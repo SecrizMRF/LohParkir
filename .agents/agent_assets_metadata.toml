@@ -41,3 +41,9 @@ id = "EldEsg2X8uwHtYwso2631"
 uri = "file://screenshots/erd-lohparkir.jpg"
 type = "image"
 title = "ERD (Entity Relationship Diagram) - Sistem LohParkir"
+
+[[outputs]]
+id = "1FDKqeAp6KF2s4Q0ktVeP"
+uri = "file://screenshots/nfr-lohparkir.jpg"
+type = "image"
+title = "Non-Functional Requirements (NFR) - Sistem LohParkir"
