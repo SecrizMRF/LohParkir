@@ -6,8 +6,20 @@ uri = "file://artifacts/mobile/assets/images/icon.png"
 type = "image"
 title = "generated_image"
 
+[[generated]]
+id = "BNbLrY5Cn75rBBt9kk6eT"
+uri = "file://SRS_LohParkir_UseCase_Diagram.png"
+type = "image"
+title = "generated_image"
+
 [[outputs]]
 id = "vV4_G9I3fUj43sHW34SvQ"
 uri = "file://SRS_LohParkir_UseCase.md"
 type = "text"
 title = "SRS LohParkir - Use Case Document"
+
+[[outputs]]
+id = "4FtVVcqFDcrGC9bofRkaV"
+uri = "file://screenshots/usecase-diagram.jpg"
+type = "image"
+title = "Use Case Diagram - Sistem LohParkir"
