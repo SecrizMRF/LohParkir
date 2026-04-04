@@ -35,3 +35,9 @@ id = "z5mcCDBNMvT92T67p2ZwQ"
 uri = "file://screenshots/usecase-diagram-annotated.jpg"
 type = "image"
 title = "Use Case Diagram + Data Transfer - Sistem LohParkir"
+
+[[outputs]]
+id = "EldEsg2X8uwHtYwso2631"
+uri = "file://screenshots/erd-lohparkir.jpg"
+type = "image"
+title = "ERD (Entity Relationship Diagram) - Sistem LohParkir"
