@@ -23,3 +23,9 @@ id = "4FtVVcqFDcrGC9bofRkaV"
 uri = "file://screenshots/usecase-diagram.jpg"
 type = "image"
 title = "Use Case Diagram - Sistem LohParkir"
+
+[[outputs]]
+id = "AFezSEhf79AzaNgllmho6"
+uri = "file://screenshots/data-transfer-usecase.jpg"
+type = "image"
+title = "Data Transfer pada Use Case Diagram - Sistem LohParkir"
