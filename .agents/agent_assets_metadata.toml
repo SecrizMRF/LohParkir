@@ -29,3 +29,9 @@ id = "AFezSEhf79AzaNgllmho6"
 uri = "file://screenshots/data-transfer-usecase.jpg"
 type = "image"
 title = "Data Transfer pada Use Case Diagram - Sistem LohParkir"
+
+[[outputs]]
+id = "z5mcCDBNMvT92T67p2ZwQ"
+uri = "file://screenshots/usecase-diagram-annotated.jpg"
+type = "image"
+title = "Use Case Diagram + Data Transfer - Sistem LohParkir"
