@@ -1,47 +1,19 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  api,
+  type ApiOfficer,
+  type ApiReport,
+  type ApiPayment,
+  type ApiScan,
+  type DashboardStats,
+  type QrValidationResult,
+} from "@/lib/api";
 
-export interface Officer {
-  id: string;
-  name: string;
-  badgeNumber: string;
-  qrCode: string;
-  area: string;
-  location: string;
-  rate: number;
-  status: "active" | "inactive";
-  createdAt: string;
-}
-
-export interface Report {
-  id: string;
-  ticketNumber: string;
-  type: "illegal_parking" | "fake_qr";
-  photoUri: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  description: string;
-  status: "pending" | "in_progress" | "resolved";
-  createdAt: string;
-}
-
-export interface ScanRecord {
-  id: string;
-  qrCode: string;
-  officerName: string | null;
-  location: string | null;
-  isValid: boolean;
-  scannedAt: string;
-}
-
-export interface Payment {
-  id: string;
-  officerId: string;
-  officerName: string;
-  amount: number;
-  status: "pending" | "completed";
-  createdAt: string;
-}
+export type Officer = ApiOfficer;
+export type Report = ApiReport;
+export type Payment = ApiPayment;
+export type ScanRecord = ApiScan;
 
 interface AppContextType {
   officers: Officer[];
@@ -49,224 +21,260 @@ interface AppContextType {
   scanHistory: ScanRecord[];
   payments: Payment[];
   userRole: "public" | "admin";
+  authToken: string | null;
+  authUser: { id: number; username: string; fullName: string; role: string } | null;
   setUserRole: (role: "public" | "admin") => void;
-  addOfficer: (officer: Omit<Officer, "id" | "qrCode" | "createdAt">) => Promise<Officer>;
-  removeOfficer: (id: string) => Promise<void>;
-  addReport: (report: Omit<Report, "id" | "ticketNumber" | "status" | "createdAt">) => Promise<Report>;
-  updateReportStatus: (id: string, status: Report["status"]) => Promise<void>;
-  addScanRecord: (record: Omit<ScanRecord, "id" | "scannedAt">) => Promise<void>;
-  addPayment: (payment: Omit<Payment, "id" | "status" | "createdAt">) => Promise<Payment>;
-  validateQR: (qrCode: string) => Officer | null;
-  dashboardStats: {
-    totalScans: number;
-    validScans: number;
-    invalidScans: number;
-    totalReports: number;
-    pendingReports: number;
-    totalPayments: number;
-    totalRevenue: number;
-    activeOfficers: number;
-  };
+  login: (username: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  addOfficer: (data: { nip: string; name: string; badgeNumber: string; area: string; location: string; rate?: number; phone?: string }) => Promise<Officer>;
+  removeOfficer: (id: number) => Promise<void>;
+  updateOfficer: (id: number, data: Partial<Officer>) => Promise<Officer>;
+  addReport: (data: { type: string; description: string; photoUrl?: string | null; latitude?: number | null; longitude?: number | null; address?: string | null; relatedQrCode?: string | null }) => Promise<Report>;
+  updateReportStatus: (id: number, status: string, adminNotes?: string) => Promise<void>;
+  addPayment: (data: { officerId?: number | null; officerName: string; amount: number; method?: string; area?: string }) => Promise<Payment>;
+  validateQR: (qrCode: string) => Promise<QrValidationResult>;
+  refreshData: () => Promise<void>;
+  dashboardStats: DashboardStats;
+  loading: boolean;
 }
+
+const defaultStats: DashboardStats = {
+  totalScans: 0,
+  validScans: 0,
+  invalidScans: 0,
+  totalReports: 0,
+  pendingReports: 0,
+  totalPayments: 0,
+  totalRevenue: 0,
+  activeOfficers: 0,
+  todayScans: 0,
+  todayPayments: 0,
+  todayRevenue: 0,
+};
 
 const AppContext = createContext<AppContextType | null>(null);
 
-const SEED_OFFICERS: Officer[] = [
-  {
-    id: "off-001",
-    name: "Budi Santoso",
-    badgeNumber: "DSH-2024-001",
-    qrCode: "LOHPARKIR-DSH-2024-001",
-    area: "Zona A - Jl. Sudirman",
-    location: "Jl. Jend. Sudirman No. 1-50",
-    rate: 3000,
-    status: "active",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "off-002",
-    name: "Siti Rahayu",
-    badgeNumber: "DSH-2024-002",
-    qrCode: "LOHPARKIR-DSH-2024-002",
-    area: "Zona B - Jl. Thamrin",
-    location: "Jl. MH Thamrin No. 1-30",
-    rate: 5000,
-    status: "active",
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "off-003",
-    name: "Ahmad Wijaya",
-    badgeNumber: "DSH-2024-003",
-    qrCode: "LOHPARKIR-DSH-2024-003",
-    area: "Zona C - Jl. Gatot Subroto",
-    location: "Jl. Gatot Subroto No. 10-80",
-    rate: 3000,
-    status: "active",
-    createdAt: new Date().toISOString(),
-  },
-];
-
-function generateId() {
-  return Date.now().toString() + Math.random().toString(36).substr(2, 9);
-}
-
-function generateTicketNumber() {
-  const date = new Date();
-  const prefix = "LP";
-  const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
-  const rand = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-  return `${prefix}-${dateStr}-${rand}`;
-}
-
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [officers, setOfficers] = useState<Officer[]>(SEED_OFFICERS);
+  const [officers, setOfficers] = useState<Officer[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [scanHistory, setScanHistory] = useState<ScanRecord[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [userRole, setUserRole] = useState<"public" | "admin">("public");
+  const [userRole, setUserRoleState] = useState<"public" | "admin">("public");
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [authUser, setAuthUser] = useState<{ id: number; username: string; fullName: string; role: string } | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>(defaultStats);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadInitialData();
   }, []);
 
-  const loadData = async () => {
+  const loadInitialData = async () => {
     try {
-      const [storedOfficers, storedReports, storedScans, storedPayments, storedRole] =
-        await Promise.all([
-          AsyncStorage.getItem("officers"),
-          AsyncStorage.getItem("reports"),
-          AsyncStorage.getItem("scanHistory"),
-          AsyncStorage.getItem("payments"),
-          AsyncStorage.getItem("userRole"),
-        ]);
+      const [storedToken, storedUser, storedRole] = await Promise.all([
+        AsyncStorage.getItem("authToken"),
+        AsyncStorage.getItem("authUser"),
+        AsyncStorage.getItem("userRole"),
+      ]);
 
-      if (storedOfficers) setOfficers(JSON.parse(storedOfficers));
-      else await AsyncStorage.setItem("officers", JSON.stringify(SEED_OFFICERS));
-      if (storedReports) setReports(JSON.parse(storedReports));
-      if (storedScans) setScanHistory(JSON.parse(storedScans));
-      if (storedPayments) setPayments(JSON.parse(storedPayments));
-      if (storedRole) setUserRole(storedRole as "public" | "admin");
+      if (storedToken) setAuthToken(storedToken);
+      if (storedUser) setAuthUser(JSON.parse(storedUser));
+      if (storedRole) setUserRoleState(storedRole as "public" | "admin");
+
+      const results = await Promise.allSettled([
+        api.getOfficers(),
+        api.getReports(),
+        api.getPayments(),
+        api.getRecentScans(50),
+        api.getDashboardStats(),
+      ]);
+
+      const allFailed = results.every((r) => r.status === "rejected");
+
+      if (allFailed) {
+        console.log("All API calls failed, loading from cache");
+        await loadFromCache();
+      } else {
+        const [officersResult, reportsResult, paymentsResult, scansResult, statsResult] = results;
+        if (officersResult.status === "fulfilled" && officersResult.value) {
+          setOfficers(officersResult.value);
+          saveToCache("officers", officersResult.value);
+        }
+        if (reportsResult.status === "fulfilled" && reportsResult.value) {
+          setReports(reportsResult.value);
+          saveToCache("reports", reportsResult.value);
+        }
+        if (paymentsResult.status === "fulfilled" && paymentsResult.value) {
+          setPayments(paymentsResult.value);
+          saveToCache("payments", paymentsResult.value);
+        }
+        if (scansResult.status === "fulfilled" && scansResult.value) {
+          setScanHistory(scansResult.value);
+          saveToCache("scans", scansResult.value);
+        }
+        if (statsResult.status === "fulfilled" && statsResult.value) {
+          setDashboardStats(statsResult.value);
+        }
+      }
+    } catch (err) {
+      console.log("Failed to load initial data, using cache:", err);
+      await loadFromCache();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadFromCache = async () => {
+    try {
+      const [cachedOfficers, cachedReports, cachedPayments, cachedScans] = await Promise.all([
+        AsyncStorage.getItem("cache_officers"),
+        AsyncStorage.getItem("cache_reports"),
+        AsyncStorage.getItem("cache_payments"),
+        AsyncStorage.getItem("cache_scans"),
+      ]);
+      if (cachedOfficers) setOfficers(JSON.parse(cachedOfficers));
+      if (cachedReports) setReports(JSON.parse(cachedReports));
+      if (cachedPayments) setPayments(JSON.parse(cachedPayments));
+      if (cachedScans) setScanHistory(JSON.parse(cachedScans));
     } catch {}
   };
 
-  const saveOfficers = async (data: Officer[]) => {
-    setOfficers(data);
-    await AsyncStorage.setItem("officers", JSON.stringify(data));
+  const saveToCache = async (key: string, data: any) => {
+    try {
+      await AsyncStorage.setItem(`cache_${key}`, JSON.stringify(data));
+    } catch {}
   };
 
-  const saveReports = async (data: Report[]) => {
-    setReports(data);
-    await AsyncStorage.setItem("reports", JSON.stringify(data));
+  const fetchAllData = async () => {
+    try {
+      const [officersData, reportsData, paymentsData, scansData, stats] = await Promise.all([
+        api.getOfficers().catch(() => null),
+        api.getReports().catch(() => null),
+        api.getPayments().catch(() => null),
+        api.getRecentScans(50).catch(() => null),
+        api.getDashboardStats().catch(() => null),
+      ]);
+
+      if (officersData) {
+        setOfficers(officersData);
+        saveToCache("officers", officersData);
+      }
+      if (reportsData) {
+        setReports(reportsData);
+        saveToCache("reports", reportsData);
+      }
+      if (paymentsData) {
+        setPayments(paymentsData);
+        saveToCache("payments", paymentsData);
+      }
+      if (scansData) {
+        setScanHistory(scansData);
+        saveToCache("scans", scansData);
+      }
+      if (stats) {
+        setDashboardStats(stats);
+      }
+    } catch (err) {
+      console.log("Failed to fetch data from server:", err);
+    }
   };
 
-  const saveScanHistory = async (data: ScanRecord[]) => {
-    setScanHistory(data);
-    await AsyncStorage.setItem("scanHistory", JSON.stringify(data));
-  };
+  const refreshData = useCallback(async () => {
+    await fetchAllData();
+  }, []);
 
-  const savePayments = async (data: Payment[]) => {
-    setPayments(data);
-    await AsyncStorage.setItem("payments", JSON.stringify(data));
-  };
-
-  const handleSetUserRole = useCallback(async (role: "public" | "admin") => {
-    setUserRole(role);
+  const setUserRole = useCallback(async (role: "public" | "admin") => {
+    setUserRoleState(role);
     await AsyncStorage.setItem("userRole", role);
   }, []);
 
-  const validateQR = useCallback(
-    (qrCode: string): Officer | null => {
-      return officers.find((o) => o.qrCode === qrCode && o.status === "active") || null;
-    },
-    [officers],
-  );
+  const login = useCallback(async (username: string, password: string) => {
+    const response = await api.login(username, password);
+    setAuthToken(response.token);
+    setAuthUser(response.user);
+    await AsyncStorage.setItem("authToken", response.token);
+    await AsyncStorage.setItem("authUser", JSON.stringify(response.user));
+    if (response.user.role === "admin" || response.user.role === "superadmin") {
+      setUserRoleState("admin");
+      await AsyncStorage.setItem("userRole", "admin");
+    }
+  }, []);
 
-  const addOfficer = useCallback(
-    async (data: Omit<Officer, "id" | "qrCode" | "createdAt">): Promise<Officer> => {
-      const officer: Officer = {
-        ...data,
-        id: generateId(),
-        qrCode: `LOHPARKIR-${data.badgeNumber}`,
-        createdAt: new Date().toISOString(),
-      };
-      const updated = [...officers, officer];
-      await saveOfficers(updated);
-      return officer;
-    },
-    [officers],
-  );
+  const logout = useCallback(async () => {
+    setAuthToken(null);
+    setAuthUser(null);
+    setUserRoleState("public");
+    await Promise.all([
+      AsyncStorage.removeItem("authToken"),
+      AsyncStorage.removeItem("authUser"),
+      AsyncStorage.setItem("userRole", "public"),
+    ]);
+  }, []);
 
-  const removeOfficer = useCallback(
-    async (id: string) => {
-      const updated = officers.filter((o) => o.id !== id);
-      await saveOfficers(updated);
-    },
-    [officers],
-  );
+  const validateQR = useCallback(async (qrCode: string): Promise<QrValidationResult> => {
+    try {
+      const result = await api.validateQr(qrCode);
+      await fetchAllData();
+      return result;
+    } catch {
+      const localOfficer = officers.find((o) => o.qrCode === qrCode && o.status === "active");
+      if (localOfficer) {
+        return {
+          isValid: true,
+          message: "QR code valid (offline)",
+          officer: {
+            id: localOfficer.id,
+            name: localOfficer.name,
+            badgeNumber: localOfficer.badgeNumber,
+            area: localOfficer.area,
+            location: localOfficer.location,
+            rate: localOfficer.rate,
+            status: localOfficer.status,
+          },
+        };
+      }
+      return { isValid: false, message: "QR code tidak valid (offline)", officer: null };
+    }
+  }, [officers]);
 
-  const addReport = useCallback(
-    async (data: Omit<Report, "id" | "ticketNumber" | "status" | "createdAt">): Promise<Report> => {
-      const report: Report = {
-        ...data,
-        id: generateId(),
-        ticketNumber: generateTicketNumber(),
-        status: "pending",
-        createdAt: new Date().toISOString(),
-      };
-      const updated = [report, ...reports];
-      await saveReports(updated);
-      return report;
-    },
-    [reports],
-  );
+  const addOfficer = useCallback(async (data: { nip: string; name: string; badgeNumber: string; area: string; location: string; rate?: number; phone?: string }): Promise<Officer> => {
+    if (!authToken) throw new Error("Silakan login sebagai admin terlebih dahulu");
+    const officer = await api.createOfficer(data, authToken);
+    setOfficers((prev) => [officer, ...prev]);
+    return officer;
+  }, [authToken]);
 
-  const updateReportStatus = useCallback(
-    async (id: string, status: Report["status"]) => {
-      const updated = reports.map((r) => (r.id === id ? { ...r, status } : r));
-      await saveReports(updated);
-    },
-    [reports],
-  );
+  const removeOfficer = useCallback(async (id: number) => {
+    if (!authToken) throw new Error("Silakan login sebagai admin terlebih dahulu");
+    await api.deleteOfficer(id, authToken);
+    setOfficers((prev) => prev.filter((o) => o.id !== id));
+  }, [authToken]);
 
-  const addScanRecord = useCallback(
-    async (record: Omit<ScanRecord, "id" | "scannedAt">) => {
-      const newRecord: ScanRecord = {
-        ...record,
-        id: generateId(),
-        scannedAt: new Date().toISOString(),
-      };
-      const updated = [newRecord, ...scanHistory];
-      await saveScanHistory(updated);
-    },
-    [scanHistory],
-  );
+  const updateOfficer = useCallback(async (id: number, data: Partial<Officer>): Promise<Officer> => {
+    if (!authToken) throw new Error("Silakan login sebagai admin terlebih dahulu");
+    const officer = await api.updateOfficer(id, data, authToken);
+    setOfficers((prev) => prev.map((o) => (o.id === id ? officer : o)));
+    return officer;
+  }, [authToken]);
 
-  const addPayment = useCallback(
-    async (data: Omit<Payment, "id" | "status" | "createdAt">): Promise<Payment> => {
-      const payment: Payment = {
-        ...data,
-        id: generateId(),
-        status: "completed",
-        createdAt: new Date().toISOString(),
-      };
-      const updated = [payment, ...payments];
-      await savePayments(updated);
-      return payment;
-    },
-    [payments],
-  );
+  const addReport = useCallback(async (data: { type: string; description: string; photoUrl?: string | null; latitude?: number | null; longitude?: number | null; address?: string | null; relatedQrCode?: string | null }): Promise<Report> => {
+    const report = await api.createReport(data);
+    setReports((prev) => [report, ...prev]);
+    return report;
+  }, []);
 
-  const dashboardStats = {
-    totalScans: scanHistory.length,
-    validScans: scanHistory.filter((s) => s.isValid).length,
-    invalidScans: scanHistory.filter((s) => !s.isValid).length,
-    totalReports: reports.length,
-    pendingReports: reports.filter((r) => r.status === "pending").length,
-    totalPayments: payments.length,
-    totalRevenue: payments.reduce((sum, p) => sum + p.amount, 0),
-    activeOfficers: officers.filter((o) => o.status === "active").length,
-  };
+  const updateReportStatus = useCallback(async (id: number, status: string, adminNotes?: string) => {
+    if (!authToken) throw new Error("Silakan login sebagai admin terlebih dahulu");
+    const updated = await api.updateReportStatus(id, status, adminNotes, authToken);
+    setReports((prev) => prev.map((r) => (r.id === id ? updated : r)));
+  }, [authToken]);
+
+  const addPayment = useCallback(async (data: { officerId?: number | null; officerName: string; amount: number; method?: string; area?: string }): Promise<Payment> => {
+    const payment = await api.createPayment(data);
+    setPayments((prev) => [payment, ...prev]);
+    await fetchAllData();
+    return payment;
+  }, []);
 
   return (
     <AppContext.Provider
@@ -276,15 +284,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         scanHistory,
         payments,
         userRole,
-        setUserRole: handleSetUserRole,
+        authToken,
+        authUser,
+        setUserRole,
+        login,
+        logout,
         addOfficer,
         removeOfficer,
+        updateOfficer,
         addReport,
         updateReportStatus,
-        addScanRecord,
         addPayment,
         validateQR,
+        refreshData,
         dashboardStats,
+        loading,
       }}
     >
       {children}

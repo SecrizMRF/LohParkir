@@ -2,7 +2,7 @@
 
 ## Overview
 
-LohParkir is a parking verification and management mobile application built with Expo (React Native). It helps verify official parking officers, report illegal parking, and manage parking operations for Dishub (Transportation Agency).
+LohParkir is a QR code-based parking verification and management system for Indonesian Dinas Perhubungan (Dishub). Public users scan QR codes on officer badges to verify legitimacy, report illegal parking, and pay via QRIS. Dishub admins monitor a real-time dashboard, manage reports, and register parking officers.
 
 ## Stack
 
@@ -10,42 +10,83 @@ LohParkir is a parking verification and management mobile application built with
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **Mobile framework**: Expo (React Native)
+- **Mobile framework**: Expo (React Native) with expo-router
 - **API framework**: Express 5
-- **State management**: React Context + AsyncStorage
-- **UI**: React Native StyleSheet with Inter font
+- **Database**: PostgreSQL with Drizzle ORM
+- **Auth**: JWT (8h expiry) with role-based middleware
+- **State management**: React Context + API client + AsyncStorage offline cache
+- **UI**: React Native StyleSheet with Inter font family
 
-## App Structure
+## Architecture
 
-### User Roles
-- **Public (Drivers)**: Scan QR codes, report illegal parking, make digital payments
-- **Admin (Dishub)**: Dashboard, manage reports, create officer accounts
-- **Officers**: Carry QR badge only (no app interaction)
+### Database (lib/db)
+- **Drizzle ORM** schema with 6 tables: `users`, `officers`, `reports`, `scans`, `payments`, `audit_trail`
+- Schema at `lib/db/src/schema/index.ts`
+- Push with `pnpm --filter @workspace/db run push`
 
-### Screens
-- **Scan Tab**: QR code verification with demo codes
-- **Reports Tab**: View submitted reports with FAB to create new ones
-- **Admin Tab**: Dashboard with stats, role toggle, officer/report management
-- **Scan Result**: Shows valid/invalid QR verification results
-- **Report Form**: Submit illegal parking or fake QR reports with photo & GPS
-- **Payment**: Digital QRIS payment flow with receipt
-- **Officer Form**: Register new parking officers (admin)
-- **Officers List**: View/manage registered officers (admin)
-- **Reports Manage**: Filter and manage reports by status (admin)
+### API Server (artifacts/api-server)
+- Express 5 REST API mounted at `/api`
+- Routes: auth, officers (CRUD), QR validation, reports, payments, dashboard stats, seed
+- JWT auth middleware with role-based access (`admin`, `superadmin`)
+- Runs on port 8080
 
-### Data Models
-- Officers: id, name, badgeNumber, qrCode, area, location, rate, status
-- Reports: id, ticketNumber, type, photoUri, GPS coords, description, status
-- ScanHistory: id, qrCode, officerName, location, isValid, scannedAt
-- Payments: id, officerId, officerName, amount, status
+### Mobile App (artifacts/mobile)
+- Expo React Native with expo-router tabs
+- API client at `lib/api.ts` with offline fallback via AsyncStorage
+- Context at `contexts/AppContext.tsx` for global state
+
+## User Roles
+- **public**: Scan QR codes, submit reports, make payments (no auth needed)
+- **officer**: Carry QR badge only (no app interaction)
+- **admin**: Manage officers, reports, view dashboard (JWT required)
+- **superadmin**: Full access (JWT required)
+
+## Screens (4 Tabs + Stack)
+- **Scan Tab** (`(tabs)/index.tsx`): QR scanner with camera + manual input, demo QR codes
+- **Laporan Tab** (`(tabs)/reports.tsx`): View reports, FAB to create new
+- **Riwayat Tab** (`(tabs)/payments.tsx`): Payment history with summary stats
+- **Admin Tab** (`(tabs)/admin.tsx`): Dashboard stats, login, officer/report management
+- **Scan Result** (`scan-result.tsx`): Valid/invalid QR verification display
+- **Payment** (`payment.tsx`): QRIS payment flow with receipt
+- **Report Form** (`report-form.tsx`): Submit reports with photo & GPS
+- **Report Detail** (`report-detail.tsx`): View report, admin status changes + notes
+- **Officer Form** (`officer-form.tsx`): Register officers with NIP/badge validation
+- **Officers List** (`officers-list.tsx`): View/manage officers, activate/deactivate
+- **Reports Manage** (`reports-manage.tsx`): Filter reports by status (pending/in_progress/resolved/rejected)
+
+## QR Code Format
+- Badge: `DSH-YYYY-NNN` (e.g., DSH-2024-001)
+- QR Code: `LOHPARKIR-DSH-YYYY-NNN` (e.g., LOHPARKIR-DSH-2024-001)
+- Validated via regex: `/^LOHPARKIR-DSH-\d{4}-\d{3}$/`
+
+## Seed Data
+- 3 demo officers: Budi Santoso, Siti Rahayu, Ahmad Wijaya
+- Admin login: `admin` / `admin123`
+- Superadmin login: `superadmin` / `superadmin123`
+- Seed endpoint: `POST /api/seed`
 
 ## Key Commands
-
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/api-server run dev` — run API server locally
+- `pnpm --filter @workspace/db run push` — push DB schema changes
+- `pnpm --filter @workspace/api-server run dev` — run API server
+- `pnpm --filter @workspace/mobile run dev` — run Expo mobile app
+
+## API Endpoints
+- `POST /api/auth/login` — JWT login
+- `GET /api/officers` — list all officers
+- `POST /api/officers` — create officer (admin)
+- `PUT /api/officers/:id` — update officer (admin)
+- `DELETE /api/officers/:id` — delete officer (admin)
+- `POST /api/qr/validate` — validate QR code, record scan
+- `GET /api/reports` — list reports (filter by status/type)
+- `POST /api/reports` — create report (public)
+- `PUT /api/reports/:id/status` — update report status (admin)
+- `GET /api/payments` — list payments
+- `POST /api/payments` — create payment
+- `GET /api/dashboard/stats` — dashboard statistics
+- `GET /api/dashboard/recent-scans` — recent scan history
+- `GET /api/dashboard/recent-reports` — recent reports
 
 ## Color Theme
 - Primary: #0066CC (blue)

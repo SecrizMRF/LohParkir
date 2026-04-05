@@ -12,7 +12,7 @@ import {
   View,
 } from "react-native";
 
-import { useApp } from "@/contexts/AppContext";
+import { useApp, type Payment } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 
 export default function PaymentScreen() {
@@ -27,32 +27,33 @@ export default function PaymentScreen() {
 
   const [loading, setLoading] = useState(false);
   const [paymentComplete, setPaymentComplete] = useState(false);
-  const [paymentData, setPaymentData] = useState<{ id: string } | null>(null);
+  const [paymentData, setPaymentData] = useState<Payment | null>(null);
 
   const rate = Number(params.rate || 0);
 
   const handlePayment = async () => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       const payment = await addPayment({
-        officerId: params.officerId || "",
+        officerId: params.officerId ? Number(params.officerId) : null,
         officerName: params.officerName || "",
         amount: rate,
+        method: "qris",
+        area: params.area || "",
       });
 
       setPaymentData(payment);
       setPaymentComplete(true);
-    } catch {
-      Alert.alert("Error", "Pembayaran gagal. Silakan coba lagi.");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Pembayaran gagal. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (paymentComplete) {
+  if (paymentComplete && paymentData) {
     return (
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -81,12 +82,13 @@ export default function PaymentScreen() {
         >
           <Text style={[styles.receiptTitle, { color: colors.foreground }]}>Bukti Pembayaran</Text>
           {[
-            { label: "ID Transaksi", value: paymentData?.id?.slice(0, 12) || "-" },
+            { label: "ID Transaksi", value: paymentData.transactionId },
             { label: "Petugas", value: params.officerName },
-            { label: "Area", value: params.area },
+            { label: "Area", value: params.area || "-" },
             { label: "Jumlah", value: `Rp ${rate.toLocaleString("id-ID")}` },
+            { label: "Metode", value: paymentData.method?.toUpperCase() || "QRIS" },
             { label: "Status", value: "Lunas" },
-            { label: "Waktu", value: new Date().toLocaleString("id-ID") },
+            { label: "Waktu", value: new Date(paymentData.createdAt).toLocaleString("id-ID") },
           ].map((item) => (
             <View key={item.label} style={[styles.receiptRow, { borderBottomColor: colors.border }]}>
               <Text style={[styles.receiptLabel, { color: colors.mutedForeground }]}>
@@ -129,7 +131,7 @@ export default function PaymentScreen() {
         </View>
         <Text style={[styles.paymentTitle, { color: colors.foreground }]}>Pembayaran QRIS</Text>
         <Text style={[styles.paymentDesc, { color: colors.mutedForeground }]}>
-          Scan QRIS atau bayar secara digital
+          Bayar parkir secara digital via QRIS
         </Text>
       </View>
 

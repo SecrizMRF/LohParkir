@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Alert,
   FlatList,
@@ -14,7 +14,7 @@ import {
 import { useApp, type Officer } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 
-function OfficerItem({ item, onRemove }: { item: Officer; onRemove: (id: string) => void }) {
+function OfficerItem({ item, onToggleStatus, onRemove }: { item: Officer; onToggleStatus: (id: number, status: string) => void; onRemove: (id: number) => void }) {
   const colors = useColors();
 
   return (
@@ -27,12 +27,15 @@ function OfficerItem({ item, onRemove }: { item: Officer; onRemove: (id: string)
           <Text style={[styles.name, { color: colors.foreground }]}>{item.name}</Text>
           <Text style={[styles.badge, { color: colors.mutedForeground }]}>{item.badgeNumber}</Text>
         </View>
-        <View
-          style={[
-            styles.statusDot,
-            { backgroundColor: item.status === "active" ? colors.success : colors.destructive },
-          ]}
-        />
+        <Pressable
+          onPress={() => onToggleStatus(item.id, item.status === "active" ? "inactive" : "active")}
+          style={[styles.statusPill, { backgroundColor: item.status === "active" ? colors.success + "15" : colors.destructive + "15" }]}
+        >
+          <View style={[styles.statusDot, { backgroundColor: item.status === "active" ? colors.success : colors.destructive }]} />
+          <Text style={[styles.statusLabel, { color: item.status === "active" ? colors.success : colors.destructive }]}>
+            {item.status === "active" ? "Aktif" : "Nonaktif"}
+          </Text>
+        </Pressable>
       </View>
 
       <View style={[styles.infoRow, { borderTopColor: colors.border }]}>
@@ -72,14 +75,34 @@ function OfficerItem({ item, onRemove }: { item: Officer; onRemove: (id: string)
 
 export default function OfficersListScreen() {
   const colors = useColors();
-  const { officers, removeOfficer } = useApp();
+  const { officers, removeOfficer, updateOfficer, refreshData } = useApp();
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const handleToggleStatus = async (id: number, newStatus: string) => {
+    try {
+      await updateOfficer(id, { status: newStatus } as any);
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Gagal mengubah status petugas");
+    }
+  };
+
+  const handleRemove = async (id: number) => {
+    try {
+      await removeOfficer(id);
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Gagal menghapus petugas");
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={officers}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <OfficerItem item={item} onRemove={removeOfficer} />}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => <OfficerItem item={item} onToggleStatus={handleToggleStatus} onRemove={handleRemove} />}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         scrollEnabled={officers.length > 0}
@@ -119,7 +142,9 @@ const styles = StyleSheet.create({
   cardInfo: { flex: 1 },
   name: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
   badge: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  statusDot: { width: 10, height: 10, borderRadius: 5 },
+  statusPill: { flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, gap: 6 },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   infoRow: {
     flexDirection: "row",
     paddingTop: 12,

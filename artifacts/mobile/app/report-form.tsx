@@ -119,9 +119,11 @@ export default function ReportFormScreen() {
       const report = await addReport({
         type,
         description: description.trim(),
-        photoUri,
+        photoUrl: photoUri,
         latitude,
         longitude,
+        address: locationName || null,
+        relatedQrCode: params.qrCode || null,
       });
 
       Alert.alert(
@@ -129,8 +131,8 @@ export default function ReportFormScreen() {
         `Nomor tiket: ${report.ticketNumber}\n\nLaporan Anda telah diterima dan akan segera ditindaklanjuti.`,
         [{ text: "OK", onPress: () => router.back() }],
       );
-    } catch {
-      Alert.alert("Error", "Gagal mengirim laporan. Coba lagi.");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Gagal mengirim laporan. Coba lagi.");
     } finally {
       setLoading(false);
     }

@@ -4,6 +4,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Linking,
   Platform,
   Pressable,
@@ -21,11 +22,12 @@ import { useColors } from "@/hooks/useColors";
 export default function ScanScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { validateQR, addScanRecord, scanHistory } = useApp();
+  const { validateQR, scanHistory } = useApp();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
   const [qrInput, setQrInput] = useState("");
+  const [validating, setValidating] = useState(false);
   const scanCooldown = useRef(false);
 
   const handleScan = async (code: string) => {
@@ -33,47 +35,45 @@ export default function ScanScreen() {
     if (scanCooldown.current) return;
     scanCooldown.current = true;
     setScanned(true);
+    setValidating(true);
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    const officer = validateQR(code.trim());
+    try {
+      const result = await validateQR(code.trim());
 
-    if (officer) {
-      await addScanRecord({
-        qrCode: code.trim(),
-        officerName: officer.name,
-        location: officer.location,
-        isValid: true,
-      });
+      if (result.isValid && result.officer) {
+        router.push({
+          pathname: "/scan-result",
+          params: {
+            valid: "true",
+            officerName: result.officer.name,
+            badgeNumber: result.officer.badgeNumber,
+            area: result.officer.area,
+            location: result.officer.location,
+            rate: result.officer.rate.toString(),
+            officerId: result.officer.id.toString(),
+          },
+        });
+      } else {
+        router.push({
+          pathname: "/scan-result",
+          params: { valid: "false", qrCode: code.trim(), message: result.message },
+        });
+      }
+    } catch {
       router.push({
         pathname: "/scan-result",
-        params: {
-          valid: "true",
-          officerName: officer.name,
-          badgeNumber: officer.badgeNumber,
-          area: officer.area,
-          location: officer.location,
-          rate: officer.rate.toString(),
-          officerId: officer.id,
-        },
+        params: { valid: "false", qrCode: code.trim(), message: "Gagal memvalidasi QR code" },
       });
-    } else {
-      await addScanRecord({
-        qrCode: code.trim(),
-        officerName: null,
-        location: null,
-        isValid: false,
-      });
-      router.push({
-        pathname: "/scan-result",
-        params: { valid: "false", qrCode: code.trim() },
-      });
+    } finally {
+      setValidating(false);
+      setQrInput("");
+      setTimeout(() => {
+        scanCooldown.current = false;
+        setScanned(false);
+      }, 2000);
     }
-    setQrInput("");
-    setTimeout(() => {
-      scanCooldown.current = false;
-      setScanned(false);
-    }, 2000);
   };
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
@@ -111,7 +111,8 @@ export default function ScanScreen() {
             <MaterialCommunityIcons name="keyboard" size={36} color={colors.primary} />
           </View>
           <Text style={[styles.manualDesc, { color: colors.mutedForeground }]}>
-            Masukkan kode QR petugas parkir secara manual
+            Masukkan kode QR petugas parkir secara manual{"\n"}
+            Format: LOHPARKIR-DSH-YYYY-NNN
           </Text>
           <View style={styles.inputRow}>
             <TextInput
@@ -124,7 +125,7 @@ export default function ScanScreen() {
                   borderRadius: colors.radius,
                 },
               ]}
-              placeholder="Masukkan kode QR..."
+              placeholder="LOHPARKIR-DSH-2024-001"
               placeholderTextColor={colors.mutedForeground}
               value={qrInput}
               onChangeText={setQrInput}
@@ -134,12 +135,17 @@ export default function ScanScreen() {
             />
             <Pressable
               onPress={() => handleScan(qrInput)}
+              disabled={validating}
               style={({ pressed }) => [
                 styles.scanButton,
-                { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
+                { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: validating ? 0.5 : pressed ? 0.8 : 1 },
               ]}
             >
-              <Feather name="search" size={20} color="#FFF" />
+              {validating ? (
+                <ActivityIndicator size="small" color="#FFF" />
+              ) : (
+                <Feather name="search" size={20} color="#FFF" />
+              )}
             </Pressable>
           </View>
         </View>
@@ -159,6 +165,7 @@ export default function ScanScreen() {
             <Pressable
               key={item.code}
               onPress={() => handleScan(item.code)}
+              disabled={validating}
               style={({ pressed }) => [
                 styles.demoCard,
                 {
@@ -167,7 +174,7 @@ export default function ScanScreen() {
                     : colors.card,
                   borderColor: item.code.startsWith("FAKE") ? colors.destructive + "30" : colors.border,
                   borderRadius: colors.radius,
-                  opacity: pressed ? 0.8 : 1,
+                  opacity: validating ? 0.5 : pressed ? 0.8 : 1,
                 },
               ]}
             >
@@ -189,6 +196,13 @@ export default function ScanScreen() {
             </Pressable>
           ))}
         </View>
+
+        {validating && (
+          <View style={styles.validatingOverlay}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <Text style={[styles.validatingText, { color: colors.primary }]}>Memvalidasi...</Text>
+          </View>
+        )}
       </ScrollView>
     );
   }
@@ -280,15 +294,24 @@ export default function ScanScreen() {
         </View>
 
         <View style={styles.scanAreaContainer}>
-          <View style={styles.scanFrame}>
-            <View style={[styles.corner, styles.cornerTL, { borderColor: colors.primary }]} />
-            <View style={[styles.corner, styles.cornerTR, { borderColor: colors.primary }]} />
-            <View style={[styles.corner, styles.cornerBL, { borderColor: colors.primary }]} />
-            <View style={[styles.corner, styles.cornerBR, { borderColor: colors.primary }]} />
-          </View>
-          <Text style={styles.scanHint}>
-            {scanned ? "QR Code terdeteksi..." : "Arahkan kamera ke QR Code petugas parkir"}
-          </Text>
+          {validating ? (
+            <View style={styles.validatingCenter}>
+              <ActivityIndicator size="large" color="#FFF" />
+              <Text style={styles.scanHint}>Memvalidasi QR Code...</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.scanFrame}>
+                <View style={[styles.corner, styles.cornerTL, { borderColor: colors.primary }]} />
+                <View style={[styles.corner, styles.cornerTR, { borderColor: colors.primary }]} />
+                <View style={[styles.corner, styles.cornerBL, { borderColor: colors.primary }]} />
+                <View style={[styles.corner, styles.cornerBR, { borderColor: colors.primary }]} />
+              </View>
+              <Text style={styles.scanHint}>
+                {scanned ? "QR Code terdeteksi..." : "Arahkan kamera ke QR Code petugas parkir"}
+              </Text>
+            </>
+          )}
         </View>
 
         <View style={[styles.bottomBar, { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 }]}>
@@ -330,6 +353,7 @@ const styles = StyleSheet.create({
   topTitle: { color: "#FFF", fontSize: 18, fontFamily: "Inter_700Bold" },
 
   scanAreaContainer: { alignItems: "center", gap: 20 },
+  validatingCenter: { alignItems: "center", gap: 16 },
   scanFrame: { width: 260, height: 260, position: "relative" },
   corner: { position: "absolute", width: 40, height: 40, borderWidth: 4 },
   cornerTL: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 12 },
@@ -465,4 +489,6 @@ const styles = StyleSheet.create({
   },
   demoName: { fontSize: 13, fontFamily: "Inter_600SemiBold", textAlign: "center" },
   demoArea: { fontSize: 11, fontFamily: "Inter_400Regular" },
+  validatingOverlay: { alignItems: "center", paddingTop: 20, gap: 10 },
+  validatingText: { fontSize: 14, fontFamily: "Inter_500Medium" },
 });

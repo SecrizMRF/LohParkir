@@ -1,13 +1,16 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
@@ -17,9 +20,136 @@ import { useColors } from "@/hooks/useColors";
 
 export default function AdminScreen() {
   const colors = useColors();
-  const { dashboardStats, userRole, setUserRole, officers, reports, scanHistory } = useApp();
+  const { dashboardStats, userRole, setUserRole, officers, scanHistory, authToken, authUser, login, logout, refreshData, loading } = useApp();
 
   const isAdmin = userRole === "admin";
+  const isLoggedIn = !!authToken;
+
+  const [showLogin, setShowLogin] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const handleLogin = async () => {
+    if (!username.trim() || !password.trim()) {
+      Alert.alert("Error", "Username dan password wajib diisi");
+      return;
+    }
+    setLoginLoading(true);
+    try {
+      await login(username.trim(), password.trim());
+      setShowLogin(false);
+      setUsername("");
+      setPassword("");
+      Alert.alert("Berhasil", "Login berhasil sebagai Admin Dishub");
+    } catch (err: any) {
+      Alert.alert("Login Gagal", err.message || "Username atau password salah");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    Alert.alert("Logout", "Yakin ingin keluar dari mode admin?", [
+      { text: "Batal", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          Alert.alert("Berhasil", "Anda telah keluar dari mode admin");
+        },
+      },
+    ]);
+  };
+
+  if (showLogin) {
+    return (
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={{
+          paddingBottom: 100,
+          paddingTop: Platform.OS === "web" ? 67 + 16 : 16,
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Pressable
+          onPress={() => setShowLogin(false)}
+          style={({ pressed }) => [
+            styles.backBtn,
+            { backgroundColor: colors.card, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
+          ]}
+        >
+          <Feather name="arrow-left" size={20} color={colors.foreground} />
+          <Text style={[styles.backText, { color: colors.foreground }]}>Kembali</Text>
+        </Pressable>
+
+        <View style={[styles.loginCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
+          <View style={[styles.loginIcon, { backgroundColor: colors.primary + "10" }]}>
+            <Feather name="shield" size={36} color={colors.primary} />
+          </View>
+          <Text style={[styles.loginTitle, { color: colors.foreground }]}>Login Admin Dishub</Text>
+          <Text style={[styles.loginDesc, { color: colors.mutedForeground }]}>
+            Masuk untuk mengelola petugas dan laporan
+          </Text>
+
+          <View style={styles.loginFields}>
+            <View style={[styles.inputWrap, { backgroundColor: colors.background, borderColor: colors.border, borderRadius: colors.radius }]}>
+              <Feather name="user" size={18} color={colors.mutedForeground} />
+              <TextInput
+                style={[styles.loginInput, { color: colors.foreground }]}
+                placeholder="Username"
+                placeholderTextColor={colors.mutedForeground}
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+              />
+            </View>
+            <View style={[styles.inputWrap, { backgroundColor: colors.background, borderColor: colors.border, borderRadius: colors.radius }]}>
+              <Feather name="lock" size={18} color={colors.mutedForeground} />
+              <TextInput
+                style={[styles.loginInput, { color: colors.foreground }]}
+                placeholder="Password"
+                placeholderTextColor={colors.mutedForeground}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+            </View>
+          </View>
+
+          <Pressable
+            onPress={handleLogin}
+            disabled={loginLoading}
+            style={({ pressed }) => [
+              styles.loginBtn,
+              { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: loginLoading ? 0.6 : pressed ? 0.8 : 1 },
+            ]}
+          >
+            {loginLoading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <>
+                <Feather name="log-in" size={18} color="#FFF" />
+                <Text style={styles.loginBtnText}>Masuk</Text>
+              </>
+            )}
+          </Pressable>
+
+          <View style={[styles.credHint, { backgroundColor: colors.primary + "08", borderRadius: colors.radius }]}>
+            <Feather name="info" size={14} color={colors.primary} />
+            <Text style={[styles.credHintText, { color: colors.primary }]}>
+              Demo: admin / admin123
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
@@ -31,32 +161,37 @@ export default function AdminScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.roleToggle}>
-        <Text style={[styles.roleLabel, { color: colors.mutedForeground }]}>Mode:</Text>
-        <Pressable
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setUserRole(isAdmin ? "public" : "admin");
-          }}
-          style={({ pressed }) => [
-            styles.roleButton,
-            {
-              backgroundColor: isAdmin ? colors.primary : colors.muted,
-              borderRadius: colors.radius,
-              opacity: pressed ? 0.8 : 1,
-            },
-          ]}
-        >
-          <Feather
-            name={isAdmin ? "shield" : "user"}
-            size={14}
-            color={isAdmin ? "#FFF" : colors.foreground}
-          />
-          <Text
-            style={[styles.roleButtonText, { color: isAdmin ? "#FFF" : colors.foreground }]}
-          >
-            {isAdmin ? "Admin Dishub" : "Publik"}
-          </Text>
-        </Pressable>
+        {isLoggedIn && authUser && (
+          <View style={styles.userInfo}>
+            <Feather name="user" size={14} color={colors.primary} />
+            <Text style={[styles.userName, { color: colors.primary }]}>{authUser.fullName}</Text>
+          </View>
+        )}
+        <View style={styles.roleActions}>
+          {isAdmin && isLoggedIn ? (
+            <Pressable
+              onPress={handleLogout}
+              style={({ pressed }) => [
+                styles.roleButton,
+                { backgroundColor: colors.destructive, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
+              ]}
+            >
+              <Feather name="log-out" size={14} color="#FFF" />
+              <Text style={[styles.roleButtonText, { color: "#FFF" }]}>Logout</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => setShowLogin(true)}
+              style={({ pressed }) => [
+                styles.roleButton,
+                { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
+              ]}
+            >
+              <Feather name="shield" size={14} color="#FFF" />
+              <Text style={[styles.roleButtonText, { color: "#FFF" }]}>Login Admin</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Dashboard</Text>
@@ -99,7 +234,24 @@ export default function AdminScreen() {
         />
       </View>
 
-      {isAdmin && (
+      {dashboardStats.todayScans > 0 && (
+        <View style={styles.statsRow}>
+          <StatCard
+            icon="sunrise"
+            label="Scan Hari Ini"
+            value={dashboardStats.todayScans}
+            color={colors.warning}
+          />
+          <StatCard
+            icon="trending-up"
+            label="Revenue Hari Ini"
+            value={`Rp ${dashboardStats.todayRevenue.toLocaleString("id-ID")}`}
+            color={colors.success}
+          />
+        </View>
+      )}
+
+      {isAdmin && isLoggedIn && (
         <>
           <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 28 }]}>
             Kelola
@@ -143,8 +295,11 @@ export default function AdminScreen() {
                 <View style={[styles.menuIcon, { backgroundColor: item.color + "15" }]}>
                   <Feather name={item.icon} size={20} color={item.color} />
                 </View>
-                <Text style={[styles.menuLabel, { color: colors.foreground }]}>{item.label}</Text>
-                <Text style={[styles.menuDesc, { color: colors.mutedForeground }]}>{item.desc}</Text>
+                <View style={styles.menuContent}>
+                  <Text style={[styles.menuLabel, { color: colors.foreground }]}>{item.label}</Text>
+                  <Text style={[styles.menuDesc, { color: colors.mutedForeground }]}>{item.desc}</Text>
+                </View>
+                <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
               </Pressable>
             ))}
           </View>
@@ -196,12 +351,14 @@ const styles = StyleSheet.create({
   roleToggle: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "flex-end",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     marginBottom: 20,
     gap: 8,
   },
-  roleLabel: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  userInfo: { flexDirection: "row", alignItems: "center", gap: 6, flex: 1 },
+  userName: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  roleActions: { flexDirection: "row", gap: 8 },
   roleButton: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 8, gap: 6 },
   roleButtonText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
   sectionTitle: { fontSize: 18, fontFamily: "Inter_700Bold", paddingHorizontal: 20, marginBottom: 14 },
@@ -209,8 +366,9 @@ const styles = StyleSheet.create({
   menuGrid: { paddingHorizontal: 20, gap: 10 },
   menuCard: { padding: 16, flexDirection: "row", alignItems: "center", gap: 14 },
   menuIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  menuContent: { flex: 1 },
   menuLabel: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  menuDesc: { fontSize: 12, fontFamily: "Inter_400Regular", position: "absolute", right: 16 },
+  menuDesc: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
   activityItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -224,4 +382,25 @@ const styles = StyleSheet.create({
   activityName: { fontSize: 14, fontFamily: "Inter_500Medium" },
   activityDate: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
   activityStatus: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+
+  backBtn: { flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginBottom: 20, padding: 12, gap: 8, alignSelf: "flex-start" },
+  backText: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  loginCard: { marginHorizontal: 20, padding: 28, alignItems: "center" },
+  loginIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  loginTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
+  loginDesc: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 24 },
+  loginFields: { width: "100%", gap: 12 },
+  inputWrap: { flexDirection: "row", alignItems: "center", height: 48, paddingHorizontal: 14, borderWidth: 1, gap: 10 },
+  loginInput: { flex: 1, fontSize: 14, fontFamily: "Inter_400Regular" },
+  loginBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", width: "100%", height: 50, gap: 10, marginTop: 16 },
+  loginBtnText: { color: "#FFF", fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  credHint: { flexDirection: "row", alignItems: "center", gap: 8, padding: 12, marginTop: 16, width: "100%" },
+  credHintText: { fontSize: 12, fontFamily: "Inter_500Medium" },
 });

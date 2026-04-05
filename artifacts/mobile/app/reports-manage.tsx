@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -13,9 +13,9 @@ import {
 import { useApp, type Report } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 
-type FilterType = "all" | "pending" | "in_progress" | "resolved";
+type FilterType = "all" | "pending" | "in_progress" | "resolved" | "rejected";
 
-function getStatusConfig(status: Report["status"], colors: ReturnType<typeof useColors>) {
+function getStatusConfig(status: string, colors: ReturnType<typeof useColors>) {
   switch (status) {
     case "pending":
       return { label: "Menunggu", bg: colors.warning + "15", fg: colors.warning };
@@ -23,6 +23,10 @@ function getStatusConfig(status: Report["status"], colors: ReturnType<typeof use
       return { label: "Diproses", bg: colors.primary + "15", fg: colors.primary };
     case "resolved":
       return { label: "Selesai", bg: colors.success + "15", fg: colors.success };
+    case "rejected":
+      return { label: "Ditolak", bg: colors.destructive + "15", fg: colors.destructive };
+    default:
+      return { label: status, bg: colors.muted, fg: colors.mutedForeground };
   }
 }
 
@@ -34,7 +38,7 @@ function ReportManageItem({ item }: { item: Report }) {
     <Pressable
       onPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        router.push({ pathname: "/report-detail", params: { reportId: item.id } });
+        router.push({ pathname: "/report-detail", params: { reportId: item.id.toString() } });
       }}
       style={({ pressed }) => [
         styles.card,
@@ -67,6 +71,14 @@ function ReportManageItem({ item }: { item: Report }) {
       <Text style={[styles.description, { color: colors.mutedForeground }]} numberOfLines={2}>
         {item.description}
       </Text>
+      {item.adminNotes && (
+        <View style={styles.notesRow}>
+          <Feather name="message-square" size={12} color={colors.primary} />
+          <Text style={[styles.notesText, { color: colors.primary }]} numberOfLines={1}>
+            {item.adminNotes}
+          </Text>
+        </View>
+      )}
       <Text style={[styles.date, { color: colors.mutedForeground }]}>
         {new Date(item.createdAt).toLocaleString("id-ID")}
       </Text>
@@ -76,8 +88,12 @@ function ReportManageItem({ item }: { item: Report }) {
 
 export default function ReportsManageScreen() {
   const colors = useColors();
-  const { reports } = useApp();
+  const { reports, refreshData } = useApp();
   const [filter, setFilter] = useState<FilterType>("all");
+
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   const filteredReports = filter === "all" ? reports : reports.filter((r) => r.status === filter);
 
@@ -86,6 +102,7 @@ export default function ReportsManageScreen() {
     { value: "pending", label: "Menunggu" },
     { value: "in_progress", label: "Diproses" },
     { value: "resolved", label: "Selesai" },
+    { value: "rejected", label: "Ditolak" },
   ];
 
   return (
@@ -120,7 +137,7 @@ export default function ReportsManageScreen() {
 
       <FlatList
         data={filteredReports}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => <ReportManageItem item={item} />}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
@@ -150,6 +167,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     gap: 8,
+    flexWrap: "wrap",
   },
   filterChip: { paddingHorizontal: 16, paddingVertical: 8 },
   filterText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
@@ -162,6 +180,8 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4 },
   statusText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   description: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 8 },
+  notesRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
+  notesText: { fontSize: 12, fontFamily: "Inter_500Medium", flex: 1 },
   date: { fontSize: 11, fontFamily: "Inter_400Regular" },
   empty: { alignItems: "center", paddingTop: 60 },
   emptyIcon: {

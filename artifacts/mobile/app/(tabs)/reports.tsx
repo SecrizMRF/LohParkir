@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   FlatList,
   Platform,
@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp, type Report } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 
-function getStatusConfig(status: Report["status"], colors: ReturnType<typeof useColors>) {
+function getStatusConfig(status: string, colors: ReturnType<typeof useColors>) {
   switch (status) {
     case "pending":
       return { label: "Menunggu", bg: colors.warning + "15", fg: colors.warning };
@@ -23,6 +23,10 @@ function getStatusConfig(status: Report["status"], colors: ReturnType<typeof use
       return { label: "Diproses", bg: colors.primary + "15", fg: colors.primary };
     case "resolved":
       return { label: "Selesai", bg: colors.success + "15", fg: colors.success };
+    case "rejected":
+      return { label: "Ditolak", bg: colors.destructive + "15", fg: colors.destructive };
+    default:
+      return { label: status, bg: colors.muted, fg: colors.mutedForeground };
   }
 }
 
@@ -32,7 +36,7 @@ function ReportItem({ item }: { item: Report }) {
 
   return (
     <Pressable
-      onPress={() => router.push({ pathname: "/report-detail", params: { reportId: item.id } })}
+      onPress={() => router.push({ pathname: "/report-detail", params: { reportId: item.id.toString() } })}
       style={({ pressed }) => [
         styles.reportCard,
         { backgroundColor: colors.card, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
@@ -78,13 +82,17 @@ function ReportItem({ item }: { item: Report }) {
 
 export default function ReportsScreen() {
   const colors = useColors();
-  const { reports } = useApp();
+  const { reports, refreshData } = useApp();
+
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={reports}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => <ReportItem item={item} />}
         contentContainerStyle={{
           padding: 20,

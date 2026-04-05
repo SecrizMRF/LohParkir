@@ -21,15 +21,23 @@ export default function OfficerFormScreen() {
   const { addOfficer } = useApp();
 
   const [name, setName] = useState("");
+  const [nip, setNip] = useState("");
   const [badgeNumber, setBadgeNumber] = useState("");
   const [area, setArea] = useState("");
   const [location, setLocation] = useState("");
   const [rate, setRate] = useState("3000");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!name.trim() || !badgeNumber.trim() || !area.trim() || !location.trim()) {
-      Alert.alert("Error", "Semua field wajib diisi");
+    if (!name.trim() || !nip.trim() || !badgeNumber.trim() || !area.trim() || !location.trim()) {
+      Alert.alert("Error", "NIP, nama, nomor badge, area, dan lokasi wajib diisi");
+      return;
+    }
+
+    const badgePattern = /^DSH-\d{4}-\d{3}$/;
+    if (!badgePattern.test(badgeNumber.trim().toUpperCase())) {
+      Alert.alert("Error", "Format nomor badge harus DSH-YYYY-NNN (contoh: DSH-2024-004)");
       return;
     }
 
@@ -37,12 +45,13 @@ export default function OfficerFormScreen() {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const officer = await addOfficer({
+        nip: nip.trim(),
         name: name.trim(),
         badgeNumber: badgeNumber.trim().toUpperCase(),
         area: area.trim(),
         location: location.trim(),
         rate: Number(rate) || 3000,
-        status: "active",
+        phone: phone.trim() || undefined,
       });
 
       Alert.alert(
@@ -50,19 +59,21 @@ export default function OfficerFormScreen() {
         `${officer.name} telah berhasil didaftarkan.\n\nQR Code: ${officer.qrCode}`,
         [{ text: "OK", onPress: () => router.back() }],
       );
-    } catch {
-      Alert.alert("Error", "Gagal mendaftarkan petugas.");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Gagal mendaftarkan petugas.");
     } finally {
       setLoading(false);
     }
   };
 
   const fields = [
+    { label: "NIP", value: nip, onChange: setNip, placeholder: "Contoh: 198501012010011001", icon: "hash" as const, keyboardType: "numeric" as const },
     { label: "Nama Petugas", value: name, onChange: setName, placeholder: "Contoh: Budi Santoso", icon: "user" as const },
     { label: "Nomor Badge", value: badgeNumber, onChange: setBadgeNumber, placeholder: "Contoh: DSH-2024-004", icon: "credit-card" as const, autoCapitalize: "characters" as const },
     { label: "Area Kerja", value: area, onChange: setArea, placeholder: "Contoh: Zona D - Jl. Asia Afrika", icon: "map" as const },
     { label: "Lokasi", value: location, onChange: setLocation, placeholder: "Contoh: Jl. Asia Afrika No. 1-40", icon: "map-pin" as const },
     { label: "Tarif (Rp)", value: rate, onChange: setRate, placeholder: "3000", icon: "tag" as const, keyboardType: "numeric" as const },
+    { label: "No. HP (opsional)", value: phone, onChange: setPhone, placeholder: "Contoh: 081234567893", icon: "phone" as const, keyboardType: "phone-pad" as const },
   ];
 
   return (
@@ -76,7 +87,7 @@ export default function OfficerFormScreen() {
       >
         <Feather name="info" size={18} color={colors.primary} />
         <Text style={[styles.infoText, { color: colors.primary }]}>
-          QR Code akan otomatis dibuat berdasarkan nomor badge petugas
+          QR Code otomatis dibuat: LOHPARKIR-[Badge]. Format badge: DSH-YYYY-NNN
         </Text>
       </View>
 
@@ -100,7 +111,7 @@ export default function OfficerFormScreen() {
               value={field.value}
               onChangeText={field.onChange}
               autoCapitalize={field.autoCapitalize || "words"}
-              keyboardType={(field as { keyboardType?: string }).keyboardType === "numeric" ? "numeric" : "default"}
+              keyboardType={(field as any).keyboardType || "default"}
             />
           </View>
         </View>
