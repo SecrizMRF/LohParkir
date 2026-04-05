@@ -1,0 +1,404 @@
+================================================================
+   LohParkir — APP vs SRS v1.2 GAP ANALYSIS
+================================================================
+Date: April 05, 2026
+
+================================================================
+EXECUTIVE SUMMARY
+================================================================
+
+Current app status: PROTOTYPE / LOCAL-FIRST DEMO
+SRS v1.2 target:    PRODUCTION-READY SYSTEM
+
+The mobile app successfully implements the UI and user flow for
+most public-facing features, but operates entirely on local
+storage (AsyncStorage) without a real backend. It functions as a
+working prototype that demonstrates the concept, not as a
+production system that meets the full SRS.
+
+Overall coverage:
+  - 59 functional requirements (REQs) in SRS v1.2
+  - 22 fully met       (37%)
+  - 14 partially met    (24%)
+  - 23 not met          (39%)
+
+  - 34 non-functional requirements (NFRs)
+  -  4 met
+  -  5 partially met
+  - 25 not met
+
+
+================================================================
+FEATURE-BY-FEATURE ANALYSIS
+================================================================
+
+--------------------------------------------------------------
+4.1 QR Code Validation Scan (Priority: High)
+--------------------------------------------------------------
+Status: PARTIALLY MET
+
+What works:
+  ✓ REQ-1:  Camera-based QR scanning (expo-camera)
+  ✓ REQ-4:  Shows valid/invalid result
+  ✓ REQ-5:  Displays location name
+  ✓ REQ-6:  Displays officer name
+  ✓ REQ-7:  Displays official tariff (rate)
+  ✓ REQ-8:  Displays operational area
+  ✓ REQ-9:  Displays badge number and active/inactive status
+  + Bonus:  Manual QR input fallback, demo QR codes for testing
+
+What's missing:
+  ✗ REQ-2:  No server communication — validation is done
+            locally against a hardcoded officer array in
+            AppContext, not sent to a backend server.
+  ✗ REQ-3:  No official database — officers are stored in
+            AsyncStorage, not in a PostgreSQL database managed
+            by Dishub.
+
+Gap: The scanning UI is complete, but without a real backend,
+validation is only against local demo data (3 preset officers).
+In production, this must query a server-side database.
+
+
+--------------------------------------------------------------
+4.2 Report Illegal Parking (Priority: High)
+--------------------------------------------------------------
+Status: PARTIALLY MET
+
+What works:
+  ✓ REQ-10: Warning displayed for invalid QR
+  ✓ REQ-11: "Laporkan" (Report) button provided
+  ✓ REQ-12: Photo upload via expo-image-picker
+  ✓ REQ-13: GPS location auto-captured via expo-location
+  ✓ REQ-14: Description text input field
+  ✓ REQ-16: Ticket number generated (format: LP-YYYYMMDD-XXXX)
+  ✓ REQ-17: Report status displayed (pending/in_progress/resolved)
+
+What's missing:
+  ✗ REQ-15: Reports saved locally only, not submitted to server
+  ✗ REQ-18: No real upload error handling (no actual upload)
+  ✗ REQ-19: No direct report from home screen — reporting is
+            triggered from the Reports tab or after a failed
+            scan, but there's no prominent "Report" button on
+            the home/scan screen for standalone reporting
+
+Gap: The report form UI is functional, but reports exist only
+on the local device. A backend is needed to persist reports and
+enable admin follow-up across devices.
+
+
+--------------------------------------------------------------
+4.3 Integrated Digital Payment / QRIS (Priority: High)
+--------------------------------------------------------------
+Status: MINIMALLY MET (simulated only)
+
+What works:
+  ~ REQ-24: Payment status shown (simulated success after delay)
+  ~ REQ-26: Digital receipt displayed (simulated)
+
+What's missing:
+  ✗ REQ-20: No real QRIS code generation — payment is a mock
+            button with a 1.5s setTimeout, not an actual QRIS
+            integration
+  ✗ REQ-21: No officer app for cash recording — officers have
+            no separate app or cash recording function
+  ✗ REQ-22: No secure payment processing
+  ✗ REQ-23: No payment gateway confirmation
+  ✗ REQ-25: Payments stored in AsyncStorage, not in a database
+
+Gap: This is the largest gap. The entire payment system is
+simulated. Real QRIS integration requires a payment gateway
+(Midtrans/Xendit), server-side transaction processing, and
+proper financial security measures. The officer app for cash
+recording does not exist at all.
+
+
+--------------------------------------------------------------
+4.4 Real-time Monitoring Dashboard (Priority: High)
+--------------------------------------------------------------
+Status: PARTIALLY MET
+
+What works:
+  ✓ REQ-27: Total daily scans displayed
+  ~ REQ-28: Active officer count shown (but no fake QR count)
+  ~ REQ-31: Dashboard shows live data (but from local state,
+            not real-time server)
+
+What's missing:
+  ✗ REQ-29: No validation trend graphs
+  ✗ REQ-30: No heatmap of scan locations
+  ✗ REQ-32: No real-time server updates (local state only)
+  ✗ REQ-33: No time-period filtering
+  ✗ REQ-34: No public view of statistics
+
+Gap: The dashboard shows basic stats (total scans, revenue,
+officers) and recent activity, but lacks visualizations
+(graphs, heatmaps), filtering, and a public transparency view.
+Also, the dashboard is embedded in the mobile app, not a
+separate web dashboard as specified in the SRS.
+
+
+--------------------------------------------------------------
+4.5 Officer Account & QR Badge Management (Priority: High)
+--------------------------------------------------------------
+Status: PARTIALLY MET
+
+What works:
+  ✓ REQ-35: Admin can register new officers (name, badge, area)
+  ✓ REQ-36: QR code auto-generated (LOHPARKIR- prefix)
+  ✓ REQ-38: Officers can be removed (but no activate/deactivate)
+
+What's missing:
+  ✗ REQ-37: No printable QR badge card generation
+  ✗ REQ-39: No duplicate prevention by NIP or badge number
+  ~ REQ-38: Remove only, no activate/deactivate toggle
+
+Gap: Basic officer CRUD works locally, but lacks badge
+printing, NIP-based duplicate prevention, and proper
+activate/deactivate functionality.
+
+
+--------------------------------------------------------------
+4.6 Payment History (Priority: Low)
+--------------------------------------------------------------
+Status: NOT MET
+
+  ✗ REQ-40: No dedicated payment history screen
+  ✗ REQ-41: No payment detail view
+
+Gap: Payments are stored in AppContext but there is no screen
+to view past payment records. This is Low priority per SRS, so
+it's acceptable to defer.
+
+
+--------------------------------------------------------------
+4.7 Report Management (Priority: High)
+--------------------------------------------------------------
+Status: PARTIALLY MET
+
+What works:
+  ✓ REQ-42: Admin can view reports with status filtering
+  ✓ REQ-43: Admin can update report status
+
+What's missing:
+  ✗ REQ-44: No ability to add notes to reports
+  ✗ REQ-45: No push notifications to reporters on status change
+  ✗ REQ-46: No summary report generation
+  ✗ REQ-47: No PDF print/export
+
+Gap: Basic report viewing and status updating works, but
+advanced admin features (notes, notifications, PDF export)
+are not implemented.
+
+
+--------------------------------------------------------------
+4.8 Push Notifications & Emergency Alerts (Priority: High)
+--------------------------------------------------------------
+Status: NOT MET
+
+  ✗ REQ-48: No push notifications for report status changes
+  ✗ REQ-49: No push notifications for new reports
+  ✗ REQ-50: No panic button implemented
+  ✗ REQ-51: No GPS sharing in emergency alerts
+
+Gap: The entire push notification and emergency alert system
+is not implemented. No Firebase Cloud Messaging integration.
+No officer app with panic button exists.
+
+
+--------------------------------------------------------------
+4.9 System Administration / Superadmin (Priority: High)
+--------------------------------------------------------------
+Status: NOT MET
+
+  ✗ REQ-52 to REQ-59: None implemented
+
+Gap: There is no superadmin functionality. The admin role in
+the app is a simple toggle switch, not a real authenticated
+role. No CRUD operations on QR codes, locations, or tariffs.
+No audit trail. No role management.
+
+
+================================================================
+NON-FUNCTIONAL REQUIREMENTS STATUS
+================================================================
+
+5.1 Performance
+  ~ NFR-01: Response time — app responds quickly (local data)
+  ✓ NFR-02: QR scan speed — camera scans quickly
+  ✗ NFR-03: Dashboard load — no web dashboard
+  ✗ NFR-04: Concurrent users — no server, untestable
+  ✗ NFR-05: Data growth — local storage only
+  ✗ NFR-06: Horizontal scaling — no server infrastructure
+
+5.2 Safety
+  ✗ NFR-07: Anonymous reporting — no encryption on reporter data
+  ~ NFR-08: Report limits — no 5/day limit enforced
+  ✗ NFR-09: Payment safety — simulated payments only
+  ~ NFR-10: Location data — GPS used only during reports (good)
+  ✗ NFR-11: Failsafe — no error recovery mechanisms
+  ✗ NFR-12: Panic button — not implemented
+
+5.3 Security
+  ✗ NFR-13: Authentication — no real auth (role toggle only)
+  ✗ NFR-14: Encryption — no HTTPS, no AES-256
+  ~ NFR-15: QR format — uses LOHPARKIR- prefix but not strict
+            LOHPARKIR-DSH-YYYY-NNN format validation
+  ✗ NFR-16: Input validation — no server-side validation
+  ✗ NFR-17: RBAC — no real role-based access control
+  ✗ NFR-18: UU PDP compliance — not addressed
+  ✗ NFR-19: Data retention — AsyncStorage, no retention policy
+  ✗ NFR-20: PCI DSS — no payment security
+
+5.4 Software Quality
+  ✓ NFR-21: Ease of use — simple, few-tap flows
+  ✓ NFR-22: Indonesian language — UI is in Bahasa Indonesia
+  ~ NFR-23: Accessibility — basic contrast, not WCAG audited
+  ✓ NFR-24: Visual feedback — haptics, loading states, alerts
+  ✓ NFR-25: Platform — works on Android + iOS via Expo
+  ~ NFR-26: Screen sizes — responsive but not explicitly tested
+  ~ NFR-27: Camera — works with basic cameras
+  ~ NFR-28: Code quality — TypeScript used, but no ESLint config
+  ✗ NFR-29: Logging — no structured logging or Sentry
+  ✗ NFR-30: API versioning — no API exists
+  ✗ NFR-31: Uptime — no server to measure
+  ✓ NFR-32: Offline mode — works offline (AsyncStorage-first)
+  ✗ NFR-33: Backup/recovery — no backup mechanism
+  ~ NFR-34: Error handling — basic try/catch, no graceful degrade
+
+
+================================================================
+WHAT'S NEEDED TO REACH SRS v1.2 COMPLIANCE
+================================================================
+
+The gaps can be grouped into 5 major work areas:
+
+--------------------------------------------------------------
+1. BACKEND SERVER (biggest gap — blocks most other work)
+--------------------------------------------------------------
+Required: Node.js + Express + PostgreSQL backend
+Effort: Large
+
+Must implement:
+  - RESTful API with /api/v1/ versioning
+  - PostgreSQL database with all entities (officers, reports,
+    scans, payments, users, audit_trail)
+  - JWT authentication for admin, superadmin, and officer roles
+  - RBAC middleware (4 roles: public, officer, admin, superadmin)
+  - Server-side QR validation
+  - Report submission and management API
+  - Audit trail logging
+  - Rate limiting (100 req/min)
+  - HTTPS with TLS 1.2+
+
+This unblocks: REQ-2, 3, 15, 18, 25, 32, 52-59, and most NFRs
+
+--------------------------------------------------------------
+2. PAYMENT INTEGRATION (second biggest gap)
+--------------------------------------------------------------
+Required: QRIS payment gateway (Midtrans/Xendit)
+Effort: Large
+
+Must implement:
+  - QRIS code generation via payment gateway API
+  - Payment webhook handling
+  - Idempotency keys
+  - Transaction recording in database
+  - Receipt generation
+  - Daily reconciliation
+  - Officer cash recording (in officer app)
+
+This unblocks: REQ-20, 21, 22, 23, 25, 26
+
+--------------------------------------------------------------
+3. OFFICER APP (new app module needed)
+--------------------------------------------------------------
+Required: Separate officer app section or standalone app
+Effort: Medium
+
+Must implement:
+  - Officer authentication (login with credentials from admin)
+  - Cash payment recording interface
+  - Emergency panic button with GPS
+  - Session management (8-hour timeout)
+
+This unblocks: REQ-21, 50, 51
+
+--------------------------------------------------------------
+4. ADMIN WEB DASHBOARD (new artifact needed)
+--------------------------------------------------------------
+Required: Web-based React dashboard
+Effort: Large
+
+Must implement:
+  - Real-time statistics with auto-refresh
+  - Trend graphs (line/bar charts)
+  - Heatmap of scan locations (Maps API integration)
+  - Report management with notes
+  - Summary report generation + PDF export
+  - Officer management with printable QR badges
+  - Superadmin data CRUD + role management
+  - Audit trail viewer
+  - Public transparency view (read-only)
+
+This unblocks: REQ-29, 30, 33, 34, 37, 44, 46, 47, 52-59
+
+--------------------------------------------------------------
+5. PUSH NOTIFICATIONS (Firebase integration)
+--------------------------------------------------------------
+Required: Firebase Cloud Messaging (FCM) setup
+Effort: Medium
+
+Must implement:
+  - FCM token registration
+  - Report status change notifications
+  - New report notifications for admins
+  - Emergency panic button alerts
+  - GPS location in emergency notifications
+
+This unblocks: REQ-45, 48, 49, 50, 51
+
+
+================================================================
+WHAT THE CURRENT APP DOES WELL
+================================================================
+
+Despite the gaps, the current app is a solid prototype:
+
+✓ Core scanning UX is smooth and intuitive
+✓ Report form with photo + GPS is fully functional
+✓ Officer registration flow works
+✓ Admin dashboard shows useful basic stats
+✓ Indonesian language throughout
+✓ Clean, accessible color scheme
+✓ Works offline by default (AsyncStorage-first approach)
+✓ Uses TypeScript for type safety
+✓ Demo QR codes make testing easy
+✓ Haptic feedback enhances UX
+✓ Good foundation for connecting to a real backend
+
+
+================================================================
+VERDICT
+================================================================
+
+The current app covers approximately 37% of the SRS functional
+requirements and serves well as a UI/UX prototype. However, it
+cannot be considered compliant with SRS v1.2 because:
+
+  1. There is no backend server or database
+  2. There is no real authentication or authorization
+  3. Payment is fully simulated
+  4. There is no officer app
+  5. There is no web-based admin dashboard
+  6. There are no push notifications
+
+The app demonstrates the intended user experience effectively,
+which is valuable for stakeholder validation and UI testing.
+To reach full SRS compliance, significant backend development,
+payment integration, and a web dashboard are required.
+
+
+================================================================
+END OF GAP ANALYSIS
+================================================================

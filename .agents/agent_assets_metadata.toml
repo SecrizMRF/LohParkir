@@ -95,3 +95,9 @@ id = "qG9ctCVzCYjyzN-mQ0xzW"
 uri = "file://SRS_Consistency_Review_v1.2.txt"
 type = "text"
 title = "SRS v1.2 Consistency Review Report (4 Issues Found)"
+
+[[outputs]]
+id = "nW8NcroW3iiWr1G4v0o_T"
+uri = "file://App_vs_SRS_Gap_Analysis.txt"
+type = "text"
+title = "App vs SRS v1.2 — Gap Analysis Report"
