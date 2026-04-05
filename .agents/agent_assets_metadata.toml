@@ -83,3 +83,9 @@ id = "8IMkkEL8-JLRZGFMvLhh5"
 uri = "file://SRS_Consistency_Review_v1.1.txt"
 type = "text"
 title = "SRS v1.1 Consistency Review Report (11 Issues Found)"
+
+[[outputs]]
+id = "MoMFHBflvtCya5sPEGwN4"
+uri = "file://SRS_LohParkir_v1.2_Revised.docx"
+type = "word_document"
+title = "SRS LohParkir v1.2 (All 11 Issues Fixed)"
