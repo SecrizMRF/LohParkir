@@ -77,3 +77,9 @@ id = "Mqoo2f5kqdmSjaArSzau_"
 uri = "file://SRS_LohParkir_v1.1_Revised.docx"
 type = "word_document"
 title = "SRS LohParkir v1.1 Revised (.docx) - All 22 Issues Fixed"
+
+[[outputs]]
+id = "8IMkkEL8-JLRZGFMvLhh5"
+uri = "file://SRS_Consistency_Review_v1.1.txt"
+type = "text"
+title = "SRS v1.1 Consistency Review Report (11 Issues Found)"

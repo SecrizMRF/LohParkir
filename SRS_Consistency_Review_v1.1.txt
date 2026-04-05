@@ -1,0 +1,462 @@
+================================================================
+    SRS LohParkir v1.1 — CONSISTENCY REVIEW REPORT
+================================================================
+Reviewed: April 05, 2026
+Document: SRS_LOHPARKIR_1775378875373.docx (Version 1.1)
+Reviewer: Automated cross-section analysis
+
+================================================================
+SUMMARY
+================================================================
+
+Total issues found: 11
+  - Critical:  3  (contradictions that break system logic)
+  - Major:     5  (gaps between sections, missing traceability)
+  - Minor:     3  (cosmetic, organizational, or glossary gaps)
+
+
+================================================================
+CRITICAL ISSUES (3)
+================================================================
+
+--------------------------------------------------------------
+ISSUE #1 — Officer Cash Recording Contradicts Officer Access
+--------------------------------------------------------------
+Severity: CRITICAL
+Sections: 2.2 A, 2.3, 4.3.1, REQ-20
+
+PROBLEM:
+- Section 2.2 A (General Public functions) states: "pay in cash
+  (recorded by the officer)."
+- Section 4.3.1 states: "Cash payments are also supported and
+  recorded by the officer or admin into the system."
+- REQ-20 states: "The system shall support cash payment recording
+  by officers or admins."
+
+BUT Section 2.3 (Registered Parking Officers) explicitly states:
+  "Access rights: Emergency panic button only. No access to
+  system data, reports, or dashboards."
+
+This is a direct contradiction. Officers are supposed to record
+cash payments, yet their defined access rights limit them to only
+the panic button.
+
+RECOMMENDATION:
+Either (A) expand officer access rights in Section 2.3 to include
+a "Record Cash Payment" function in the minimal officer app, and
+add a corresponding system feature or sub-feature; or (B) change
+all references to state that cash is recorded by Dishub admins
+at the end of the shift (not by officers directly).
+
+
+--------------------------------------------------------------
+ISSUE #2 — Push Notifications Priority vs Safety-Critical Content
+--------------------------------------------------------------
+Severity: CRITICAL
+Sections: 4.8.1, NFR-15, BR-10
+
+PROBLEM:
+- Feature 4.8 (Push Notifications) is listed as Priority: Medium.
+- However, this feature contains the panic button notification
+  system (REQ-47, REQ-48), which is classified as safety-critical
+  in NFR-15 and BR-10.
+- NFR-15 states: "When pressed, the system sends a real-time
+  notification to the admin and automatically shares the officer's
+  GPS location."
+- BR-10 states: "Alert prioritized, admins notified immediately."
+
+A Medium-priority feature cannot be the delivery mechanism for a
+safety-critical function. If Push Notifications is deprioritized
+or deferred, the officer panic button becomes non-functional.
+
+RECOMMENDATION:
+Either (A) raise Push Notifications to Priority: High; or
+(B) separate the panic button notification into its own
+High-priority feature (e.g., 4.9 Emergency Alert System) and
+keep general push notifications as Medium.
+
+
+--------------------------------------------------------------
+ISSUE #3 — RBAC Defines 3 Roles but System Has 4 User Classes
+--------------------------------------------------------------
+Severity: CRITICAL
+Sections: 2.3, NFR-09
+
+PROBLEM:
+- Section 2.3 defines 4 user classes: General Public, Registered
+  Parking Officers, Dishub Admin, Database Administrator.
+- NFR-09 (Authorization & RBAC) states: "Three roles: public,
+  admin, superadmin."
+- Officers are not included as a role in RBAC, yet they have their
+  own app with specific access (panic button, and potentially cash
+  recording per Issue #1).
+- If officers are not a recognized role, the system cannot enforce
+  access control on the officer app — anyone could install it and
+  trigger false panic alerts.
+
+RECOMMENDATION:
+Update NFR-09 to define 4 roles: public, officer, admin,
+superadmin. Describe the officer role's permissions (panic button,
+and optionally cash recording). This ensures RBAC actually
+protects the officer app functions.
+
+
+================================================================
+MAJOR ISSUES (5)
+================================================================
+
+--------------------------------------------------------------
+ISSUE #4 — Superadmin Functions Have No System Feature in Sec. 4
+--------------------------------------------------------------
+Severity: MAJOR
+Sections: 2.2 C, Section 4
+
+PROBLEM:
+Section 2.2 C lists three Superadmin (Database Administrator)
+functions:
+  1. Full Data Management (CRUD on QR codes, locations, officers,
+     tariffs)
+  2. User Role Management (assign/modify admin roles)
+  3. System Audit (review audit trails and system logs)
+
+None of these have a corresponding System Feature in Section 4.
+There are no REQs covering superadmin CRUD, role assignment, or
+audit log viewing. These functions are described but never
+specified as requirements.
+
+RECOMMENDATION:
+Add a new system feature, e.g., "4.9 System Administration
+(Superadmin)" with sub-sections for data management, role
+management, and audit trail viewing. Assign REQ IDs (REQ-49
+through REQ-5x) to each functional requirement.
+
+
+--------------------------------------------------------------
+ISSUE #5 — "Print Reports" Function Has No REQ
+--------------------------------------------------------------
+Severity: MAJOR
+Sections: 2.2 B, Section 4.4, Section 4.7
+
+PROBLEM:
+Section 2.2 B (Dishub Admin functions) states:
+  "View and Print Reports: Generate and print monthly or custom
+  reports on validation, payments, and illegal reports."
+
+However, no REQ in Section 4 covers the print/export capability.
+Feature 4.4 (Dashboard) only covers viewing statistics, and
+Feature 4.7 (Report Management) only covers managing report
+statuses. Neither includes requirements for generating printable
+reports or exporting data.
+
+RECOMMENDATION:
+Add REQs for report generation and printing. This could be added
+to Feature 4.4 or 4.7, e.g.:
+  REQ-49: The system shall allow admins to generate summary
+  reports for a selected time period.
+  REQ-50: The system shall allow admins to export or print
+  reports in PDF format.
+
+
+--------------------------------------------------------------
+ISSUE #6 — NFR Numbering Is Non-Sequential Across Sections
+--------------------------------------------------------------
+Severity: MAJOR
+Sections: 5.1 through 5.4
+
+PROBLEM:
+The NFR IDs do not follow section order, making the document
+harder to navigate:
+
+  Section 5.1 (Performance): NFR-01, 02, 03, 04 ... then
+    jumps to NFR-27, 28
+  Section 5.2 (Safety): NFR-10, 11, 12, 13, 14, 15
+  Section 5.3 (Security): NFR-05, 06, 07, 08, 09 ... then
+    jumps to NFR-32, 33, 34
+  Section 5.4 (Quality): NFR-16 to 19, 20 to 26, 29 to 31
+
+Expected: NFR IDs should be sequential within each section and
+follow the section order (5.1 → lowest, 5.4 → highest), OR use a
+prefix-based scheme (e.g., PERF-01, SAFE-01, SEC-01, QUAL-01).
+
+RECOMMENDATION:
+Renumber all NFRs sequentially following section order:
+  5.1 Performance: NFR-01 through NFR-06
+  5.2 Safety: NFR-07 through NFR-12
+  5.3 Security: NFR-13 through NFR-20
+  5.4 Quality: NFR-21 through NFR-34
+Then update all cross-references in Business Rules (5.5).
+
+Alternatively, adopt a prefix scheme (PERF-01, SAFE-01, etc.)
+for clearer categorization.
+
+
+--------------------------------------------------------------
+ISSUE #7 — Offline Mode Not Covered by Any REQ
+--------------------------------------------------------------
+Severity: MAJOR
+Sections: 2.4, NFR-17, Section 4
+
+PROBLEM:
+- Section 2.4 (Operating Environment) states: "Offline mode
+  available for cached data and queued reports."
+- NFR-17 states: "App caches data offline. Reports saved locally
+  and auto-synced when back online."
+- However, no functional requirement (REQ) in Section 4 specifies
+  offline behavior. Feature 4.2 stimulus/response (reporting)
+  assumes online connectivity throughout. REQ-15 says "The system
+  shall submit reports to the server" with no offline fallback.
+
+Without a REQ, developers have no specification for how offline
+mode should work (what is cached, how sync works, conflict
+resolution, etc.).
+
+RECOMMENDATION:
+Add offline-related REQs, either within Feature 4.2 or as a
+cross-cutting concern:
+  REQ-xx: The system shall allow users to save reports locally
+  when no internet connection is available.
+  REQ-xx: The system shall automatically submit locally saved
+  reports when internet connectivity is restored.
+  REQ-xx: The system shall display cached validation data when
+  offline.
+
+
+--------------------------------------------------------------
+ISSUE #8 — Product Scope Lists 4 Features but Section 4 Has 8
+--------------------------------------------------------------
+Severity: MAJOR
+Sections: 1.4, Section 4
+
+PROBLEM:
+Section 1.4 (Product Scope) lists 4 "main features":
+  1. Instant QR Code Validation
+  2. Report Illegal Parking or Fake QR
+  3. Digital Payment via QRIS
+  4. Real-time Monitoring Dashboard
+
+But Section 4 (System Features) defines 8 features:
+  4.1 QR Code Validation Scan
+  4.2 Report Illegal Parking
+  4.3 Integrated Digital Payment (QRIS)
+  4.4 Real-time Monitoring Dashboard
+  4.5 Officer Account & QR Badge Management
+  4.6 Payment History
+  4.7 Report Management
+  4.8 Push Notifications
+
+Features 4.5, 4.6, 4.7, and 4.8 are not mentioned in the scope.
+While 1.4 briefly alludes to some (e.g., "QR codes for badges are
+generated by the government"), readers expect the scope to provide
+a complete overview of all system features.
+
+RECOMMENDATION:
+Either expand Section 1.4 to briefly mention all 8 features, or
+add a summary statement like: "In addition to the four core
+features above, the system also includes Officer Account & QR
+Badge Management, Payment History, Report Management, and Push
+Notifications (detailed in Section 4)."
+
+
+================================================================
+MINOR ISSUES (3)
+================================================================
+
+--------------------------------------------------------------
+ISSUE #9 — UI Components List Missing Payment History
+--------------------------------------------------------------
+Severity: MINOR
+Sections: 3.1, 4.6
+
+PROBLEM:
+Section 3.1 lists 7 "Software Components Requiring UI" but omits
+the Payment History module (Feature 4.6), which requires a user
+interface to display past payment records.
+
+RECOMMENDATION:
+Add "Payment History Module (Mobile)" to the list in Section 3.1.
+
+
+--------------------------------------------------------------
+ISSUE #10 — Missing Glossary Terms
+--------------------------------------------------------------
+Severity: MINOR
+Sections: Appendix A
+
+PROBLEM:
+Several technical terms are used repeatedly in the document but
+are not defined in the glossary:
+  - "Panic Button" — used in 2.2 D, 2.3, 3.1, NFR-15, BR-10,
+    REQ-47, REQ-48
+  - "Idempotency key" — used in NFR-12, BR-04
+  - "Webhook" — used in 3.4
+  - "STNK" — appears in References (Rahmatika, 2026)
+  - "MDM" — appears in Appendix C (TBD-4)
+
+RECOMMENDATION:
+Add definitions for at least "Panic Button", "Idempotency key",
+and "Webhook" to Appendix A. STNK and MDM can be added if they
+are referenced elsewhere.
+
+
+--------------------------------------------------------------
+ISSUE #11 — Report Stimulus Does Not Cover Standalone Reporting
+--------------------------------------------------------------
+Severity: MINOR
+Sections: 4.2.2
+
+PROBLEM:
+Feature 4.2 stimulus/response sequence starts with:
+  "1. The system detects an invalid or inactive QR code."
+
+This implies that reports can only be submitted AFTER a failed QR
+scan. However, Section 1.4 and 2.2 A describe the report feature
+more broadly: users should be able to report "illegal parking"
+(e.g., unauthorized parking attendants operating without any QR
+code at all). In real-world usage, a user may want to report
+illegal parking they observe without scanning anything first.
+
+RECOMMENDATION:
+Add an alternative stimulus path, e.g.:
+  "1a. The user navigates to the Report section directly from the
+  home screen (without scanning)."
+This ensures the report function is not locked behind a failed
+QR scan.
+
+
+================================================================
+CONSISTENCY MATRIX — Features Traceability
+================================================================
+
+Below is a cross-check of features across all document sections.
+✓ = Present, ✗ = Missing/Absent, ~ = Partially covered
+
+Feature                  | 1.4   | 2.2   | 3.1   | 4.x   | REQs  | NFRs
+                         | Scope | Func  | UI    | Feat  |       |
+-------------------------|-------|-------|-------|-------|-------|------
+QR Code Validation       |  ✓    |  ✓    |  ✓    | 4.1 ✓ | 1-9   |  ✓
+Report Illegal Parking   |  ✓    |  ✓    |  ✓    | 4.2 ✓ | 10-18 |  ✓
+Digital Payment (QRIS)   |  ✓    |  ✓    |  ✓    | 4.3 ✓ | 19-25 |  ✓
+Monitoring Dashboard     |  ✓    |  ✓    |  ✓    | 4.4 ✓ | 26-33 |  ✓
+Officer & Badge Mgmt     |  ~    |  ✓    |  ✓    | 4.5 ✓ | 34-38 |  ~
+Payment History          |  ✗    |  ✓    |  ✗    | 4.6 ✓ | 39-40 |  ✗
+Report Management        |  ✗    |  ✓    |  ✓    | 4.7 ✓ | 41-44 |  ✗
+Push Notifications       |  ✗    |  ✓    |  ~    | 4.8 ✓ | 45-48 |  ✓
+Print/Export Reports     |  ✗    |  ✓    |  ✗    |  ✗    |  ✗    |  ✗
+Superadmin Data Mgmt     |  ✗    |  ✓    |  ✗    |  ✗    |  ✗    |  ✗
+Superadmin Role Mgmt     |  ✗    |  ✓    |  ✗    |  ✗    |  ✗    |  ✗
+Superadmin Audit          |  ✗    |  ✓    |  ✗    |  ✗    |  ✗    |  ✗
+Offline Mode             |  ✗    |  ✗    |  ✗    |  ✗    |  ✗    | ✓(17)
+Officer Cash Recording   |  ✗    |  ✓    |  ✗    | 4.3~  | 20    |  ✗
+
+
+================================================================
+CONSISTENCY MATRIX — NFR to Section Mapping
+================================================================
+
+NFR ID  | Section | Category              | Notes
+--------|---------|------------------------|------------------
+NFR-01  | 5.1     | Performance            | OK
+NFR-02  | 5.1     | Performance            | OK
+NFR-03  | 5.1     | Performance            | OK
+NFR-04  | 5.1     | Performance            | OK
+NFR-05  | 5.3     | Security               | Out of order*
+NFR-06  | 5.3     | Security               | Out of order*
+NFR-07  | 5.3     | Security               | Out of order*
+NFR-08  | 5.3     | Security               | Out of order*
+NFR-09  | 5.3     | Security               | Out of order*
+NFR-10  | 5.2     | Safety                 | Out of order*
+NFR-11  | 5.2     | Safety                 | Out of order*
+NFR-12  | 5.2     | Safety                 | Out of order*
+NFR-13  | 5.2     | Safety                 | Out of order*
+NFR-14  | 5.2     | Safety                 | Out of order*
+NFR-15  | 5.2     | Safety                 | Out of order*
+NFR-16  | 5.4     | Reliability            | Out of order*
+NFR-17  | 5.4     | Reliability            | Out of order*
+NFR-18  | 5.4     | Reliability            | Out of order*
+NFR-19  | 5.4     | Reliability            | Out of order*
+NFR-20  | 5.4     | Usability              | Out of order*
+NFR-21  | 5.4     | Usability              | OK
+NFR-22  | 5.4     | Usability              | OK
+NFR-23  | 5.4     | Usability              | OK
+NFR-24  | 5.4     | Compatibility          | OK
+NFR-25  | 5.4     | Compatibility          | OK
+NFR-26  | 5.4     | Compatibility          | OK
+NFR-27  | 5.1     | Performance (growth)   | Jump from 04*
+NFR-28  | 5.1     | Performance (scaling)  | OK after 27
+NFR-29  | 5.4     | Maintainability        | Jump from 26*
+NFR-30  | 5.4     | Maintainability        | OK
+NFR-31  | 5.4     | Maintainability        | OK
+NFR-32  | 5.3     | Security (compliance)  | Jump from 09*
+NFR-33  | 5.3     | Security (retention)   | OK
+NFR-34  | 5.3     | Security (payment reg) | OK
+
+*Out of order = NFR ID does not follow section order (5.1→5.4)
+
+
+================================================================
+WHAT IS ALREADY CONSISTENT (Positive Findings)
+================================================================
+
+The following elements are consistent across the document:
+
+✓ QR code format: LOHPARKIR-DSH-YYYY-NNN — consistent in 1.4,
+  2.5, 3.2, 4.5.2, NFR-07, BR-03
+
+✓ Platform: Android + iOS — consistent in 2.3, 2.4, 3.1, 3.2,
+  3.3, NFR-24
+
+✓ iOS version: 14.0 — consistent in 2.4, 3.3, NFR-24
+
+✓ Camera spec: 5 MP — consistent in 2.4, 3.2, NFR-26
+
+✓ Payment methods: QRIS + Cash — consistent in 1.4, 2.2, 4.3
+
+✓ Report statuses: received, investigating, resolved, rejected
+  — consistent in 4.7.2 and BR-02
+
+✓ Session timeout: 30 minutes — consistent in NFR-05 and BR-09
+
+✓ Rate limiting: 100 req/min — consistent in NFR-08 and BR-11
+
+✓ Report limit: 5 per day — consistent in NFR-11 and BR-01
+
+✓ Data retention periods: Reports 5yr, Transactions 10yr,
+  Scans 1yr — consistent in NFR-33 and BR-05
+
+✓ Uptime: 99.5%, 3.6 hrs/month — consistent in NFR-16
+
+✓ Database: PostgreSQL — consistent in 2.4, 3.3, Section 6
+
+✓ Admin device: Computer with web browser — consistent in 2.3,
+  2.4
+
+✓ REQ numbering: Sequential 1-48, no gaps, no duplicates
+
+✓ Business Rule references: All BR→NFR cross-references point
+  to valid NFR IDs
+
+✓ User class count: 4 classes in both 2.2 and 2.3
+
+
+================================================================
+PRIORITY LEVEL SUMMARY
+================================================================
+
+Feature                          | Priority | Assessment
+---------------------------------|----------|------------------
+4.1 QR Code Validation Scan      | High     | Appropriate ✓
+4.2 Report Illegal Parking       | High     | Appropriate ✓
+4.3 Integrated Digital Payment   | High     | Appropriate ✓
+4.4 Real-time Dashboard          | High     | Appropriate ✓
+4.5 Officer Account & Badge Mgmt | High     | Appropriate ✓
+4.6 Payment History              | Low      | Appropriate ✓
+4.7 Report Management            | High     | Appropriate ✓
+4.8 Push Notifications           | Medium   | ISSUE #2 ⚠️
+                                 |          | Contains safety-
+                                 |          | critical panic
+                                 |          | button alerts
+
+
+================================================================
+END OF REVIEW
+================================================================
