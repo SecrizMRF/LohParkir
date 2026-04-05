@@ -46,7 +46,7 @@ title = "ERD (Entity Relationship Diagram) - Sistem LohParkir"
 id = "1FDKqeAp6KF2s4Q0ktVeP"
 uri = "file://screenshots/nfr-lohparkir.jpg"
 type = "image"
-title = "Non-Functional Requirements (NFR) - Sistem LohParkir"
+title = "Non-Functional Requirements (NFR) + Safety - Sistem LohParkir"
 
 [[outputs]]
 id = "IjtUHnlsiVJj02lluEiT5"
