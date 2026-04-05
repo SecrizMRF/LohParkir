@@ -71,3 +71,9 @@ id = "1QZjNNYYIqJmSRKN22kQt"
 uri = "file://SRS_LohParkir_REVISED.txt"
 type = "text"
 title = "SRS LohParkir v1.1 (Revised - All 22 Issues Fixed)"
+
+[[outputs]]
+id = "Mqoo2f5kqdmSjaArSzau_"
+uri = "file://SRS_LohParkir_v1.1_Revised.docx"
+type = "word_document"
+title = "SRS LohParkir v1.1 Revised (.docx) - All 22 Issues Fixed"
