@@ -1,0 +1,972 @@
+================================================================
+        SOFTWARE REQUIREMENTS SPECIFICATION
+                    for
+                 LohParkir
+              Version 1.1 (Revised)
+================================================================
+
+Prepared by:
+  241401055 - Muhammad Rizky Fadhillah
+  241401007 - Rifki Al Sauqy
+  241401070 - Yehezkiel Gustav Setiawan Sitanggang
+  241401076 - Yasmin Assyifa
+  241401079 - Edric Roland Li
+  241401136 - Najla Az Zahra Tanjung
+
+Date: 2 April 2026
+
+================================================================
+                   Table of Contents
+================================================================
+
+1. Introduction
+   1.1 Purpose
+   1.2 Document Conventions
+   1.3 Intended Audience and Reading Suggestions
+   1.4 Product Scope
+   1.5 References
+
+2. Overall Description
+   2.1 Product Perspective
+   2.2 Product Functions
+   2.3 User Classes and Characteristics
+   2.4 Operating Environment
+   2.5 Design and Implementation Constraints
+   2.6 User Documentation
+   2.7 Assumptions and Dependencies
+
+3. External Interface Requirements
+   3.1 User Interfaces
+   3.2 Hardware Interfaces
+   3.3 Software Interfaces
+   3.4 Communications Interfaces
+
+4. System Features
+   4.1 QR Code Validation Scan
+   4.2 Report Illegal Parking
+   4.3 Integrated Digital Payment (QRIS)
+   4.4 Real-time Monitoring Dashboard
+   4.5 Officer Account & QR Badge Management
+   4.6 Payment History
+   4.7 Report Management
+   4.8 Push Notifications
+
+5. Other Nonfunctional Requirements
+   5.1 Performance Requirements
+   5.2 Safety Requirements
+   5.3 Security Requirements
+   5.4 Software Quality Attributes
+   5.5 Business Rules
+
+6. Other Requirements
+
+Appendix A: Glossary
+Appendix B: Analysis Models
+Appendix C: To Be Determined List
+
+================================================================
+               Revision History
+================================================================
+
+Name                   Date          Reason              Version
+---                    ---           ---                  ---
+All team members       02/04/2026    Initial draft        1.0
+All team members       04/04/2026    Consistency fixes    1.1
+                                     (22 issues resolved,
+                                     see review report)
+
+
+================================================================
+1. INTRODUCTION
+================================================================
+
+1.1 Purpose
+-----------
+The purpose of LohParkir is to provide an official QR code-based parking validation system for the city of Medan. This system aims to solve three main problems: weak supervision of parking spots, lack of official identity that the public can easily verify, and no integrated system to document official parking data. By using this system, illegal parking attendants cannot easily demand money because every parking spot and officer has a verified QR code. If illegal parking still occurs, the public can immediately report it through the app with photo evidence and GPS location. The report is then sent to Dishub Medan for follow-up.
+
+This SRS document describes all functional and non-functional requirements for the LohParkir system, version 1.1.
+
+
+1.2 Document Conventions
+-------------------------
+This document follows these simple conventions:
+
+- Bold text is used for menu names, button labels, or user interface elements. Examples: Scan QR, Laporkan, Dashboard Monitoring.
+
+- Abbreviations are written in full when first used, followed by the abbreviation in parentheses. Example: Dinas Perhubungan (Dishub), Quality Assurance (QA).
+
+- The word "user" refers to the general public who uses the mobile application to scan QR codes.
+
+- The word "admin" refers to Dishub or Pemda (local government) staff who manage the system through the admin dashboard.
+
+- The word "superadmin" refers to the Database Administrator who has full CRUD access to the system database.
+
+
+1.3 Intended Audience and Reading Suggestions
+----------------------------------------------
+This document is written for the following audiences:
+
+Developers: They will build the mobile app and admin dashboard based on the requirements. They should read all sections carefully, especially the product scope and feature descriptions.
+
+QA Testers: They will create test scenarios to check if the system works correctly. They should focus on the validation rules, scan flow, reporting features, and admin functions.
+
+Lecturers: They will monitor and evaluate the project progress. They should read the purpose and scope sections to ensure the project meets academic standards.
+
+General Users (public): They will use the mobile app to scan QR codes and report illegal parking. They may read the summary of features to understand how the system helps them.
+
+Dishub Medan (Admins): They will manage official parking data, issue QR codes, and monitor reports. They should read the admin features section to understand how to validate parking spots and view dashboards.
+
+UI/UX Designers: They will design the visual appearance and user interaction. They should focus on the intended audience needs and the described user flows.
+
+General public (viewers): They can access a public view of the dashboard to see statistics about parking validation in Medan.
+
+For developers and testers, we suggest reading the entire document. For other audiences, reading the purpose, scope, and summary of features is enough.
+
+
+1.4 Product Scope
+------------------
+LohParkir is designed specifically for official on-street parking managed by Dishub Medan. It does not cover parking inside buildings, malls, or private areas. The scope is limited to public roads where illegal parking often occurs.
+
+The system includes the following main features:
+
+Instant QR Code Validation: Users scan a QR code displayed at the parking location or on the officer's badge. The system checks the code against Dishub's official database. It then shows whether the parking is official or not, along with the location name, officer name, official rate, and work area.
+
+Report Illegal Parking or Fake QR: If a scanned QR code is not registered in the database, the system shows a warning and provides a button to report it immediately. Users can submit a report with a photo, automatic GPS location, and a short description. The system then gives a ticket number and sends notifications about the follow-up status.
+
+Digital Payment via QRIS: After validation, the app allows users to pay the official parking fee digitally through QRIS (Quick Response Code Indonesian Standard) or in cash. For digital payment, the system generates a QRIS code that users can scan using their mobile banking or e-wallet app to complete the transaction. All payments, including cash, are recorded in the system's database so that the government can track how much money was collected and where.
+
+[REVISED - Issue #10: Clarified payment methods to QRIS + Cash only, consistent throughout]
+
+Real-time Monitoring Dashboard: There is a dashboard that shows a summary of today's scans, number of active versus fake QR codes, trend graphs of validations, a heatmap of scan locations, and notifications of incoming reports. This dashboard is accessible to Dishub Medan staff with different roles (some can edit the database, others can only view). A public view is also available so that citizens can see parking validation statistics for transparency.
+
+The system does not currently integrate with any external systems such as existing retribution systems or public complaint platforms. However, it is designed to be scalable for future integration.
+
+The target users are all vehicle drivers in Medan who park on public streets. The number of expected users is very large, so the system must be able to handle high traffic.
+
+Official QR codes for badges are generated by the government based on the registered database. The QR code format is: LOHPARKIR-DSH-YYYY-NNN (e.g., LOHPARKIR-DSH-2024-001). Officers must print and wear these QR codes as part of their official badge so that they can be scanned at any time.
+
+[REVISED - Issue #9: Standardized QR code format to LOHPARKIR-DSH-YYYY-NNN, no slash]
+
+
+1.5 References
+--------------
+The following references were used to define the problem and justify the need for this system:
+
+Pemerintah Kota Medan. (2024). Peraturan Daerah Kota Medan Nomor 1 Tahun 2024 tentang Pajak Daerah dan Retribusi Daerah. JDIH Bagian Hukum Pemerintah Kota Medan. https://www.jdih.medan.go.id
+
+Pemerintah Kota Medan. (2026). Peraturan Wali Kota Medan Nomor 9 Tahun 2026 tentang Peninjauan Besaran Tarif Retribusi Pelayanan Parkir di Tepi Jalan Umum. Portal Resmi Pemerintah Kota Medan (siaran pers). https://portal.medan.go.id/berita/pemko-medan-turunkan-tarif-parkir-ringankan-beban-masyarakat-dan-ciptakan-sistem-perparkiran-yang-lebih-baik__read5971.html
+
+Republik Indonesia. (2022). Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP). Database Peraturan BPK RI. https://peraturan.bpk.go.id/details/229798
+
+ISO/IEC. (2024). ISO/IEC 18004:2024 - Information technology - Automatic identification and data capture techniques - QR Code bar code symbology specification (4th ed.). ISO. https://www.iso.org/standard/83389.html
+
+Bank Indonesia & Asosiasi Sistem Pembayaran Indonesia (ASPI). (2019). Quick Response Code Indonesian Standard (QRIS) - Standar Nasional QR Code untuk Pembayaran (berlaku efektif 1 Januari 2020). Bank Indonesia. https://www.bi.go.id
+
+Sintyaningrum, D. E., Muladi, & Ashar, M. (2022). Implementasi Digital Signature dan QR Code Pada Sertifikat Profesi Digital untuk Mengatasi Kasus Pemalsuan Sertifikat. TEKNO, 1-10. http://journal2.um.ac.id/index.php/tekno
+
+OWASP Foundation. (2023). OWASP Top 10 API Security Risks - 2023. OWASP. https://owasp.org/API-Security/editions/2023/en/0x11-t10/
+
+OWASP Foundation. (n.d.). OWASP Mobile Application Security Verification Standard (MASVS). OWASP GitHub. https://github.com/OWASP/owasp-masvs
+
+Korps Lalu Lintas Polri (Korlantas Polri). (2025, April 26). Jumlah Kendaraan Bermotor di Kota Medan. Databoks Katadata. https://databoks.katadata.co.id
+
+Hadiningrum, S., Sitohang, A. T., Harahap, P., Purba, W., Nadapdap, F. N., & Marbun, T. B. (2024, Desember 19). Implementasi Kebijakan Parkir Digital dalam Peningkatan Retribusi Daerah di Kota Medan. JURNAL RECTUM, 4(2). Universitas Darma Agung. https://jurnal.universitasdarmaagung.ac.id/jurnalrectum/article/view/5144
+
+ANTARA News Sumatera Utara. (2025, April 22). Pemkot Medan segera terbitkan peraturan baru tentang sistem parkir. ANTARA News. https://sumut.antaranews.com/berita/620485
+
+Pemerintah Kota Makassar. (2025, September 1). Digitalisasi Parkir Makassar Resmi Diluncurkan, 27 Jukir di 16 Titik Jadi Percontohan [Siaran pers]. Portal Resmi Pemerintah Kota Makassar. https://makassarkota.go.id/2025/09/01/
+
+Rahmatika, N. (2026, February 25). Benarkah Biaya Parkir Tahunan Digabung dengan STNK Mulai 2027? Ini Faktanya. Pajakku. https://artikel.pajakku.com/benarkah-biaya-parkir-tahunan-digabung-dengan-stnk-mulai-2027-ini-faktanya
+
+
+================================================================
+2. OVERALL DESCRIPTION
+================================================================
+
+2.1 Product Perspective
+------------------------
+LohParkir is a newly developed software system designed to support the management and validation of official parking services. The system is not a replacement for an existing automated system, but rather a digital enhancement of current manual or loosely monitored parking practices.
+
+The system operates as part of a broader parking management ecosystem managed by the Department of Transportation (Dishub) or local government authorities (Pemda). Within this ecosystem, LohParkir functions as a validation and information layer that enables users to verify the authenticity of parking services through QR code scanning.
+
+LohParkir is not a fully standalone system, as it depends on external data sources provided by Dishub/Pemda. Specifically, the system interfaces with an external database containing registered official QR codes. This interaction may involve data retrieval mechanisms such as APIs or other data exchange methods defined by the authority.
+
+At a high level, the system consists of:
+- A user application for scanning QR codes and displaying validation results
+- A backend system for processing validation requests and managing data
+- An administrative interface for Dishub/Pemda to manage QR code data and monitor system activity
+
+The primary external interface of the system is the Dishub/Pemda data source, which provides the official QR code dataset used for validation. Additional interfaces may include network communication services required for real-time data exchange.
+
+The system is limited to providing data validation and informational support. It does not include direct physical enforcement or monitoring of parking activities in the field.
+
+
+2.2 Product Functions
+----------------------
+The LohParkir system provides a set of functions for four types of users: general public (drivers), Dishub admins, database administrators, and registered parking officers (who carry a QR badge and have access to a minimal officer app). The system also performs automatic functions. The main functions are grouped below.
+
+[REVISED - Issue #21: Added Database Administrator; Issue #11: Officers now have minimal app access]
+
+A. General Public (Drivers)
+- Scan QR Code: Scan a QR code on an officer's badge or parking location. The system validates the code against the Dishub database and displays the status (official/unofficial), location name, officer name, official rate, and work area.
+- Report Illegal Parking or Fake QR: If a scanned QR is invalid, submit a report with a photo, automatic GPS location, and description. The system generates a ticket number and sends follow-up notifications.
+- Make Digital Payment: After validation, pay the official fee by scanning a QRIS code generated by the system, or pay in cash (recorded by the officer).
+- View Payment History: View past scans and payment records.
+- Receive Notifications: Receive push notifications about report status updates.
+
+[REVISED - Issue #10: Payment limited to QRIS + Cash]
+
+B. Dishub Admins
+- View Real-time Dashboard: See scan summary, active vs fake QR counts, trend graphs, heatmap of scan locations, and incoming report notifications. A public view is available for transparency.
+- View and Print Reports: Generate and print monthly or custom reports on validation, payments, and illegal reports.
+- Create Officer Accounts: Register new parking officers and issue official QR badges with auto-generated QR codes.
+- Manage Incoming Reports: Review, update status, and resolve reports submitted by the public.
+
+C. Database Administrator (Superadmin)
+- Full Data Management: Create, update, and delete official data including QR codes, parking locations, officer records, and tariffs.
+- User Role Management: Assign and modify roles for Dishub admin users.
+- System Audit: Review audit trails and system logs.
+
+[REVISED - Issue #21: Added Database Administrator functions]
+
+D. Registered Parking Officers
+- Officers carry the official QR badge issued by the system. They are given access to a minimal officer app that includes an emergency panic button for personal safety while on duty.
+
+[REVISED - Issue #11: Officers now have minimal app with panic button, resolving contradiction]
+
+
+2.3 User Classes and Characteristics
+--------------------------------------
+The LohParkir system has four user classes. Each class has different characteristics and access rights.
+
+General Public
+- Description: Ordinary people who park their vehicles on official streets in Medan.
+- Frequency of use: Every day.
+- Technical skill level: Low to average. The UI must be very simple.
+- Training needed: No.
+- Device used: Smartphone (Android or iOS).
+- Access rights: View only (scan QR, see validation results, make payments, view history, submit reports).
+- Estimated number: 3.7 million (population of Medan).
+
+[REVISED - Issue #1: Changed from "iOS" to "Android or iOS"]
+
+Registered Parking Officers
+- Description: Official parking officers who have been registered in the system. They have access to a minimal officer app with an emergency panic button.
+- Frequency of use: Daily (for panic button availability while on duty).
+- Technical skill level: Low.
+- Training needed: Basic training on panic button usage.
+- Device used: Smartphone (Android or iOS) with the minimal officer app installed.
+- Access rights: Emergency panic button only. No access to system data, reports, or dashboards.
+- Estimated number: 1,000 - 2,000 officers in Medan.
+
+[REVISED - Issue #11: Officers now have minimal app; Issue #1: Cross-platform]
+
+Dishub Admin
+- Description: Staff from Dishub Medan who manage daily operations, view dashboards, and handle reports.
+- Frequency of use: Every day.
+- Technical skill level: Low to moderate.
+- Training needed: Basic training on dashboard usage.
+- Device used: Computer with web browser (for admin dashboard).
+- Access rights: View dashboards, print reports, create officer accounts, update report status. They cannot delete or modify database records directly.
+- Estimated number: 5 - 10 people.
+
+[REVISED - Issue #20: Changed from "Smartphone (iOS)" to "Computer with web browser"]
+
+Database Administrator (Superadmin)
+- Description: A special role responsible for managing the database. This person handles create, update, and delete operations to prevent fraud or errors by regular admins.
+- Frequency of use: As needed (when data changes are required).
+- Technical skill level: Moderate to high (trained in database management).
+- Training needed: Yes, specific training on the system's database structure.
+- Device used: Computer with secure access to the database backend.
+- Access rights: Full rights to create, update, and delete official data (QR codes, parking locations, officer records, tariffs).
+- Estimated number: 1 - 2 people.
+
+
+2.4 Operating Environment
+--------------------------
+The LohParkir system consists of a mobile application for the public and officers, and a web-based dashboard for admins and database administrators. The operating environment is described below.
+
+Mobile Application Environment (for General Public & Officers)
+- Platforms: Android and iOS.
+- Minimum OS versions: Android 8.0 (API 26) or higher; iOS 14.0 or higher.
+- Minimum hardware requirements:
+  - RAM: 2 GB or more.
+  - Storage: at least 100 MB free space.
+  - Camera: 5 MP or higher (for scanning QR codes and taking report photos).
+  - GPS: Required (for automatic location capture when reporting).
+- Network:
+  - Requires internet connection for online features.
+  - Offline mode available for cached data and queued reports.
+  - Minimum recommended speed: 3 Mbps for stable scanning and photo uploads.
+
+[REVISED - Issue #1: Added Android; Issue #2: iOS 14.0; Issue #3: Camera 5 MP]
+
+Admin Dashboard Environment (for Dishub Admin & Superadmin)
+- Platform: Web-based, accessible via modern browsers (Chrome, Firefox, Edge).
+- Minimum screen resolution: 1366x768 pixels.
+- Requires stable internet connection.
+
+Server Environment
+- Backend: Node.js with Express.js framework.
+- Database: PostgreSQL (relational database).
+- Deployment: Cloud-based server with containerized deployment support.
+- Authentication: JWT-based session management.
+
+[REVISED - Issue #19: Filled in server environment details]
+
+
+2.5 Design and Implementation Constraints
+-------------------------------------------
+The following constraints apply to the development of LohParkir:
+
+- The mobile app must be developed using React Native with Expo framework to support cross-platform deployment (Android and iOS) from a single codebase.
+- The QR code format must follow the standard: LOHPARKIR-DSH-YYYY-NNN. Only Dishub-authorized admins or superadmins can generate new QR codes.
+- All payment integrations must comply with Bank Indonesia's QRIS standard and PCI DSS requirements.
+- The system must comply with Indonesia's Law No. 27 of 2022 on Personal Data Protection (UU PDP).
+- The admin dashboard must be web-based to support access from standard office computers without requiring app installation.
+- All API communications must use HTTPS with TLS 1.2 or higher.
+- The system must use TypeScript for type safety across both frontend and backend codebases.
+- Rate limiting must be implemented on all API endpoints to prevent abuse.
+
+[REVISED - Issue #19: Replaced placeholder text with actual constraints]
+
+
+2.6 User Documentation
+------------------------
+The following user documentation will be provided:
+
+- In-app Help: Contextual help screens and tooltips within the mobile app explaining key features (scan QR, submit report, make payment).
+- Admin User Guide: A step-by-step guide for Dishub admins on how to use the dashboard, manage reports, and create officer accounts.
+- Officer Quick Start Card: A one-page printed guide for parking officers explaining how to use the panic button on the officer app.
+- FAQ Section: An in-app FAQ addressing common questions about QR validation, payment, and reporting.
+
+
+2.7 Assumptions and Dependencies
+----------------------------------
+The following assumptions and dependencies apply to this project:
+
+Assumptions:
+- Users have access to a smartphone with a working camera and internet connection.
+- Dishub Medan will provide the initial dataset of registered parking officers and parking zones.
+- Users are willing to use a mobile application for parking verification.
+- GPS location services are available and accurate in the target deployment areas.
+- The QRIS payment infrastructure is operational and accessible in Medan.
+
+Dependencies:
+- The system depends on Dishub Medan's official data for QR code validation. If this data is not provided or is inaccurate, the system cannot function correctly.
+- Digital payment functionality depends on integration with a QRIS payment gateway provider.
+- Push notification delivery depends on Firebase Cloud Messaging (FCM) service availability.
+- Map visualizations on the admin dashboard depend on a Maps API (e.g., Google Maps or Leaflet).
+- The system requires a stable cloud hosting environment for the backend server and database.
+
+[REVISED - Issue #19: Replaced placeholder text with actual content]
+
+
+================================================================
+3. EXTERNAL INTERFACE REQUIREMENTS
+================================================================
+
+3.1 User Interfaces
+---------------------
+The LohParkir user interface is designed with the principle of extreme simplicity (user-friendliness) considering the low to average technical skill level of users (Community & Admin).
+
+GUI Standards:
+- Mobile App (Community & Officers): Follows platform-specific guidelines — Material Design (Android) and Human Interface Guidelines (iOS). Uses large, high-contrast visual elements.
+- Web Dashboard (Admin): Follows the card-based Admin Dashboard standard with consistent sidebar navigation.
+
+[REVISED - Issue #1: Added Android/Material Design alongside iOS/HIG]
+
+Standard Elements:
+- Every mobile app screen will have a persistent "Help" or "Report Center" button.
+- The admin dashboard header will always display the database connection status and real-time incoming report notifications.
+
+Screen Layout Constraints:
+- Mobile: Focus on one action per screen (for example: only the scan screen, or only the payment details screen).
+- Web: Responsive, but optimized for a minimum resolution of 1366x768 pixels.
+
+Error Messages: Error messages should use non-technical language (e.g., "QR Code not registered" instead of "Error 404: Data not found").
+
+Software Components Requiring UI:
+- QR Scanning Module (Mobile).
+- QRIS Payment Module (Mobile).
+- Illegal Parking Reporting Module (Mobile).
+- Emergency Panic Button (Officer App).
+- Data Visualization & Heatmap Dashboard (Web).
+- Officer Management & QR Badge Module (Web).
+- Report Management Module (Web).
+
+
+3.2 Hardware Interfaces
+------------------------
+The system will interact with the following hardware components:
+
+Mobile Devices (Android and iOS):
+- Camera: Used to scan the officer's QR code and upload photographic evidence of illegal parking. Minimum: 5 MP with autofocus.
+- GPS/Location Sensor: Used to automatically mark the location coordinates when the public reports an illegal parking violation.
+
+[REVISED - Issue #1: Added Android; Issue #3: Camera 5 MP]
+
+Physical QR Badges: Physical cards carried by parking officers. The software must be able to identify the unique code on the badge following the format LOHPARKIR-DSH-YYYY-NNN.
+
+[REVISED - Issue #9: Consistent QR format]
+
+Admin Computers: Standard PCs/Laptops with graphics rendering capabilities to display heatmaps and trend graphs.
+
+Communication Protocol: Data between the mobile device and the server will be transmitted via the HTTPS protocol.
+
+
+3.3 Software Interfaces
+-------------------------
+LohParkir will be connected to several external software components:
+
+Database System: PostgreSQL used to store officer data, payment history, location coordinates and report logs. Firebase is used for real-time features including push notifications (via Firebase Cloud Messaging) and real-time data synchronization.
+
+[REVISED - Issue #19: Clarified database vs Firebase roles]
+
+Payment Gateway/QRIS API: Interface with government payment service providers to generate QRIS codes and receive payment settlement status in real time.
+
+[REVISED - Issue #10: Removed e-wallet/VA references, QRIS only]
+
+Maps API (Google Maps API/Leaflet):
+- Data In: GPS coordinates from citizen reports.
+- Data Out: Interactive maps and heatmaps on the admin dashboard to visualize parking locations.
+
+Operating Systems:
+- Mobile: Android 8.0 or higher; iOS 14.0 or higher.
+- Server: Linux-based cloud server.
+
+[REVISED - Issue #1: Added Android; Issue #2: iOS 14.0; Issue #19: Filled server OS]
+
+Shared Data: Officer ID and Location ID data will be shared between the verification module (Mobile) and the annual report module (Web).
+
+
+3.4 Communications Interfaces
+-------------------------------
+System communication function requirements include:
+
+Web Browser Communication: Admins access the system through a modern browser (Chrome, Firefox, Edge) using the HTTPS protocol (TLS 1.2+) to ensure data security.
+
+Push Notifications: Use Firebase Cloud Messaging (FCM) to send report follow-up statuses from Admins to Community devices, and emergency alerts from officer panic buttons to Admin devices.
+
+[REVISED - Issue #11: Added panic button notification]
+
+Data Transfer Rate: The system must be able to operate functionally on a minimum 3G connection speed (for field users), with a maximum API response latency of 2 seconds.
+
+Security/Encryption: All sensitive data (such as admin identities and transaction records) must be transmitted over an encrypted channel. Tokenization (such as JWT - JSON Web Token) is used to maintain login sessions for Admins and Database Administrators.
+
+Synchronization: Payment status synchronization between the QRIS API and the main database must be performed asynchronously (webhooks) to ensure the "Paid" status is updated promptly without burdening the client application.
+
+
+================================================================
+4. SYSTEM FEATURES
+================================================================
+
+4.1 QR Code Validation Scan
+-----------------------------
+
+4.1.1 Description and Priority
+
+This feature allows users to scan QR codes located at parking areas or on parking officer badges. The system validates the QR code against the Dishub/Pemda database and displays its authenticity status along with detailed information.
+
+Priority: High
+
+4.1.2 Stimulus/Response Sequences
+
+1. The user opens the app and taps "Scan QR".
+2. The system activates the device camera.
+3. The user points the camera at the QR code.
+4. The system detects and decodes the QR code.
+5. The system sends the QR data to the server for validation.
+6. If valid: The system displays officer details (name, badge number, zone, official rate).
+7. If invalid: The system displays a warning notification and provides a "Report" button to submit an illegal parking report.
+8. If network error: The system displays a user-friendly error message and suggests retrying.
+
+[REVISED - Issue #22: Completed the stimulus/response sequence]
+
+4.1.3 Functional Requirements
+
+REQ-1: The system shall provide a QR code scanning feature using the device camera.
+REQ-2: The system shall send scanned QR data to the server for validation.
+REQ-3: The system shall validate QR codes against the official database.
+REQ-4: The system shall display the validation result (official/unofficial) or an appropriate error message if the QR code cannot be processed (e.g., unreadable, invalid, not found, or network error).
+REQ-5: The system shall display the parking location name.
+REQ-6: The system shall display the parking officer name.
+REQ-7: The system shall display the official parking tariff.
+REQ-8: The system shall display the assigned operational area.
+REQ-9: The system shall display the officer's badge number and active/inactive status.
+
+[REVISED - Issue #17: Added missing REQ-9]
+
+
+4.2 Report Illegal Parking
+----------------------------
+
+4.2.1 Description and Priority
+
+This feature allows users to report illegal parking activities, unauthorized fees, or fake QR codes. Reports include photo evidence, automatic GPS location, and user description.
+
+Priority: High
+
+[REVISED - Issue #15: Fixed section numbering from 4.1.x to 4.2.x]
+
+4.2.2 Stimulus/Response Sequences
+
+1. The system detects an invalid or inactive QR code.
+2. The system displays a warning notification.
+3. The user clicks the "Report" button.
+4. The user uploads a photo and enters a description.
+5. The system automatically captures GPS location.
+6. The system submits the report.
+7. The system generates a complaint ticket number.
+8. The system displays report status updates.
+
+4.2.3 Functional Requirements
+
+REQ-10: The system shall display a warning when a QR code is invalid.
+REQ-11: The system shall provide a report submission button.
+REQ-12: The system shall allow users to upload photo evidence.
+REQ-13: The system shall automatically capture GPS location.
+REQ-14: The system shall provide a description input field.
+REQ-15: The system shall submit reports to the server.
+REQ-16: The system shall generate a complaint ticket number.
+REQ-17: The system shall display report status updates.
+REQ-18: The system shall display an error message if upload fails.
+
+
+4.3 Integrated Digital Payment (QRIS)
+---------------------------------------
+
+4.3.1 Description and Priority
+
+This feature enables users to make parking payments digitally using QRIS. Cash payments are also supported and recorded by the officer or admin into the system.
+
+[REVISED - Issue #10: Removed e-wallet/VA, limited to QRIS + Cash]
+
+Priority: High
+
+4.3.2 Stimulus/Response Sequences
+
+1. The user completes a valid QR scan.
+2. The user selects "Pay Digitally" or the officer records a cash payment.
+3. For QRIS: The system generates a QRIS code for the user to scan with their mobile banking app.
+4. The system processes the payment via the QRIS gateway.
+5. The system receives confirmation from the payment gateway.
+6. The system displays the payment status (success/failure).
+7. The system generates and displays a payment receipt.
+
+[REVISED - Issue #10: Simplified to QRIS flow only]
+
+4.3.3 Functional Requirements
+
+REQ-19: The system shall support QRIS payments by generating a scannable QRIS code.
+REQ-20: The system shall support cash payment recording by officers or admins.
+REQ-21: The system shall process payment transactions securely.
+REQ-22: The system shall receive payment confirmation from the QRIS gateway.
+REQ-23: The system shall display payment status (success/failure).
+REQ-24: The system shall store transaction history in the database.
+REQ-25: The system shall generate and display payment receipts.
+
+[REVISED - Issue #10: Replaced e-wallet (REQ-20) and virtual account (REQ-21) with cash recording and secure processing. Renumbered accordingly.]
+
+
+4.4 Real-time Monitoring Dashboard
+------------------------------------
+
+4.4.1 Description and Priority
+
+This feature provides a real-time dashboard for administrators to monitor system activity, including scan statistics, payment data, and incoming reports. A public view is also available for transparency.
+
+Priority: High
+
+[REVISED - Issue #14: Changed from Medium to High, consistent with scope description]
+
+4.4.2 Stimulus/Response Sequences
+
+1. The admin opens the dashboard via web browser.
+2. The system retrieves data from the server.
+3. The system displays statistics and visualizations.
+4. The system updates data in real-time.
+
+4.4.3 Functional Requirements
+
+REQ-26: The system shall display the total number of daily scans.
+REQ-27: The system shall display the number of active and fake QR codes.
+REQ-28: The system shall display validation trend graphs.
+REQ-29: The system shall display a heatmap of scan locations.
+REQ-30: The system shall display incoming report notifications.
+REQ-31: The system shall update dashboard data in real-time.
+REQ-32: The system shall allow data filtering by time period.
+REQ-33: The system shall provide a public view of statistics for transparency.
+
+
+4.5 Officer Account & QR Badge Management
+-------------------------------------------
+
+[REVISED - Issue #13: Added missing system feature]
+
+4.5.1 Description and Priority
+
+This feature allows Dishub admins to register new parking officers, generate official QR badges, and manage officer status (active/inactive).
+
+Priority: High
+
+4.5.2 Stimulus/Response Sequences
+
+1. The admin navigates to the officer management section.
+2. The admin enters officer details (name, NIP, phone, assigned zone).
+3. The system validates the input data.
+4. The system creates the officer record and auto-generates a unique QR code following the format LOHPARKIR-DSH-YYYY-NNN.
+5. The system generates a printable QR badge for the officer.
+6. The admin prints and issues the badge to the officer.
+
+4.5.3 Functional Requirements
+
+REQ-34: The system shall allow admins to register new parking officers.
+REQ-35: The system shall auto-generate unique QR codes for each officer.
+REQ-36: The system shall generate printable QR badge cards.
+REQ-37: The system shall allow admins to activate or deactivate officer accounts.
+REQ-38: The system shall prevent duplicate officer registrations (by NIP or badge number).
+
+
+4.6 Payment History
+---------------------
+
+[REVISED - Issue #13: Added missing system feature]
+
+4.6.1 Description and Priority
+
+This feature allows users to view their past scan and payment records.
+
+Priority: Low (future enhancement)
+
+4.6.2 Stimulus/Response Sequences
+
+1. The user navigates to the payment history section.
+2. The system retrieves past payment records.
+3. The system displays a list of payments with date, amount, officer, and status.
+
+4.6.3 Functional Requirements
+
+REQ-39: The system shall display a list of past payments for the user.
+REQ-40: The system shall show payment details including date, amount, officer name, and payment status.
+
+
+4.7 Report Management
+-----------------------
+
+[REVISED - Issue #13: Added missing system feature]
+
+4.7.1 Description and Priority
+
+This feature allows Dishub admins to view, manage, and update the status of incoming reports from the public.
+
+Priority: High
+
+4.7.2 Stimulus/Response Sequences
+
+1. The admin opens the report management section.
+2. The system displays a list of incoming reports with status.
+3. The admin selects a report to view details.
+4. The admin updates the report status (received, investigating, resolved, rejected).
+5. The system sends a notification to the reporter about the status change.
+
+4.7.3 Functional Requirements
+
+REQ-41: The system shall display all incoming reports with filtering options.
+REQ-42: The system shall allow admins to update report status.
+REQ-43: The system shall allow admins to add notes to reports.
+REQ-44: The system shall send notifications to reporters when status changes.
+
+
+4.8 Push Notifications
+------------------------
+
+[REVISED - Issue #13: Added missing system feature]
+
+4.8.1 Description and Priority
+
+This feature sends push notifications to users about report status updates and to admins about new incoming reports and officer emergency alerts.
+
+Priority: Medium
+
+4.8.2 Stimulus/Response Sequences
+
+1. A report status is updated by an admin.
+2. The system sends a push notification to the reporter.
+3. A new report is submitted by a user.
+4. The system sends a push notification to relevant admins.
+5. An officer presses the panic button.
+6. The system sends a high-priority notification to all admins with the officer's GPS location.
+
+4.8.3 Functional Requirements
+
+REQ-45: The system shall send push notifications to users about report status changes.
+REQ-46: The system shall send push notifications to admins about new reports.
+REQ-47: The system shall send high-priority emergency notifications when an officer uses the panic button.
+REQ-48: The system shall include the officer's GPS location in emergency notifications.
+
+
+================================================================
+5. OTHER NONFUNCTIONAL REQUIREMENTS
+================================================================
+
+5.1 Performance Requirements
+------------------------------
+The system must respond quickly and handle many users at the same time. The following performance targets are required:
+
+Response time (NFR-01): For normal actions like scanning a QR code, submitting a report, or loading a page, the system must respond within 2 seconds. If the user uploads a photo, it must respond within 3 seconds.
+
+QR scan speed (NFR-02): The camera must detect and decode a QR code on an officer's badge within 1.5 seconds after the code enters the camera frame.
+
+[REVISED - Issue #4: Changed from 1 second to 1.5 seconds for realism]
+
+Dashboard load time (NFR-03): The admin dashboard must load real-time statistics within 3 seconds for initial load and within 1 second for data refresh.
+
+[REVISED - Issue #5: Changed initial load from 1 second to 3 seconds for realism]
+
+Concurrent users (NFR-04): The system must handle at least 500 users simultaneously and support up to 1,000 scans or reports per hour.
+
+[REVISED - Issue #16: Changed from NFR-03 to NFR-04, unique ID]
+
+Data growth (NFR-27): The system must be able to handle growth of up to 10,000 registered officers, 100,000 reports per year, and 500,000 scans per year without major changes.
+
+[REVISED - Issue #8: Clarified metrics (officers, reports, scans instead of vague "users")]
+
+Horizontal scaling (NFR-28): The backend must support scaling by adding more servers (horizontal scaling). It should use stateless APIs, be ready for a load balancer, and use containerized deployment.
+
+
+5.2 Safety Requirements
+-------------------------
+The system must protect the physical and psychological safety of all users, including reporters, parking officers, and the general public:
+
+Protection of reporter identity (NFR-10): The system must protect the identity of anyone who reports illegal parking or fake QR codes. Reporting must be anonymous. Reporter data must be encrypted, and only a superadmin can access it.
+
+Prevention of report misuse (NFR-11): The system must prevent fake reports or spam that could harm honest officers. Each user can submit a maximum of 5 reports per day. Every report must include a photo (mandatory). All reports are moderated by an admin.
+
+Payment transaction safety (NFR-12): Digital payments must be safe from double charging, failure without refund, or amount manipulation. The system must use an idempotency key for each transaction. If a payment fails, the system must automatically issue a refund. Every transaction must have a complete audit trail.
+
+Location data protection (NFR-13): The system may collect the user's GPS location only during a scan or when submitting a report. It must not track the user continuously. The app must ask for permission before accessing location, and it should use one-time location (not background tracking). Location data must never be sold or shared with third parties.
+
+Failsafe on critical errors (NFR-14): If a critical error occurs, the system must not show sensitive data, send duplicate payments, or delete data without confirmation. The system must degrade gracefully, avoid exposing technical details in error messages, and automatically roll back any failed transaction.
+
+Physical safety of parking officers (NFR-15): The system must provide an emergency feature (panic button) for parking officers who face physical threats while on duty. The officer's minimal app must include a panic button. When pressed, the system sends a real-time notification to the admin and automatically shares the officer's GPS location.
+
+[REVISED - Issue #11: Changed "officer's app" to "officer's minimal app" for consistency with Section 2.2]
+
+
+5.3 Security Requirements
+---------------------------
+The system must protect data and prevent fraud. The following security requirements apply:
+
+Admin authentication (NFR-05): Admin logins must use encrypted passwords (bcrypt hashing) and JWT tokens with expiry. The session will time out after 30 minutes of inactivity.
+
+Data encryption (NFR-06): All communication between the mobile app and the server must use HTTPS with TLS 1.2 or higher. Sensitive data stored on the server must be encrypted using AES-256.
+
+QR code integrity (NFR-07): Each QR code on an officer's badge must follow the fixed format: LOHPARKIR-DSH-YYYY-NNN (e.g., LOHPARKIR-DSH-2024-001). The system must validate each code using checksum verification to prevent forgery and duplication.
+
+[REVISED - Issue #9: Changed from "LOH/PARKIR-DSH-YYY-NNN" to "LOHPARKIR-DSH-YYYY-NNN"]
+
+Input validation (NFR-08): Every input from users (text, photos, reports) must be validated on the server side to prevent SQL injection and XSS attacks. The system must implement rate limiting of 100 requests per minute per user for general API endpoints.
+
+[REVISED - Issue #7: Changed from 10 req/min to 100 req/min]
+
+Authorization & RBAC (NFR-09): The system must use role-based access control (RBAC). There are three roles: public (regular users), admin (Dishub staff), and superadmin (database manager). Each API endpoint must check the user's role before allowing access.
+
+Personal data protection (NFR-32): The system must follow Indonesia's Law No. 27 of 2022 on Personal Data Protection (UU PDP). This means collecting only necessary data, getting user consent, and handling data securely.
+
+Data retention (NFR-33): Reports must be stored for at least 5 years. Payment transactions for at least 10 years. Scan logs for at least 1 year.
+
+Digital payment regulation (NFR-34): The QRIS payment integration must follow Bank Indonesia standards and be PCI DSS compliant. The system must perform daily reconciliation of payments.
+
+
+5.4 Software Quality Attributes
+---------------------------------
+These attributes describe how well the system works from the user's and developer's point of view.
+
+Usability:
+
+Ease of use (NFR-20): The app must be simple. A user should need no more than 3 taps to scan a QR code, 5 taps to send a report, and 4 taps to make a payment.
+
+Language & localization (NFR-21): The entire user interface must be in Indonesian using clear and simple words. Font size must be at least 14sp.
+
+Accessibility (NFR-22): The app must meet WCAG 2.1 Level AA standards. This includes a contrast ratio of at least 4.5:1 and touch targets of at least 44x44 dp.
+
+Visual feedback (NFR-23): Every user action must show a loading indicator, a success or error message (toast/alert), and color-coded status.
+
+Compatibility:
+
+Platform support (NFR-24): The mobile app must run on Android 8.0 (API 26) or higher and iOS 14.0 or higher. It should look and work the same on both platforms. The framework used is React Native with Expo.
+
+[REVISED - Issue #2: Changed "iOS 14.9" to "iOS 14.0"]
+
+Screen size (NFR-25): The app must work on smartphone screens from 4.7 inches to 6.9 inches in portrait mode.
+
+Camera compatibility (NFR-26): The QR scanner must work with cameras as low as 5 MP, support autofocus, and tolerate low-light conditions.
+
+Maintainability:
+
+Code quality (NFR-29): The source code must use TypeScript with strict mode, follow ESLint and Prettier rules, and require code reviews before merging.
+
+Logging & monitoring (NFR-30): The system must use structured logging (JSON format) for debugging. All admin actions must be saved in an audit trail. Error tracking tools (e.g., Sentry) should be used.
+
+API versioning (NFR-31): The backend API must use URL versioning (e.g., /api/v1/...). If a version is deprecated, users must be notified at least 3 months in advance.
+
+Reliability & Availability:
+
+Uptime (NFR-16): The system must be available 99.5% of the time during operational hours (6:00 AM to 10:00 PM WIB) and 24/7 for reporting. Maximum allowable downtime is approximately 3.6 hours per month.
+
+[REVISED - Issue #6: Changed from 99.9% to 99.5% to match 3.6 hours/month downtime]
+
+Offline mode (NFR-17): The mobile app must cache data when there is no internet connection. Users can save reports locally, and the app will automatically sync them when back online using a queue.
+
+Backup & recovery (NFR-18): The system must perform automatic daily backups. Recovery point objective (RPO): 24 hours. Recovery time objective (RTO): 4 hours.
+
+Error handling (NFR-19): The system must show user-friendly error messages without technical details. All errors must be logged on the server, and the app should degrade gracefully.
+
+
+5.5 Business Rules
+--------------------
+Business rules are the logical constraints that guide how the system operates:
+
+Reporting limits (BR-01, ref: NFR-11): A regular user cannot submit more than 5 reports per day to prevent spam. Each report must include a photo. All reports are moderated by an admin.
+
+[REVISED - Issue #18: Changed from NFR reference to BR (Business Rule) reference]
+
+Report follow-up (BR-02): Once a report is submitted, it cannot be deleted by the user. An admin must change its status (e.g., "received", "investigating", "resolved", "rejected"). The user will receive a notification when the status changes.
+
+[REVISED - Issue #18: Removed incorrect "NFR-33" reference, assigned BR-02]
+
+QR code issuance (BR-03, ref: NFR-07): Only a superadmin or a designated Dishub admin can generate official QR codes for new parking officers. Each QR code must be unique and follow the format LOHPARKIR-DSH-YYYY-NNN.
+
+[REVISED - Issue #9: Consistent QR format; Issue #18: Added BR reference]
+
+Payment recording (BR-04, ref: NFR-12, NFR-34): All payments (digital via QRIS and cash) must be recorded in the database. For cash payments, the officer or admin must enter the amount into the system at the end of each shift. The system must produce a daily reconciliation report. Every transaction must have an idempotency key and audit trail.
+
+Data retention rules (BR-05, ref: NFR-33):
+- Illegal parking reports: stored for 5 years.
+- Payment transactions: stored for 10 years (for audit purposes).
+- Scan logs (who scanned which QR code): stored for 1 year, then archived.
+
+[REVISED - Issue #18: Proper BR reference]
+
+Public dashboard access (BR-06): Any citizen can view the public dashboard (statistics, heatmap, total scans) without logging in. However, detailed reports and personal data are hidden.
+
+Officer account registration (BR-07): A Dishub admin registers a new parking officer in the system and generates an official QR badge. The officer receives the badge and the minimal officer app. This prevents fake officers from self-registering.
+
+[REVISED - Issue #12: Changed from self-registration to admin-only registration for clarity and consistency with Section 2.2]
+
+Report immutability (BR-08): Users cannot edit a report after submission. If they made a mistake, they must submit a new report and mention the previous ticket number.
+
+[REVISED - Issue #18: Removed incorrect "NFR-19" reference, assigned BR-08]
+
+Session timeout (BR-09, ref: NFR-05): Admin users will be automatically logged out after 30 minutes of inactivity. Regular users (drivers) do not have a session timeout because they use the app without logging in.
+
+Emergency button for officers (BR-10, ref: NFR-15): Only registered parking officers who have the official minimal app can use the panic button. The system must prioritize this alert and notify admins immediately.
+
+[REVISED - Issue #11: "official app" → "official minimal app"]
+
+Rate limiting for API (BR-11, ref: NFR-08): Each user (by IP or account) is limited to 100 requests per minute to prevent abuse.
+
+[REVISED - Issue #7: Changed from 10 req/min to 100 req/min]
+
+
+================================================================
+6. OTHER REQUIREMENTS
+================================================================
+
+Internationalization: The initial release will support Indonesian (Bahasa Indonesia) only. Future versions may add English language support.
+
+Legal Compliance: The system must comply with all applicable Indonesian regulations, including but not limited to:
+- UU No. 27 Tahun 2022 (Personal Data Protection)
+- Bank Indonesia QRIS standards
+- Local parking regulations (Perda Kota Medan)
+
+Database Requirements: The system requires a PostgreSQL database with support for UUID primary keys, proper indexing for frequently queried fields, and automated daily backups.
+
+Reuse Objectives: The system architecture should be modular enough to be adapted for other cities in Indonesia in the future, with minimal configuration changes (primarily data sources and local regulations).
+
+
+================================================================
+APPENDIX A: GLOSSARY
+================================================================
+
+Term                 Definition
+----                 ----------
+QR Code              Quick Response Code, a two-dimensional
+                     matrix barcode.
+QRIS                 Quick Response Code Indonesian Standard,
+                     a national QR payment standard by Bank
+                     Indonesia.
+Dishub               Dinas Perhubungan (Department of
+                     Transportation).
+Pemda                Pemerintah Daerah (Local Government).
+GPS                  Global Positioning System, used for
+                     location tracking.
+JWT                  JSON Web Token, used for secure session
+                     management.
+RBAC                 Role-Based Access Control.
+TLS                  Transport Layer Security, encryption
+                     protocol for network communication.
+AES-256              Advanced Encryption Standard with
+                     256-bit key length.
+PCI DSS              Payment Card Industry Data Security
+                     Standard.
+UU PDP               Undang-Undang Pelindungan Data Pribadi
+                     (Personal Data Protection Law).
+NIP                  Nomor Induk Pegawai (Employee
+                     Identification Number).
+FCM                  Firebase Cloud Messaging, push
+                     notification service.
+RPO                  Recovery Point Objective, maximum
+                     acceptable data loss period.
+RTO                  Recovery Time Objective, maximum
+                     acceptable system downtime.
+WCAG                 Web Content Accessibility Guidelines.
+Jukir                Juru Parkir (Parking Attendant).
+
+
+================================================================
+APPENDIX B: ANALYSIS MODELS
+================================================================
+
+The following analysis models are available as separate
+documents/images:
+
+1. Use Case Diagram
+   → See: screenshots/usecase-diagram-annotated.jpg
+
+2. Entity Relationship Diagram (ERD)
+   → See: screenshots/erd-lohparkir.jpg
+
+3. Non-Functional Requirements Table
+   → See: screenshots/nfr-lohparkir.jpg
+
+4. Data Transfer Use Case Table
+   → See: screenshots/data-transfer-usecase.jpg
+
+
+================================================================
+APPENDIX C: TO BE DETERMINED LIST
+================================================================
+
+TBD-1: Specific QRIS payment gateway provider to be
+       selected (e.g., Midtrans, Xendit, or government
+       payment provider).
+
+TBD-2: Exact cloud hosting provider and deployment
+       configuration to be determined based on budget.
+
+TBD-3: Specific Maps API provider (Google Maps vs
+       Leaflet/OpenStreetMap) to be finalized.
+
+TBD-4: Officer app distribution method (Play Store/
+       App Store listing vs MDM deployment) to be
+       determined with Dishub.
+
+TBD-5: Integration with existing Dishub retribution
+       systems, if any, to be explored in future phases.
+
+
+================================================================
+                    END OF DOCUMENT
+================================================================

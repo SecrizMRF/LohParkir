@@ -65,3 +65,9 @@ id = "I8iqaFj3XrLM__TJQWG38"
 uri = "file://SRS_Consistency_Review.txt"
 type = "text"
 title = "Laporan Review Konsistensi SRS - LohParkir"
+
+[[outputs]]
+id = "1QZjNNYYIqJmSRKN22kQt"
+uri = "file://SRS_LohParkir_REVISED.txt"
+type = "text"
+title = "SRS LohParkir v1.1 (Revised - All 22 Issues Fixed)"
