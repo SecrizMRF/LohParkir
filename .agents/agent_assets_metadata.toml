@@ -89,3 +89,9 @@ id = "MoMFHBflvtCya5sPEGwN4"
 uri = "file://SRS_LohParkir_v1.2_Revised.docx"
 type = "word_document"
 title = "SRS LohParkir v1.2 (All 11 Issues Fixed)"
+
+[[outputs]]
+id = "qG9ctCVzCYjyzN-mQ0xzW"
+uri = "file://SRS_Consistency_Review_v1.2.txt"
+type = "text"
+title = "SRS v1.2 Consistency Review Report (4 Issues Found)"
