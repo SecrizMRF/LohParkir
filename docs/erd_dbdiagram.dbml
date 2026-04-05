@@ -1,0 +1,137 @@
+// LohParkir - ERD untuk dbdiagram.io
+// Sistem Verifikasi dan Manajemen Parkir Berbasis QR Code
+// Dinas Perhubungan (Dishub)
+
+Table users {
+  id serial [pk, increment]
+  username varchar(100) [not null, unique, note: 'Username login']
+  password_hash text [not null]
+  role varchar(20) [not null, default: 'public', note: 'public | officer | admin | superadmin']
+  full_name varchar(200) [not null]
+  email varchar(200)
+  phone varchar(20)
+  is_active text [not null, default: 'true']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  Note: 'Tabel pengguna sistem (admin, superadmin, public)'
+}
+
+Table officers {
+  id serial [pk, increment]
+  user_id integer [ref: > users.id, note: 'Relasi ke akun user (opsional)']
+  nip varchar(50) [not null, unique, note: 'Nomor Induk Pegawai']
+  name varchar(200) [not null, note: 'Nama lengkap petugas']
+  badge_number varchar(50) [not null, unique, note: 'Format: DSH-YYYY-NNN']
+  qr_code varchar(100) [not null, unique, note: 'Format: LOHPARKIR-DSH-YYYY-NNN']
+  area varchar(200) [not null, note: 'Zona kerja petugas']
+  location text [not null, note: 'Alamat detail lokasi tugas']
+  rate integer [not null, default: 3000, note: 'Tarif parkir dalam Rupiah']
+  status varchar(20) [not null, default: 'active', note: 'active | inactive']
+  phone varchar(20)
+  photo_url text
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  Note: 'Tabel petugas parkir resmi Dishub'
+}
+
+Table reports {
+  id serial [pk, increment]
+  ticket_number varchar(50) [not null, unique, note: 'Format: LP-YYYYMMDD-XXXX']
+  type varchar(30) [not null, note: 'illegal_parking | fake_qr']
+  description text [not null, note: 'Deskripsi laporan dari masyarakat']
+  photo_url text [note: 'URL bukti foto']
+  latitude numeric [note: 'Koordinat GPS latitude']
+  longitude numeric [note: 'Koordinat GPS longitude']
+  address text [note: 'Alamat hasil reverse geocode']
+  status varchar(30) [not null, default: 'pending', note: 'pending | in_progress | resolved | rejected']
+  admin_notes text [note: 'Catatan dari admin Dishub']
+  reporter_device_id varchar(100) [note: 'ID perangkat pelapor']
+  related_qr_code varchar(100) [note: 'QR code terkait (jika laporan QR palsu)']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  Note: 'Tabel laporan parkir liar & QR palsu dari masyarakat'
+}
+
+Table scans {
+  id serial [pk, increment]
+  qr_code varchar(100) [not null, note: 'Kode QR yang di-scan']
+  is_valid boolean [not null, note: 'Hasil validasi QR']
+  officer_id integer [ref: > officers.id, note: 'Petugas terkait (jika valid)']
+  officer_name varchar(200) [note: 'Nama petugas saat scan']
+  location text [note: 'Lokasi scan']
+  device_id varchar(100) [note: 'ID perangkat scanner']
+  scanned_at timestamp [not null, default: `now()`]
+
+  Note: 'Tabel riwayat scan QR code oleh masyarakat'
+}
+
+Table payments {
+  id serial [pk, increment]
+  transaction_id varchar(100) [not null, unique, note: 'Format: TXN-YYYYMMDD-XXXXX']
+  officer_id integer [ref: > officers.id, note: 'Petugas penerima pembayaran']
+  officer_name varchar(200) [not null, note: 'Nama petugas']
+  amount integer [not null, note: 'Jumlah pembayaran (Rupiah)']
+  method varchar(20) [not null, default: 'qris', note: 'qris | cash']
+  status varchar(20) [not null, default: 'pending', note: 'pending | completed | failed']
+  device_id varchar(100) [note: 'ID perangkat pembayar']
+  area varchar(200) [note: 'Area parkir']
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null, default: `now()`]
+
+  Note: 'Tabel transaksi pembayaran parkir digital (QRIS)'
+}
+
+Table audit_trail {
+  id serial [pk, increment]
+  user_id integer [ref: > users.id, note: 'Admin yang melakukan aksi']
+  action varchar(100) [not null, note: 'Jenis aksi: create, update, delete, login']
+  entity varchar(50) [not null, note: 'Entitas target: officer, report, user']
+  entity_id integer [note: 'ID entitas yang dimodifikasi']
+  details text [note: 'Detail perubahan (JSON)']
+  ip_address varchar(50) [note: 'Alamat IP pelaku']
+  created_at timestamp [not null, default: `now()`]
+
+  Note: 'Tabel jejak audit untuk akuntabilitas admin'
+}
+
+// ==========================================
+// ENUM REFERENCES (untuk dokumentasi)
+// ==========================================
+
+Enum user_role {
+  public
+  officer
+  admin
+  superadmin
+}
+
+Enum officer_status {
+  active
+  inactive
+}
+
+Enum report_type {
+  illegal_parking
+  fake_qr
+}
+
+Enum report_status {
+  pending
+  in_progress
+  resolved
+  rejected
+}
+
+Enum payment_method {
+  qris
+  cash
+}
+
+Enum payment_status {
+  pending
+  completed
+  failed
+}
