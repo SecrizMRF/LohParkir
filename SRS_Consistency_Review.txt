@@ -1,0 +1,450 @@
+================================================================
+   SRS CONSISTENCY REVIEW REPORT — LohParkir
+   Reviewer: AI Assistant
+   Date: April 2026
+================================================================
+
+This report identifies inconsistencies, conflicts, and gaps
+found across all sections of the SRS document.
+
+Total issues found: 22
+  - Critical (must fix):  10
+  - Major (should fix):    8
+  - Minor (nice to fix):   4
+
+
+================================================================
+A. PLATFORM & DEVICE INCONSISTENCIES
+================================================================
+
+[CRITICAL] Issue #1: iOS-only vs Cross-platform Conflict
+---------------------------------------------------------
+The document contradicts itself on supported platforms:
+
+  Section 2.3 (User Classes):
+    → General Public device: "Smartphone (iOS)"
+    → Dishub Admin device: "Smartphone (iOS)"
+
+  Section 2.5 (Operating Environment):
+    → "Platforms: iOS"
+
+  NFR-24 (Software Quality Attributes, p.11):
+    → "The mobile app must run on Android 8.0 (API 26)
+       or higher AND iOS 14.9 or higher"
+
+  Product Scope:
+    → "React Native / Expo" (cross-platform framework)
+
+  Recommendation: Decide whether the app is iOS-only or
+  cross-platform. If cross-platform, update Sections 2.3
+  and 2.5. If iOS-only, remove Android from NFR-24 and
+  reconsider using React Native.
+
+
+[MAJOR] Issue #2: iOS Version Number Conflict
+----------------------------------------------
+  Section 2.5: "iOS 14 or higher"
+  Section 3.2: "iOS 14 or higher"
+  NFR-24:      "iOS 14.9 or higher"
+
+  Note: iOS 14.9 does not exist. iOS versions go from
+  14.8.1 directly to 15.0.
+
+  Recommendation: Standardize to "iOS 14.0 or higher"
+  across all sections.
+
+
+[MAJOR] Issue #3: Camera Minimum Spec Conflict
+------------------------------------------------
+  Section 2.5 (Operating Environment):
+    → "Camera: 8 MP or higher"
+  NFR-26 (Camera Compatibility):
+    → "cameras as low as 5 MP"
+
+  Recommendation: Pick one. If you want broader device
+  support, use 5 MP. Update Section 2.5 to match.
+
+
+================================================================
+B. NFR METRIC INCONSISTENCIES
+================================================================
+
+[CRITICAL] Issue #4: QR Scan Speed Conflict
+---------------------------------------------
+  NFR-02 in SRS document:
+    → "within 1 second"
+  NFR image (nfr-lohparkir.jpg):
+    → "≤ 1.5 seconds"
+
+  Recommendation: Align to one value. 1.5 seconds is more
+  realistic for low-end devices.
+
+
+[CRITICAL] Issue #5: Dashboard Load Time Conflict
+---------------------------------------------------
+  NFR-03 in SRS document:
+    → "within 1 second for initial load and 1 second
+       for data refresh"
+  NFR image:
+    → "≤ 3 seconds initial load, ≤ 1 second refresh"
+
+  Recommendation: 1 second for initial dashboard load is
+  unrealistic for complex visualizations (heatmaps, graphs).
+  Use 3 seconds for initial load, 1 second for refresh.
+
+
+[CRITICAL] Issue #6: Uptime vs Downtime Math Error
+----------------------------------------------------
+  NFR-16 in SRS document states BOTH:
+    → "99.9% of the time"
+    → "Maximum downtime is about 3.6 hours per month"
+
+  These contradict each other:
+    99.9% uptime = ~43 minutes downtime/month
+    3.6 hours downtime/month = 99.5% uptime
+
+  Recommendation: Choose one. 99.5% with 3.6 hours/month
+  is more realistic for this scale. Or use 99.9% and
+  correct the downtime to ~43 minutes.
+
+
+[CRITICAL] Issue #7: Rate Limiting Conflict
+---------------------------------------------
+  NFR-08 (Security Requirements):
+    → "limit requests to 10 requests per minute per user"
+  Business Rules (NFR-08):
+    → "limited to 10 requests per minute"
+  NFR image:
+    → "Rate limiting: 100 req/min"
+
+  10 req/min is extremely restrictive — a user opening the
+  app and navigating through screens could hit that limit
+  within seconds.
+
+  Recommendation: Use 100 requests/minute for general API
+  calls. Keep the 5 reports/day limit separately for
+  report submissions.
+
+
+[MAJOR] Issue #8: Data Growth Metrics Mismatch
+------------------------------------------------
+  NFR-27 in SRS document:
+    → "10,000 users per day and 100,000 users per year"
+  NFR image:
+    → "≥ 10,000 officers"
+    → "≥ 100,000 reports/year"
+    → "≥ 500,000 scans/year"
+
+  These measure completely different things (users vs
+  officers vs reports vs scans).
+
+  Recommendation: Clarify what is being measured and
+  align both documents.
+
+
+================================================================
+C. QR CODE FORMAT INCONSISTENCY
+================================================================
+
+[CRITICAL] Issue #9: QR Code Format Conflict
+----------------------------------------------
+  NFR-07 in SRS document:
+    → "LOH/PARKIR-DSH-YYY-NNN"
+      (with slash, 3-digit year)
+
+  App source code (AppContext.tsx):
+    → "LOHPARKIR-DSH-2024-001"
+      (no slash, 4-digit year)
+
+  NFR image:
+    → "LOHPARKIR-DSH-YYYY-NNN"
+      (no slash, 4-digit year)
+
+  Recommendation: Use "LOHPARKIR-DSH-YYYY-NNN" (no slash,
+  4-digit year) to match the actual implementation.
+
+
+================================================================
+D. FEATURE & SCOPE INCONSISTENCIES
+================================================================
+
+[CRITICAL] Issue #10: Payment Methods Conflict
+-------------------------------------------------
+  Product Scope (Section 1.4):
+    → "scanning a government-issued QR code (centralized
+       QRIS) or paying in cash"
+    (Only 2 methods: QRIS + Cash)
+
+  Section 4.3 (System Feature title):
+    → "Integrated Digital Payment (QRIS/E-Wallet)"
+
+  REQ-19 to REQ-21:
+    → REQ-19: "QRIS payments"
+    → REQ-20: "e-wallet payments"
+    → REQ-21: "virtual account payments"
+    (3 digital methods: QRIS + E-wallet + VA)
+
+  Product Functions (Section 2.2):
+    → "pay the official fee by scanning a government-issued
+       QRIS code" (QRIS only)
+
+  Recommendation: Decide the actual payment methods.
+  If only QRIS, remove REQ-20 and REQ-21. If multiple
+  methods, update Product Scope and Product Functions.
+
+
+[CRITICAL] Issue #11: Officer Role Contradiction
+--------------------------------------------------
+  Section 2.2 (Product Functions):
+    → "Officers do not use the application"
+  Section 2.3 (User Classes):
+    → "They do not actively use the application"
+    → "Device used: None"
+
+  BUT NFR-15 (Safety Requirements):
+    → "The officer's app must include a panic button"
+  Business Rules (NFR-15):
+    → "Only registered parking officers who have the
+       official app (if provided) can use the panic button"
+
+  If officers don't use the app, they can't have a
+  panic button in the app.
+
+  Recommendation: Either (a) give officers a minimal app
+  with panic button functionality, or (b) remove the panic
+  button requirement.
+
+
+[MAJOR] Issue #12: Officer Account Creation Conflict
+------------------------------------------------------
+  Section 2.2 (Product Functions - Admin):
+    → "Create Officer Accounts: Register new parking
+       officers and issue official QR badges"
+    (Admin creates officer accounts)
+
+  Section 2.3 (User Classes - Officers):
+    → "Can create their own account to register into
+       the database"
+    (Officers self-register)
+
+  Business Rules:
+    → "A parking officer can create their own account,
+       but it will not be active until a Dishub admin
+       approves it"
+    (Self-register with approval)
+
+  Recommendation: Pick one flow. The self-registration
+  with admin approval is the most complete description.
+  Update Section 2.2 accordingly.
+
+
+[MAJOR] Issue #13: Missing System Features in Section 4
+---------------------------------------------------------
+  Section 2.2 (Product Functions) lists features that
+  are NOT documented in Section 4 (System Features):
+
+    → "View Payment History" — no Section 4.x
+    → "Receive Notifications" — no Section 4.x
+    → "View and Print Reports" — no Section 4.x
+    → "Create Officer Accounts" — no Section 4.x
+
+  Section 4 only covers:
+    4.1 QR Code Validation Scan
+    4.2 Report Illegal Parking
+    4.3 Integrated Digital Payment
+    4.4 Real-time Monitoring Dashboard
+
+  Recommendation: Either add these as separate system
+  features (4.5, 4.6, 4.7, 4.8) with functional
+  requirements, or explicitly mark them as "future/
+  non-major" in Section 4 as well.
+
+
+[MAJOR] Issue #14: Dashboard Priority Conflict
+-------------------------------------------------
+  Section 4.4 (Real-time Monitoring Dashboard):
+    → Priority: Medium
+
+  But the Product Scope describes it as a core feature
+  with extensive detail (heatmaps, trend graphs, public
+  view, role-based access). This level of complexity
+  implies High priority.
+
+  Recommendation: Re-evaluate the priority. If the
+  dashboard is needed for launch, it should be High.
+
+
+================================================================
+E. DOCUMENT STRUCTURE & NUMBERING ERRORS
+================================================================
+
+[CRITICAL] Issue #15: Section Numbering Error
+-----------------------------------------------
+  All system features (4.1 through 4.4) incorrectly
+  use the same sub-numbering:
+
+    Section 4.1: 4.1.1, 4.1.2, 4.1.3  ← Correct
+    Section 4.2: 4.1.1, 4.1.2, 4.1.3  ← Should be 4.2.1, 4.2.2, 4.2.3
+    Section 4.3: 4.1.1, 4.1.2, 4.1.3  ← Should be 4.3.1, 4.3.2, 4.3.3
+    Section 4.4: 4.1.1, 4.1.2, 4.1.3  ← Should be 4.4.1, 4.4.2, 4.4.3
+
+  Recommendation: Fix sub-section numbering.
+
+
+[MAJOR] Issue #16: Duplicate NFR ID
+--------------------------------------
+  In Section 5.1 (Performance Requirements):
+    → NFR-03 is used for BOTH "Dashboard load time"
+       AND "Concurrent users"
+
+  Each NFR should have a unique ID.
+
+  Recommendation: Assign "Concurrent users" a separate
+  ID. Based on the NFR image, this should be NFR-04.
+
+
+[MINOR] Issue #17: Missing REQ-9
+----------------------------------
+  Functional requirements jump from REQ-8 to REQ-10.
+  REQ-9 is missing.
+
+  Recommendation: Either add REQ-9 or renumber
+  subsequent requirements.
+
+
+================================================================
+F. NFR CROSS-REFERENCE ERRORS IN BUSINESS RULES
+================================================================
+
+[MAJOR] Issue #18: Wrong NFR References in Business Rules
+-----------------------------------------------------------
+  Several business rules reference the wrong NFR IDs:
+
+  "Report follow-up (NFR-33)"
+    → NFR-33 is "Data Retention", not report follow-up.
+    → Report follow-up has no dedicated NFR.
+
+  "Report editing (NFR-19)"
+    → NFR-19 is "Error Handling", not report editing.
+    → Report editing has no dedicated NFR.
+
+  Recommendation: Either create new NFR IDs for these
+  business rules or remove the NFR references and keep
+  them as standalone business rules.
+
+
+================================================================
+G. INCOMPLETE / PLACEHOLDER SECTIONS
+================================================================
+
+[MINOR] Issue #19: Unfilled Sections
+---------------------------------------
+  The following sections still contain placeholder text
+  or "xxx" values:
+
+  • Section 2.5 - Server Environment:
+    "Database: xxx" / "Deployment: xxx"
+
+  • Section 2.5 - Design and Implementation Constraints:
+    Still contains the IEEE template placeholder text.
+
+  • Section 2.7 - Assumptions and Dependencies:
+    Still contains the IEEE template placeholder text.
+
+  • Section 6 - Other Requirements:
+    Still contains the IEEE template placeholder text.
+
+  • Appendix A, B, C:
+    All still contain placeholder text.
+
+  • Revision History table:
+    Completely empty.
+
+  Recommendation: Fill in all placeholder sections or
+  mark them as "N/A" with justification.
+
+
+================================================================
+H. USER CLASS & ADMIN INCONSISTENCIES
+================================================================
+
+[MINOR] Issue #20: Admin Device & Interface Conflict
+------------------------------------------------------
+  Section 2.3 (User Classes):
+    → Dishub Admin "Device used: Smartphone (iOS)"
+
+  Section 3.1 (User Interfaces):
+    → "Web Dashboard (Admin): card-based Admin Dashboard
+       with consistent sidebar navigation"
+
+  Section 3.3 (Hardware Interfaces):
+    → "Admin Computers: Standard PCs/Laptops"
+
+  Do admins use smartphones or computers?
+
+  Recommendation: Admins should use web dashboard on
+  computers. Update Section 2.3 to say
+  "Device used: Computer (web browser)".
+
+
+[MINOR] Issue #21: User Class Count Mismatch
+-----------------------------------------------
+  Section 2.3 defines FOUR user classes:
+    1. General Public
+    2. Registered Parking Officers
+    3. Dishub Admin
+    4. Database Administrator
+
+  Section 2.2 (Product Functions) mentions THREE types:
+    → "general public (drivers), Dishub admins, and
+       registered parking officers"
+
+  Database Administrator is missing from Product Functions.
+
+  Recommendation: Add Database Administrator functions
+  to Section 2.2 or merge with Dishub Admin role.
+
+
+[MAJOR] Issue #22: Stimulus/Response Incomplete
+-------------------------------------------------
+  Section 4.1.2 (QR Code Validation Scan):
+    → "The user clicks the " — sentence is cut off
+    → Missing the complete stimulus/response sequence
+
+  Recommendation: Complete the sequence. Likely should
+  say "The user clicks the 'Report' button" or
+  "The user clicks the 'Pay' button".
+
+
+================================================================
+SUMMARY TABLE
+================================================================
+
+  ID   | Severity | Section(s) Affected      | Topic
+  -----|----------|--------------------------|------------------
+  #1   | CRITICAL | 2.3, 2.5, NFR-24         | Platform conflict
+  #2   | MAJOR    | 2.5, 3.2, NFR-24         | iOS version
+  #3   | MAJOR    | 2.5, NFR-26              | Camera spec
+  #4   | CRITICAL | NFR-02                   | QR scan speed
+  #5   | CRITICAL | NFR-03                   | Dashboard load
+  #6   | CRITICAL | NFR-16                   | Uptime math
+  #7   | CRITICAL | NFR-08                   | Rate limiting
+  #8   | MAJOR    | NFR-27                   | Data growth
+  #9   | CRITICAL | NFR-07, App code         | QR format
+  #10  | CRITICAL | 1.4, 2.2, 4.3            | Payment methods
+  #11  | CRITICAL | 2.2, 2.3, NFR-15         | Officer role
+  #12  | MAJOR    | 2.2, 2.3, Biz Rules      | Officer accounts
+  #13  | MAJOR    | 2.2, Section 4           | Missing features
+  #14  | MAJOR    | 4.4, 1.4                 | Dashboard priority
+  #15  | CRITICAL | 4.1-4.4                  | Section numbering
+  #16  | MAJOR    | 5.1                      | Duplicate NFR ID
+  #17  | MINOR    | 4.1.3                    | Missing REQ-9
+  #18  | MAJOR    | 5.5                      | Wrong NFR refs
+  #19  | MINOR    | 2.5, 2.7, 6, Appendix    | Placeholders
+  #20  | MINOR    | 2.3, 3.1, 3.3            | Admin device
+  #21  | MINOR    | 2.2, 2.3                 | User class count
+  #22  | MAJOR    | 4.1.2                    | Incomplete text
+
+================================================================
+END OF REVIEW
+================================================================

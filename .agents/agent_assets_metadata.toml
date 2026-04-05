@@ -59,3 +59,9 @@ id = "sP9_L1tTFV8BULue6fIsq"
 uri = "file://Kuesioner_LohParkir.txt"
 type = "text"
 title = "Kuesioner Analisis Kebutuhan Fitur - LohParkir (TXT)"
+
+[[outputs]]
+id = "I8iqaFj3XrLM__TJQWG38"
+uri = "file://SRS_Consistency_Review.txt"
+type = "text"
+title = "Laporan Review Konsistensi SRS - LohParkir"
