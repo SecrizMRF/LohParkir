@@ -47,3 +47,9 @@ id = "1FDKqeAp6KF2s4Q0ktVeP"
 uri = "file://screenshots/nfr-lohparkir.jpg"
 type = "image"
 title = "Non-Functional Requirements (NFR) - Sistem LohParkir"
+
+[[outputs]]
+id = "IjtUHnlsiVJj02lluEiT5"
+uri = "file://screenshots/kuesioner-lohparkir.jpg"
+type = "image"
+title = "Kuesioner Analisis Kebutuhan Fitur - Aplikasi LohParkir"
