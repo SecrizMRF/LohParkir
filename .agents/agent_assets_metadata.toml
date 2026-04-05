@@ -107,3 +107,9 @@ id = "asG6aOTM1PoXx8Z93M35R"
 uri = "file://docs/Use_Case_Specification_LohParkir.md"
 type = "text"
 title = "Use Case Specification — LohParkir"
+
+[[outputs]]
+id = "jXhoi03SKVx1Me2DNSZ-T"
+uri = "file://docs/Use_Case_Specification_LohParkir.docx"
+type = "word_document"
+title = "Use Case Specification — LohParkir (.docx)"
