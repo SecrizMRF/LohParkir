@@ -53,3 +53,9 @@ id = "IjtUHnlsiVJj02lluEiT5"
 uri = "file://screenshots/kuesioner-lohparkir.jpg"
 type = "image"
 title = "Kuesioner Analisis Kebutuhan Fitur - Aplikasi LohParkir"
+
+[[outputs]]
+id = "sP9_L1tTFV8BULue6fIsq"
+uri = "file://Kuesioner_LohParkir.txt"
+type = "text"
+title = "Kuesioner Analisis Kebutuhan Fitur - LohParkir (TXT)"

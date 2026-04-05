@@ -1,0 +1,151 @@
+============================================================
+   KUESIONER ANALISIS KEBUTUHAN FITUR APLIKASI LOHPARKIR
+   Sistem Verifikasi dan Manajemen Parkir
+   Dinas Perhubungan (Dishub)
+============================================================
+
+Kepada Yth. Bapak/Ibu Responden,
+Kuesioner ini bertujuan untuk mengetahui kebutuhan dan
+harapan Anda terhadap fitur aplikasi LohParkir. Mohon
+mengisi seluruh pertanyaan dengan jujur. Terima kasih.
+
+------------------------------------------------------------
+DATA RESPONDEN
+------------------------------------------------------------
+Nama           : ..........................................
+Usia           : ..........................................
+Jenis Kelamin  : [ ] Laki-laki   [ ] Perempuan
+Peran          : [ ] Masyarakat  [ ] Petugas Parkir
+                 [ ] Admin Dishub [ ] Pimpinan
+Tanggal        : ..........................................
+
+============================================================
+BAGIAN A - LATAR BELAKANG
+============================================================
+
+1. Seberapa sering Anda menggunakan layanan parkir?
+   [ ] Setiap hari
+   [ ] 3-5 kali/minggu
+   [ ] 1-2 kali/minggu
+   [ ] Jarang (beberapa kali/bulan)
+
+2. Apakah Anda pernah mengalami masalah dengan petugas
+   parkir liar atau tarif tidak sesuai?
+   [ ] Ya    [ ] Tidak
+
+3. Apakah Anda familiar menggunakan QR Code?
+   [ ] 1  [ ] 2  [ ] 3  [ ] 4  [ ] 5
+   (1 = Tidak familiar, 5 = Sangat familiar)
+
+============================================================
+BAGIAN B - FITUR VERIFIKASI PETUGAS (SCAN QR)
+============================================================
+
+4. Seberapa penting fitur verifikasi keaslian petugas
+   parkir melalui scan QR Code?
+   [ ] 1  [ ] 2  [ ] 3  [ ] 4  [ ] 5
+   (1 = Tidak penting, 5 = Sangat penting)
+
+5. Informasi apa yang perlu muncul setelah scan QR?
+   (boleh pilih lebih dari satu)
+   [ ] Nama petugas
+   [ ] Foto petugas
+   [ ] Nomor badge
+   [ ] Zona tugas
+   [ ] Tarif resmi
+   [ ] Status aktif/nonaktif
+
+6. Apakah Anda ingin melihat riwayat scan QR sebelumnya?
+   [ ] Ya    [ ] Tidak
+
+============================================================
+BAGIAN C - FITUR PELAPORAN
+============================================================
+
+7. Seberapa penting fitur pelaporan parkir liar atau
+   petugas palsu?
+   [ ] 1  [ ] 2  [ ] 3  [ ] 4  [ ] 5
+   (1 = Tidak penting, 5 = Sangat penting)
+
+8. Jenis laporan apa yang perlu tersedia?
+   (boleh pilih lebih dari satu)
+   [ ] Parkir liar
+   [ ] QR Code palsu
+   [ ] Tarif tidak sesuai
+   [ ] Petugas tidak sopan
+   [ ] Lainnya: ............................
+
+9. Apakah Anda bersedia melampirkan foto saat melapor?
+   [ ] Ya, selalu
+   [ ] Ya, jika diperlukan
+   [ ] Tidak
+
+10. Apakah Anda ingin mendapat notifikasi status laporan?
+    [ ] Ya    [ ] Tidak
+
+============================================================
+BAGIAN D - FITUR PEMBAYARAN DIGITAL (QRIS)
+============================================================
+
+11. Seberapa penting pembayaran parkir digital (QRIS)?
+    [ ] 1  [ ] 2  [ ] 3  [ ] 4  [ ] 5
+    (1 = Tidak penting, 5 = Sangat penting)
+
+12. Metode pembayaran yang Anda preferensikan?
+    [ ] Tunai saja
+    [ ] Digital saja
+    [ ] Keduanya (fleksibel)
+
+13. Apakah bukti pembayaran digital (e-receipt) penting?
+    [ ] Ya    [ ] Tidak
+
+============================================================
+BAGIAN E - DASHBOARD ADMIN (Khusus Admin Dishub)
+============================================================
+
+14. Data apa yang paling penting di dashboard?
+    (urutkan 1-4, dengan 1 = paling penting)
+    [ ] Jumlah scan harian
+    [ ] Jumlah laporan masuk
+    [ ] Total pendapatan parkir
+    [ ] Jumlah petugas aktif
+
+15. Apakah fitur ekspor laporan ke Excel/PDF diperlukan?
+    [ ] 1  [ ] 2  [ ] 3  [ ] 4  [ ] 5
+    (1 = Tidak perlu, 5 = Sangat perlu)
+
+============================================================
+BAGIAN F - PRIORITAS & SARAN
+============================================================
+
+16. Urutkan fitur berikut berdasarkan prioritas Anda
+    (1 = paling dibutuhkan, 5 = paling tidak):
+    [ ] Verifikasi petugas via QR Code
+    [ ] Pelaporan parkir liar / petugas palsu
+    [ ] Pembayaran digital (QRIS)
+    [ ] Informasi tarif & zona parkir
+    [ ] Dashboard monitoring (admin)
+
+17. Apa kekhawatiran utama Anda terhadap aplikasi ini?
+    (boleh pilih lebih dari satu)
+    [ ] Privasi data
+    [ ] Keamanan pembayaran
+    [ ] Sulit digunakan
+    [ ] Butuh koneksi internet
+    [ ] Lainnya: ............................
+
+18. Saran atau masukan untuk pengembangan aplikasi:
+    ...................................................
+    ...................................................
+    ...................................................
+
+============================================================
+Keterangan Skala:
+1 = Sangat tidak setuju / tidak penting
+2 = Tidak setuju / kurang penting
+3 = Netral
+4 = Setuju / penting
+5 = Sangat setuju / sangat penting
+
+Terima kasih atas partisipasi Anda!
+============================================================
