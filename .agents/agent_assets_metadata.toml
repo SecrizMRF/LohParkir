@@ -101,3 +101,9 @@ id = "nW8NcroW3iiWr1G4v0o_T"
 uri = "file://App_vs_SRS_Gap_Analysis.txt"
 type = "text"
 title = "App vs SRS v1.2 — Gap Analysis Report"
+
+[[outputs]]
+id = "asG6aOTM1PoXx8Z93M35R"
+uri = "file://docs/Use_Case_Specification_LohParkir.md"
+type = "text"
+title = "Use Case Specification — LohParkir"
