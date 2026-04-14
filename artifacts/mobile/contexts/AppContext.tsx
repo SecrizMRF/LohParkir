@@ -23,6 +23,7 @@ interface AppContextType {
   userRole: "public" | "admin";
   authToken: string | null;
   authUser: { id: number; username: string; fullName: string; role: string } | null;
+  points: number;
   setUserRole: (role: "public" | "admin") => void;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -31,7 +32,8 @@ interface AppContextType {
   updateOfficer: (id: number, data: Partial<Officer>) => Promise<Officer>;
   addReport: (data: { type: string; description: string; photoUrl?: string | null; latitude?: number | null; longitude?: number | null; address?: string | null; relatedQrCode?: string | null }) => Promise<Report>;
   updateReportStatus: (id: number, status: string, adminNotes?: string) => Promise<void>;
-  addPayment: (data: { officerId?: number | null; officerName: string; amount: number; method?: string; area?: string }) => Promise<Payment>;
+  addPayment: (data: { officerId?: number | null; officerName: string; amount: number; method?: string; area?: string; plateNumber?: string; duration?: number }) => Promise<Payment>;
+  addPoints: (amount: number) => void;
   validateQR: (qrCode: string) => Promise<QrValidationResult>;
   refreshData: () => Promise<void>;
   dashboardStats: DashboardStats;
@@ -63,6 +65,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<{ id: number; username: string; fullName: string; role: string } | null>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(defaultStats);
+  const [points, setPoints] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,15 +74,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const loadInitialData = async () => {
     try {
-      const [storedToken, storedUser, storedRole] = await Promise.all([
+      const [storedToken, storedUser, storedRole, storedPoints] = await Promise.all([
         AsyncStorage.getItem("authToken"),
         AsyncStorage.getItem("authUser"),
         AsyncStorage.getItem("userRole"),
+        AsyncStorage.getItem("parkingPoints"),
       ]);
 
       if (storedToken) setAuthToken(storedToken);
       if (storedUser) setAuthUser(JSON.parse(storedUser));
       if (storedRole) setUserRoleState(storedRole as "public" | "admin");
+      if (storedPoints) setPoints(Number(storedPoints) || 0);
 
       const results = await Promise.allSettled([
         api.getOfficers(),
@@ -269,11 +274,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setReports((prev) => prev.map((r) => (r.id === id ? updated : r)));
   }, [authToken]);
 
-  const addPayment = useCallback(async (data: { officerId?: number | null; officerName: string; amount: number; method?: string; area?: string }): Promise<Payment> => {
+  const addPayment = useCallback(async (data: { officerId?: number | null; officerName: string; amount: number; method?: string; area?: string; plateNumber?: string; duration?: number }): Promise<Payment> => {
     const payment = await api.createPayment(data);
     setPayments((prev) => [payment, ...prev]);
     await fetchAllData();
     return payment;
+  }, []);
+
+  const addPoints = useCallback((amount: number) => {
+    setPoints((prev) => {
+      const newTotal = prev + amount;
+      AsyncStorage.setItem("parkingPoints", String(newTotal)).catch(() => {});
+      return newTotal;
+    });
   }, []);
 
   return (
@@ -286,6 +299,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         userRole,
         authToken,
         authUser,
+        points,
         setUserRole,
         login,
         logout,
@@ -295,6 +309,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addReport,
         updateReportStatus,
         addPayment,
+        addPoints,
         validateQR,
         refreshData,
         dashboardStats,

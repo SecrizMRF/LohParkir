@@ -1,0 +1,120 @@
+Fitur Lengkap
+A. Verifikasi & Pembayaran Parkir Digital
+1. Verifikasi Jukir via Pindai QR
+Pengguna mengarahkan kamera aplikasi ke kode QR yang dimiliki jukir. Sistem secara otomatis memverifikasi data jukir pada pangkalan data pusat.
+
+Jika Valid (Jukir Terdaftar): Layar aplikasi berubah menjadi hijau dan menampilkan informasi resmi meliputi nama lengkap, foto, zona parkir, serta tarif parkir yang berlaku. Di bawah informasi tersebut tersedia tombol "Bayar Parkir".
+
+Jika Tidak Valid: Layar menampilkan peringatan merah bertuliskan "Jukir Tidak Terdaftar" dan menyediakan tombol "Laporkan Sekarang".
+
+2. Pembayaran Digital Terintegrasi QRIS
+Setelah menekan tombol "Bayar Parkir", pengguna diarahkan ke halaman pembayaran. Pengguna wajib memasukkan nomor plat kendaraan. Sistem kemudian menampilkan nominal tarif sesuai zona dan membangkitkan kode pembayaran QRIS statis yang telah ditautkan langsung ke rekening kas umum daerah (Pemda).
+
+Konfirmasi Pembayaran: Setelah pembayaran sukses, aplikasi menampilkan Karcis Digital yang memuat detail transaksi (waktu, lokasi, plat nomor, jumlah bayar). Karcis ini tersimpan dalam riwayat transaksi pengguna.
+
+Notifikasi Real-time ke Jukir: Secara simultan, sistem mengirimkan notifikasi push ke Aplikasi Mitra Jukir yang digunakan oleh jukir bersangkutan. Notifikasi berbunyi: "Kendaraan [Plat Nomor] telah melakukan pembayaran resmi sebesar [Jumlah]."
+
+Dampak Sistemik:
+Fitur ini mentransformasi aplikasi dari sekadar alat verifikasi menjadi gerbang transaksi ekonomi digital. Seluruh Pendapatan Asli Daerah (PAD) dari sektor parkir tercatat secara real-time di dasbor pemerintah, menghilangkan estimasi dan potensi kebocoran.
+
+B. Pelaporan Jukir Liar & Peta Zona Rawan
+1. Pelaporan Instan dengan Metadata Otomatis
+Saat pengguna menekan tombol "Laporkan Sekarang" (baik dari hasil scan tidak valid maupun dari tombol cepat di beranda), sistem tidak hanya mencatat laporan. Secara otomatis aplikasi mengunci dan menyertakan data pendukung ke dalam tiket laporan:
+
+Koordinat GPS lokasi kejadian.
+
+Timestamp waktu pelaporan.
+
+(Opsional) Foto situasi jika pengguna mengizinkan akses kamera.
+
+Laporan langsung masuk ke antrean dasbor admin tanpa perlu input manual dari pengguna.
+
+2. Peta Zona Rawan Interaktif
+Halaman utama aplikasi menampilkan peta kota dengan layer Zona Rawan Pungli. Area ditandai dengan gradasi warna berdasarkan tingkat kerawanan dari data historis laporan:
+
+Merah: Tingkat laporan pungli tinggi.
+
+Kuning: Tingkat laporan sedang.
+
+Hijau: Tingkat laporan rendah/aman.
+
+3. Notifikasi Geografis Preventif
+Aplikasi secara kontinu memantau lokasi pengguna (dengan izin latar belakang). Ketika perangkat memasuki radius 100 meter dari zona yang berstatus Merah atau Kuning, sistem akan mengirimkan notifikasi pengingat:
+
+"Anda memasuki area rawan pungli. Pastikan hanya membayar kepada jukir resmi dengan QR Code. Laporkan jika diminta biaya tidak wajar."
+
+C. Sistem Poin & Diskon Parkir Warga
+1. Akumulasi Poin Transaksi Digital
+Setiap kali pengguna berhasil melakukan transaksi pembayaran parkir melalui fitur Bayar Parkir (Fitur A), sistem secara otomatis mengkreditkan Poin Parkir ke akun pengguna. Jumlah poin dihitung berdasarkan nilai transaksi (misal: Rp1.000 = 1 Poin).
+
+2. Insentif Rating Jukir
+Setelah transaksi digital selesai, pengguna akan menerima notifikasi untuk memberikan Rating kepada jukir yang melayani (skala bintang 1-5) terkait keramahan, kebersihan, dan keamanan. Setiap kali pengguna memberikan rating, sistem menambahkan Poin Bonus (+5 Poin) sebagai apresiasi partisipasi.
+
+3. Konversi Poin ke Diskon Retribusi Bulanan
+Poin yang terkumpul dapat ditukarkan melalui menu Tukar Poin. Mekanisme penukaran utama adalah:
+
+Diskon Parkir Langganan: Poin ditukar dengan voucher potongan harga untuk pembayaran retribusi parkir bulanan di zona tertentu. Contoh: Kumpulkan poin setara 25 kali transaksi harian, dapatkan gratis parkir untuk transaksi ke-26 di bulan yang sama.
+
+Dampak Sistemik:
+Fitur ini menciptakan insentif ekonomi langsung bagi warga untuk selalu menggunakan jalur pembayaran resmi (digital) dan turut serta dalam menjaga kualitas layanan jukir.
+
+D. Dasbor Admin & Prediksi Pelanggaran
+1. Dasbor Kinerja Real-time
+Antarmuka admin (berbasis web) menampilkan agregasi data dari seluruh aktivitas aplikasi:
+
+Modul Transaksi: Total PAD parkir digital hari ini, perbandingan dengan periode sebelumnya, dan daftar transaksi per zona.
+
+Modul Pengaduan: Peta titik lokasi laporan pungli aktif, status penanganan laporan, dan waktu respons rata-rata petugas.
+
+2. Heatmap Prediksi Pelanggaran (AI Sederhana)
+Sistem menganalisis akumulasi data historis laporan (lokasi, waktu kejadian, frekuensi) untuk membangkitkan Heatmap Prediksi Pelanggaran.
+
+Fungsi: Dasbor menampilkan peta khusus untuk prediksi 24 jam ke depan (misal: besok sore pukul 16.00-18.00).
+
+Output: Area yang diprediksi akan mengalami lonjakan laporan pungli atau aktivitas jukir liar akan berkedip oranye/merah di peta prediksi.
+
+Dampak Sistemik:
+Mengubah paradigma operasional petugas dari Reaktif (menunggu laporan masuk) menjadi Preventif (menempatkan personel patroli di lokasi yang diprediksi rawan sebelum kejadian terjadi).
+
+E. Pengawasan Kehadiran Jukir Berbasis Geofencing
+1. Pendaftaran Zona Kerja Digital (Polygon)
+Setiap jukir resmi yang terdaftar dalam sistem memiliki Zona Tugas yang ditandai dengan batas geografis virtual (Polygon Geofencing) pada peta admin. Radius toleransi pergerakan ditetapkan, misalnya 50 meter dari titik pusat zona.
+
+2. Aplikasi Mitra Jukir & Token Kehadiran
+Jukir resmi menggunakan aplikasi ringan bernama ParkirCerdas Mitra. Aplikasi ini berjalan di latar belakang dan mengirimkan sinyal lokasi GPS secara berkala.
+
+3. Deteksi Keluar Zona (Mangkir Otomatis)
+Sistem secara otomatis memonitor posisi jukir terhadap polygon zona yang telah ditentukan.
+
+Kondisi Pelanggaran: Jika token GPS jukir terdeteksi berada di luar batas polygon selama lebih dari 5 menit tanpa adanya laporan izin khusus, sistem akan mencatat kejadian "Jukir Meninggalkan Area Tugas" di log dasbor admin.
+
+4. Deteksi Anomali Kehadiran Jukir Liar
+Sistem melakukan korelasi data antara transaksi parkir yang terjadi di suatu zona dengan keberadaan jukir resmi yang sedang bertugas.
+
+Logika Deteksi: Jika terdapat transaksi pembayaran atau laporan pengguna di Zona A, namun tidak ada jukir resmi yang terdeteksi online dalam radius zona tersebut, sistem akan membangkitkan notifikasi peringatan di dasbor admin: "Indikasi Aktivitas Jukir Liar di Zona [Nama Zona]."
+
+Dampak Sistemik:
+Fitur ini memberikan perlindungan ganda: melindungi jukir resmi dari tuduhan mangkir yang tidak benar karena data kehadiran terekam otomatis, sekaligus menjadi radar 24/7 bagi pemerintah untuk mendeteksi keberadaan oknum liar tanpa bergantung sepenuhnya pada laporan warga.
+
+Alur Pengguna Singkat
+Warga Datang ke Lokasi Parkir.
+
+Scan QR Jukir.
+
+Valid ➔ Lihat Info & Tarif ➔ Klik Bayar.
+
+Tidak Valid ➔ Klik Laporkan (Sistem kirim GPS & Waktu).
+
+Pembayaran: Input Plat Nomor ➔ Bayar via QRIS ➔ Dapat Karcis Digital.
+
+Pasca Bayar: Beri Rating Jukir ➔ Dapat Poin.
+
+Sisi Jukir: Terima Notifikasi "Plat X Sudah Bayar" di HP Mitra.
+
+Sisi Admin:
+
+Pantau PAD Real-time.
+
+Lihat Heatmap Prediksi untuk rencana patroli besok.
+
+Terima Notifikasi Otomatis jika Jukir keluar radius >5 menit.

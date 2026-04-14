@@ -41,18 +41,27 @@ LohParkir is a QR code-based parking verification and management system for Indo
 - **admin**: Manage officers, reports, view dashboard (JWT required)
 - **superadmin**: Full access (JWT required)
 
-## Screens (4 Tabs + Stack)
+## Screens (5 Tabs + Stack)
 - **Scan Tab** (`(tabs)/index.tsx`): QR scanner with camera + manual input, demo QR codes
+- **Peta Tab** (`(tabs)/peta-rawan.tsx`): Zona rawan pungli visualization with color-coded grid, legend, and danger levels
 - **Laporan Tab** (`(tabs)/reports.tsx`): View reports, FAB to create new
-- **Riwayat Tab** (`(tabs)/payments.tsx`): Payment history with summary stats
+- **Riwayat Tab** (`(tabs)/payments.tsx`): Payment history with points card (Poin Parkir) and summary stats
 - **Admin Tab** (`(tabs)/admin.tsx`): Dashboard stats, login, officer/report management
-- **Scan Result** (`scan-result.tsx`): Valid/invalid QR verification display
-- **Payment** (`payment.tsx`): QRIS payment flow with receipt
+- **Scan Result** (`scan-result.tsx`): Enhanced full-screen green (valid) / red (invalid) verification display with officer details
+- **Payment** (`payment.tsx`): QRIS payment with plate number input, duration selection (1-5 hrs), enhanced Karcis Digital receipt, points earned
+- **Rating** (`rating.tsx`): Officer rating (1-5 stars) for 3 criteria (Keramahan, Kebersihan, Keamanan) with +5 bonus points
 - **Report Form** (`report-form.tsx`): Submit reports with photo & GPS
 - **Report Detail** (`report-detail.tsx`): View report, admin status changes + notes
 - **Officer Form** (`officer-form.tsx`): Register officers with NIP/badge validation
 - **Officers List** (`officers-list.tsx`): View/manage officers, activate/deactivate
 - **Reports Manage** (`reports-manage.tsx`): Filter reports by status (pending/in_progress/resolved/rejected)
+
+## Points System
+- Users earn points from payments: 1 point per Rp 1.000 spent
+- Users earn +5 bonus points for rating officers
+- Points persisted in AsyncStorage (`parkingPoints` key)
+- 1000 points = parking discount (future feature)
+- Displayed on Riwayat tab in golden card
 
 ## QR Code Format
 - Badge: `DSH-YYYY-NNN` (e.g., DSH-2024-001)

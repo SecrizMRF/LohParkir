@@ -3,7 +3,7 @@ import { isLiquidGlassAvailable } from "expo-glass-effect";
 import { Tabs } from "expo-router";
 import { Icon, Label, NativeTabs } from "expo-router/unstable-native-tabs";
 import { SymbolView } from "expo-symbols";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
@@ -15,6 +15,10 @@ function NativeTabLayout() {
       <NativeTabs.Trigger name="index">
         <Icon sf={{ default: "qrcode.viewfinder", selected: "qrcode.viewfinder" }} />
         <Label>Scan</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="peta-rawan">
+        <Icon sf={{ default: "map", selected: "map.fill" }} />
+        <Label>Peta</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="reports">
         <Icon sf={{ default: "doc.text", selected: "doc.text.fill" }} />
@@ -67,7 +71,7 @@ function ClassicTabLayout() {
           ) : null,
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
-          fontSize: 11,
+          fontSize: 10,
         },
       }}
     >
@@ -77,9 +81,21 @@ function ClassicTabLayout() {
           title: "Scan",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="qrcode.viewfinder" tintColor={color} size={24} />
+              <SymbolView name="qrcode.viewfinder" tintColor={color} size={22} />
             ) : (
-              <Feather name="maximize" size={22} color={color} />
+              <Feather name="maximize" size={20} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="peta-rawan"
+        options={{
+          title: "Peta",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="map" tintColor={color} size={22} />
+            ) : (
+              <MaterialCommunityIcons name="map-marker-alert" size={22} color={color} />
             ),
         }}
       />
@@ -89,9 +105,9 @@ function ClassicTabLayout() {
           title: "Laporan",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="doc.text" tintColor={color} size={24} />
+              <SymbolView name="doc.text" tintColor={color} size={22} />
             ) : (
-              <Feather name="file-text" size={22} color={color} />
+              <Feather name="file-text" size={20} color={color} />
             ),
         }}
       />
@@ -101,9 +117,9 @@ function ClassicTabLayout() {
           title: "Riwayat",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="creditcard" tintColor={color} size={24} />
+              <SymbolView name="creditcard" tintColor={color} size={22} />
             ) : (
-              <Feather name="credit-card" size={22} color={color} />
+              <Feather name="credit-card" size={20} color={color} />
             ),
         }}
       />
@@ -113,9 +129,9 @@ function ClassicTabLayout() {
           title: "Admin",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="shield" tintColor={color} size={24} />
+              <SymbolView name="shield" tintColor={color} size={22} />
             ) : (
-              <Feather name="shield" size={22} color={color} />
+              <Feather name="shield" size={20} color={color} />
             ),
         }}
       />

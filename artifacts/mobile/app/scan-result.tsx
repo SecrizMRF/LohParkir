@@ -19,178 +19,313 @@ export default function ScanResultScreen() {
     rate?: string;
     officerId?: string;
     qrCode?: string;
+    message?: string;
   }>();
 
   const isValid = params.valid === "true";
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingBottom: 40 }}
-    >
-      <View
-        style={[
-          styles.statusCard,
-          {
-            backgroundColor: isValid ? colors.success + "10" : colors.destructive + "10",
-            borderRadius: colors.radius,
-          },
+    <View style={[styles.container, { backgroundColor: isValid ? "#059669" : "#DC2626" }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: Platform.OS === "web" ? 67 + 20 : insets.top + 20, paddingBottom: insets.bottom + 40 },
         ]}
+        showsVerticalScrollIndicator={false}
       >
-        <View
-          style={[
-            styles.statusIcon,
-            { backgroundColor: isValid ? colors.success + "20" : colors.destructive + "20" },
-          ]}
-        >
-          <MaterialCommunityIcons
-            name={isValid ? "shield-check" : "shield-alert"}
-            size={48}
-            color={isValid ? colors.success : colors.destructive}
-          />
+        <View style={styles.statusSection}>
+          <View style={[styles.statusIconCircle, { backgroundColor: "rgba(255,255,255,0.2)" }]}>
+            <View style={[styles.statusIconInner, { backgroundColor: "rgba(255,255,255,0.3)" }]}>
+              <MaterialCommunityIcons
+                name={isValid ? "shield-check" : "shield-alert"}
+                size={56}
+                color="#FFF"
+              />
+            </View>
+          </View>
+          <Text style={styles.statusTitle}>
+            {isValid ? "PETUGAS RESMI" : "JUKIR TIDAK TERDAFTAR"}
+          </Text>
+          <Text style={styles.statusDesc}>
+            {isValid
+              ? "QR Code ini terdaftar di database Dishub Kota Medan"
+              : params.message || "QR Code ini tidak ditemukan dalam database resmi. Hati-hati penipuan!"}
+          </Text>
         </View>
-        <Text
-          style={[
-            styles.statusTitle,
-            { color: isValid ? colors.success : colors.destructive },
-          ]}
-        >
-          {isValid ? "Petugas Resmi" : "QR Tidak Valid"}
-        </Text>
-        <Text
-          style={[
-            styles.statusDesc,
-            { color: isValid ? colors.success : colors.destructive },
-          ]}
-        >
-          {isValid
-            ? "QR Code ini terdaftar di database Dishub"
-            : "QR Code ini tidak ditemukan dalam database resmi"}
-        </Text>
-      </View>
 
-      {isValid && (
-        <View style={[styles.detailCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
-          <Text style={[styles.detailTitle, { color: colors.foreground }]}>Detail Petugas</Text>
-
-          {[
-            { icon: "user" as const, label: "Nama Petugas", value: params.officerName },
-            { icon: "credit-card" as const, label: "Nomor Badge", value: params.badgeNumber },
-            { icon: "map-pin" as const, label: "Area Kerja", value: params.area },
-            { icon: "navigation" as const, label: "Lokasi", value: params.location },
-            {
-              icon: "tag" as const,
-              label: "Tarif Resmi",
-              value: `Rp ${Number(params.rate || 0).toLocaleString("id-ID")}`,
-            },
-          ].map((item) => (
-            <View key={item.label} style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-              <View style={[styles.detailIcon, { backgroundColor: colors.primary + "10" }]}>
-                <Feather name={item.icon} size={16} color={colors.primary} />
+        {isValid && (
+          <View style={[styles.detailCard, { borderRadius: colors.radius }]}>
+            <View style={styles.officerHeader}>
+              <View style={styles.avatarCircle}>
+                <Feather name="user" size={28} color="#059669" />
               </View>
-              <View style={styles.detailContent}>
-                <Text style={[styles.detailLabel, { color: colors.mutedForeground }]}>
-                  {item.label}
-                </Text>
-                <Text style={[styles.detailValue, { color: colors.foreground }]}>{item.value}</Text>
+              <View style={styles.officerMainInfo}>
+                <Text style={styles.officerName}>{params.officerName}</Text>
+                <Text style={styles.officerBadge}>Badge: {params.badgeNumber}</Text>
+              </View>
+              <View style={styles.verifiedBadge}>
+                <Feather name="check" size={12} color="#FFF" />
+                <Text style={styles.verifiedText}>Resmi</Text>
               </View>
             </View>
-          ))}
-        </View>
-      )}
 
-      <View style={styles.actions}>
-        {isValid ? (
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push({
-                pathname: "/payment",
-                params: {
-                  officerId: params.officerId,
-                  officerName: params.officerName,
-                  rate: params.rate,
-                  area: params.area,
+            <View style={styles.infoGrid}>
+              {[
+                { icon: "map-pin" as const, label: "Zona Parkir", value: params.area },
+                { icon: "navigation" as const, label: "Lokasi", value: params.location },
+                {
+                  icon: "tag" as const,
+                  label: "Tarif Resmi",
+                  value: `Rp ${Number(params.rate || 0).toLocaleString("id-ID")}/jam`,
                 },
-              });
-            }}
-            style={({ pressed }) => [
-              styles.primaryButton,
-              { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <Feather name="credit-card" size={20} color="#FFF" />
-            <Text style={styles.primaryButtonText}>Bayar Digital</Text>
-          </Pressable>
-        ) : (
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push({
-                pathname: "/report-form",
-                params: { prefillType: "fake_qr", qrCode: params.qrCode },
-              });
-            }}
-            style={({ pressed }) => [
-              styles.primaryButton,
-              { backgroundColor: colors.destructive, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <Feather name="alert-triangle" size={20} color="#FFF" />
-            <Text style={styles.primaryButtonText}>Laporkan QR Palsu</Text>
-          </Pressable>
+              ].map((item) => (
+                <View key={item.label} style={styles.infoRow}>
+                  <View style={styles.infoIcon}>
+                    <Feather name={item.icon} size={16} color="#059669" />
+                  </View>
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>{item.label}</Text>
+                    <Text style={styles.infoValue}>{item.value}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
         )}
 
-        <Pressable
-          onPress={() => router.back()}
-          style={({ pressed }) => [
-            styles.secondaryButton,
-            { backgroundColor: colors.muted, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
-          ]}
-        >
-          <Feather name="arrow-left" size={20} color={colors.foreground} />
-          <Text style={[styles.secondaryButtonText, { color: colors.foreground }]}>Kembali</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
+        {!isValid && (
+          <View style={[styles.warningCard, { borderRadius: colors.radius }]}>
+            <Feather name="alert-triangle" size={24} color="#DC2626" />
+            <Text style={styles.warningTitle}>Peringatan Keamanan</Text>
+            <Text style={styles.warningDesc}>
+              Jangan membayar kepada jukir ini. Segera laporkan agar dapat ditindaklanjuti oleh Dishub Kota Medan.
+            </Text>
+            {params.qrCode && (
+              <View style={styles.qrCodeBadge}>
+                <Text style={styles.qrCodeLabel}>Kode QR:</Text>
+                <Text style={styles.qrCodeValue}>{params.qrCode}</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        <View style={styles.actions}>
+          {isValid ? (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push({
+                  pathname: "/payment",
+                  params: {
+                    officerId: params.officerId,
+                    officerName: params.officerName,
+                    rate: params.rate,
+                    area: params.area,
+                    location: params.location,
+                    badgeNumber: params.badgeNumber,
+                  },
+                });
+              }}
+              style={({ pressed }) => [
+                styles.payButton,
+                { borderRadius: colors.radius, opacity: pressed ? 0.9 : 1 },
+              ]}
+            >
+              <MaterialCommunityIcons name="qrcode" size={22} color="#059669" />
+              <Text style={styles.payButtonText}>Bayar Parkir</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                router.push({
+                  pathname: "/report-form",
+                  params: { prefillType: "fake_qr", qrCode: params.qrCode },
+                });
+              }}
+              style={({ pressed }) => [
+                styles.reportButton,
+                { borderRadius: colors.radius, opacity: pressed ? 0.9 : 1 },
+              ]}
+            >
+              <Feather name="alert-triangle" size={20} color="#DC2626" />
+              <Text style={styles.reportButtonText}>Laporkan Sekarang</Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [
+              styles.backButton,
+              { borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Feather name="arrow-left" size={20} color="#FFF" />
+            <Text style={styles.backButtonText}>Scan Ulang</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  statusCard: { margin: 20, padding: 32, alignItems: "center" },
-  statusIcon: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+  scrollContent: { flexGrow: 1 },
+  statusSection: { alignItems: "center", paddingHorizontal: 32, paddingTop: 20, paddingBottom: 24 },
+  statusIconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 20,
+  },
+  statusIconInner: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statusTitle: {
+    fontSize: 24,
+    fontFamily: "Inter_700Bold",
+    color: "#FFF",
+    marginBottom: 8,
+    textAlign: "center",
+    letterSpacing: 1,
+  },
+  statusDesc: {
+    fontSize: 14,
+    fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.85)",
+    textAlign: "center",
+    maxWidth: 300,
+    lineHeight: 22,
+  },
+  detailCard: {
+    backgroundColor: "#FFF",
+    marginHorizontal: 20,
+    padding: 20,
     marginBottom: 16,
   },
-  statusTitle: { fontSize: 22, fontFamily: "Inter_700Bold", marginBottom: 8 },
-  statusDesc: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280 },
-  detailCard: { marginHorizontal: 20, padding: 20, marginBottom: 20 },
-  detailTitle: { fontSize: 16, fontFamily: "Inter_600SemiBold", marginBottom: 16 },
-  detailRow: { flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 0.5, gap: 12 },
-  detailIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  detailContent: { flex: 1 },
-  detailLabel: { fontSize: 12, fontFamily: "Inter_400Regular", marginBottom: 2 },
-  detailValue: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
-  actions: { paddingHorizontal: 20, gap: 12 },
-  primaryButton: {
+  officerHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+    gap: 12,
+  },
+  avatarCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#05966910",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  officerMainInfo: { flex: 1 },
+  officerName: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#111" },
+  officerBadge: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#6B7280", marginTop: 2 },
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#059669",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  verifiedText: { fontSize: 11, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  infoGrid: { gap: 0 },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#E5E7EB",
+    gap: 12,
+  },
+  infoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#05966910",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  infoContent: { flex: 1 },
+  infoLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#9CA3AF", marginBottom: 2 },
+  infoValue: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#111" },
+  warningCard: {
+    backgroundColor: "#FFF",
+    marginHorizontal: 20,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  warningTitle: {
+    fontSize: 17,
+    fontFamily: "Inter_700Bold",
+    color: "#DC2626",
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  warningDesc: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
+    color: "#6B7280",
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  qrCodeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEE2E2",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 6,
+  },
+  qrCodeLabel: { fontSize: 12, fontFamily: "Inter_500Medium", color: "#DC2626" },
+  qrCodeValue: { fontSize: 12, fontFamily: "Inter_600SemiBold", color: "#DC2626" },
+  actions: { paddingHorizontal: 20, gap: 12, marginTop: 8 },
+  payButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    height: 52,
+    height: 56,
+    backgroundColor: "#FFF",
     gap: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  primaryButtonText: { color: "#FFF", fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  secondaryButton: {
+  payButtonText: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#059669" },
+  reportButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    height: 52,
+    height: 56,
+    backgroundColor: "#FFF",
     gap: 10,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  secondaryButtonText: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  reportButtonText: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#DC2626" },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 48,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    gap: 8,
+  },
+  backButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFF" },
 });

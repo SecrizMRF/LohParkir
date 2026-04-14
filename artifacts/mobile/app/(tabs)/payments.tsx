@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import {
   FlatList,
@@ -54,7 +54,7 @@ function PaymentItem({ item }: { item: Payment }) {
 
 export default function PaymentsScreen() {
   const colors = useColors();
-  const { payments, refreshData, dashboardStats } = useApp();
+  const { payments, refreshData, dashboardStats, points } = useApp();
 
   useEffect(() => {
     refreshData();
@@ -62,7 +62,22 @@ export default function PaymentsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.summaryCard, { backgroundColor: colors.primary + "10" }]}>
+      <View style={[styles.pointsCard, { borderRadius: colors.radius }]}>
+        <View style={styles.pointsLeft}>
+          <View style={styles.pointsIconWrap}>
+            <MaterialCommunityIcons name="star-circle" size={36} color="#F59E0B" />
+          </View>
+          <View>
+            <Text style={styles.pointsLabel}>Poin Parkir Anda</Text>
+            <Text style={styles.pointsValue}>{points} Poin</Text>
+          </View>
+        </View>
+        <View style={styles.pointsRight}>
+          <Text style={styles.pointsHint}>1000 poin = diskon parkir</Text>
+        </View>
+      </View>
+
+      <View style={[styles.summaryCard, { backgroundColor: colors.primary + "10", borderRadius: colors.radius }]}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Text style={[styles.summaryValue, { color: colors.primary }]}>
@@ -104,12 +119,33 @@ export default function PaymentsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  summaryCard: {
+  pointsCard: {
     marginHorizontal: 20,
     marginTop: Platform.OS === "web" ? 67 + 16 : 16,
+    marginBottom: 12,
+    padding: 16,
+    backgroundColor: "#FEF3C7",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pointsLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
+  pointsIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(245,158,11,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pointsLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#92400E" },
+  pointsValue: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#92400E" },
+  pointsRight: { alignItems: "flex-end" },
+  pointsHint: { fontSize: 10, fontFamily: "Inter_400Regular", color: "#92400E" },
+  summaryCard: {
+    marginHorizontal: 20,
     marginBottom: 16,
     padding: 20,
-    borderRadius: 12,
   },
   summaryRow: { flexDirection: "row", justifyContent: "space-around" },
   summaryItem: { alignItems: "center" },

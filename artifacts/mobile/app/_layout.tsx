@@ -35,13 +35,14 @@ function RootLayoutNav() {
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="scan-result" options={{ title: "Hasil Verifikasi" }} />
+      <Stack.Screen name="scan-result" options={{ title: "Hasil Verifikasi", headerShown: false }} />
       <Stack.Screen name="report-form" options={{ title: "Buat Laporan" }} />
       <Stack.Screen name="payment" options={{ title: "Pembayaran" }} />
       <Stack.Screen name="officer-form" options={{ title: "Tambah Petugas" }} />
       <Stack.Screen name="report-detail" options={{ title: "Detail Laporan" }} />
       <Stack.Screen name="officers-list" options={{ title: "Daftar Petugas" }} />
       <Stack.Screen name="reports-manage" options={{ title: "Kelola Laporan" }} />
+      <Stack.Screen name="rating" options={{ title: "Rating Jukir" }} />
     </Stack>
   );
 }
