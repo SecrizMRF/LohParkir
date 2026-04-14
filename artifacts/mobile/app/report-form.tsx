@@ -291,7 +291,7 @@ export default function ReportFormScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   card: { marginHorizontal: 20, marginTop: 16, padding: 16 },
-  label: { fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 12 },
+  label: { fontSize: 15, fontFamily: "AtkinsonHyperlegible_700Bold", marginBottom: 12 },
   typeRow: { flexDirection: "row", gap: 10 },
   typeButton: {
     flex: 1,
@@ -302,12 +302,12 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     gap: 8,
   },
-  typeLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+  typeLabel: { fontSize: 13, fontFamily: "AtkinsonHyperlegible_700Bold" },
   textArea: {
     height: 100,
     padding: 14,
     fontSize: 14,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "AtkinsonHyperlegible_400Regular",
     borderWidth: 1,
   },
   photoContainer: { position: "relative" },
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-  photoButtonText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  photoButtonText: { fontSize: 13, fontFamily: "AtkinsonHyperlegible_400Regular" },
   locationHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   locationInfo: {
     flexDirection: "row",
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 10,
   },
-  locationText: { fontSize: 14, fontFamily: "Inter_500Medium", flex: 1 },
+  locationText: { fontSize: 14, fontFamily: "AtkinsonHyperlegible_400Regular", flex: 1 },
   locationButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     gap: 8,
   },
-  locationButtonText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  locationButtonText: { fontSize: 14, fontFamily: "AtkinsonHyperlegible_700Bold" },
   submitContainer: { paddingHorizontal: 20, marginTop: 24 },
   submitButton: {
     flexDirection: "row",
@@ -356,5 +356,5 @@ const styles = StyleSheet.create({
     height: 52,
     gap: 10,
   },
-  submitText: { color: "#FFF", fontSize: 16, fontFamily: "Inter_600SemiBold" },
+  submitText: { color: "#FFF", fontSize: 16, fontFamily: "AtkinsonHyperlegible_700Bold" },
 });

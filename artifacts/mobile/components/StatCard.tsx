@@ -44,11 +44,11 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 24,
-    fontFamily: "Inter_700Bold",
+    fontFamily: "AtkinsonHyperlegible_700Bold",
     marginBottom: 2,
   },
   label: {
     fontSize: 12,
-    fontFamily: "Inter_400Regular",
+    fontFamily: "AtkinsonHyperlegible_400Regular",
   },
 });

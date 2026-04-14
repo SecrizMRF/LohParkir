@@ -234,6 +234,9 @@ importers:
 
   artifacts/mobile:
     dependencies:
+      '@expo-google-fonts/atkinson-hyperlegible':
+        specifier: ^0.4.1
+        version: 0.4.1
       expo-camera:
         specifier: ~16.0.18
         version: 16.0.18(expo@54.0.33)(react-native-web@0.21.2(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.29.0)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
@@ -1139,6 +1142,9 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [linux]
+
+  '@expo-google-fonts/atkinson-hyperlegible@0.4.1':
+    resolution: {integrity: sha512-Xr1XAguU7oEVHy28WxCBmdjPT2BNwH5lFZF2adHb9Cy6qtNgXwDzeAgvESkoq4mQmYW5RzqJZknqQxrTkEm0Xw==}
 
   '@expo-google-fonts/inter@0.4.2':
     resolution: {integrity: sha512-syfiImMaDmq7cFi0of+waE2M4uSCyd16zgyWxdPOY7fN2VBmSLKEzkfbZgeOjJq61kSqPBNNtXjggiQiSD6gMQ==}
@@ -6516,6 +6522,8 @@ snapshots:
 
   '@esbuild/linux-x64@0.27.3':
     optional: true
+
+  '@expo-google-fonts/atkinson-hyperlegible@0.4.1': {}
 
   '@expo-google-fonts/inter@0.4.2': {}
 

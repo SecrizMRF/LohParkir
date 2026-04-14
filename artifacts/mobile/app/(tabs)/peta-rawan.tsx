@@ -1,8 +1,8 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import React, { useMemo } from "react";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import React from "react";
 import {
-  FlatList,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,206 +11,81 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/contexts/AppContext";
-import { useColors } from "@/hooks/useColors";
 
-interface ZoneData {
-  zone: string;
-  reportCount: number;
-  level: "high" | "medium" | "low";
-  levelLabel: string;
-  color: string;
-  bgColor: string;
-}
-
-const ZONE_AREAS = [
-  "Zona A - Lapangan Merdeka",
-  "Zona B - Jl. Pemuda",
-  "Zona C - Jl. Gatot Subroto",
-  "Zona D - Jl. Sisingamangaraja",
-  "Zona E - Jl. Imam Bonjol",
-  "Zona F - Jl. Asia",
-  "Zona G - Jl. Zainul Arifin",
-  "Zona H - Jl. Palang Merah",
+const REWARDS = [
+  { id: 1, name: "Gratis Parkir 1x", cost: 25, icon: "ticket-confirmation" as const },
+  { id: 2, name: "Diskon Langganan Bulanan 10%", cost: 100, icon: "percent" as const },
 ];
 
-export default function PetaRawanScreen() {
-  const colors = useColors();
+export default function PoinScreen() {
   const insets = useSafeAreaInsets();
-  const { reports, dashboardStats } = useApp();
+  const { points } = useApp();
 
-  const zoneData = useMemo<ZoneData[]>(() => {
-    const zoneCounts: Record<string, number> = {};
-
-    reports.forEach((r) => {
-      const addr = r.address || "";
-      let zone = "Lainnya";
-      if (addr.toLowerCase().includes("zona a") || addr.toLowerCase().includes("lapangan")) zone = ZONE_AREAS[0];
-      else if (addr.toLowerCase().includes("zona b") || addr.toLowerCase().includes("pemuda")) zone = ZONE_AREAS[1];
-      else if (addr.toLowerCase().includes("zona c") || addr.toLowerCase().includes("gatot")) zone = ZONE_AREAS[2];
-      else if (addr.toLowerCase().includes("zona d") || addr.toLowerCase().includes("sisinga")) zone = ZONE_AREAS[3];
-      else {
-        const idx = Math.floor(Math.random() * ZONE_AREAS.length);
-        zone = ZONE_AREAS[idx];
-      }
-      zoneCounts[zone] = (zoneCounts[zone] || 0) + 1;
-    });
-
-    ZONE_AREAS.forEach((z) => {
-      if (!zoneCounts[z]) {
-        zoneCounts[z] = Math.floor(Math.random() * 5);
-      }
-    });
-
-    return Object.entries(zoneCounts)
-      .map(([zone, reportCount]) => {
-        let level: "high" | "medium" | "low";
-        let levelLabel: string;
-        let color: string;
-        let bgColor: string;
-
-        if (reportCount >= 5) {
-          level = "high";
-          levelLabel = "Rawan Tinggi";
-          color = "#DC2626";
-          bgColor = "#FEE2E2";
-        } else if (reportCount >= 2) {
-          level = "medium";
-          levelLabel = "Rawan Sedang";
-          color = "#F59E0B";
-          bgColor = "#FEF3C7";
-        } else {
-          level = "low";
-          levelLabel = "Aman";
-          color = "#059669";
-          bgColor = "#D1FAE5";
-        }
-
-        return { zone, reportCount, level, levelLabel, color, bgColor };
-      })
-      .sort((a, b) => b.reportCount - a.reportCount);
-  }, [reports]);
-
-  const highCount = zoneData.filter((z) => z.level === "high").length;
-  const medCount = zoneData.filter((z) => z.level === "medium").length;
-  const lowCount = zoneData.filter((z) => z.level === "low").length;
+  const nextReward = REWARDS.find((r) => r.cost > points) || REWARDS[REWARDS.length - 1];
+  const progressPercent = Math.min((points / nextReward.cost) * 100, 100);
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={styles.container}
       contentContainerStyle={{
-        paddingBottom: 100,
-        paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16,
+        paddingBottom: 120,
+        paddingTop: Platform.OS === "web" ? 67 + 24 : insets.top + 24,
       }}
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={[styles.headerIcon, { backgroundColor: "#FEE2E2" }]}>
-            <MaterialCommunityIcons name="map-marker-alert" size={24} color="#DC2626" />
+        <Text style={styles.pointsValue}>{points}</Text>
+        <Text style={styles.pointsLabel}>Poin Parkir</Text>
+
+        <View style={styles.progressWrap}>
+          <View style={styles.progressBar}>
+            <View style={[styles.progressFill, { width: `${progressPercent}%` }]} />
           </View>
-          <View style={styles.headerTextWrap}>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Peta Zona Rawan</Text>
-            <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>
-              Tingkat kerawanan pungli berdasarkan laporan
-            </Text>
-          </View>
+          <Text style={styles.progressText}>
+            {points} / {nextReward.cost} poin menuju {nextReward.name}
+          </Text>
         </View>
       </View>
 
-      <View style={styles.legendRow}>
-        {[
-          { color: "#DC2626", bg: "#FEE2E2", label: "Rawan Tinggi", count: highCount },
-          { color: "#F59E0B", bg: "#FEF3C7", label: "Sedang", count: medCount },
-          { color: "#059669", bg: "#D1FAE5", label: "Aman", count: lowCount },
-        ].map((item) => (
-          <View key={item.label} style={[styles.legendItem, { backgroundColor: item.bg, borderRadius: colors.radius }]}>
-            <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-            <Text style={[styles.legendLabel, { color: item.color }]}>{item.count}</Text>
-            <Text style={[styles.legendText, { color: item.color }]}>{item.label}</Text>
-          </View>
-        ))}
-      </View>
+      <Text style={styles.sectionTitle}>Tukar Hadiah</Text>
 
-      <View style={[styles.mapPlaceholder, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
-        <View style={styles.mapGrid}>
-          {zoneData.slice(0, 8).map((zone, index) => {
-            const row = Math.floor(index / 2);
-            const col = index % 2;
-            return (
-              <View
-                key={zone.zone}
-                style={[
-                  styles.mapCell,
-                  {
-                    backgroundColor: zone.bgColor,
-                    borderRadius: 8,
-                    borderColor: zone.color + "40",
-                    borderWidth: 1,
-                  },
-                ]}
-              >
-                <View style={[styles.mapCellDot, { backgroundColor: zone.color }]}>
-                  <Text style={styles.mapCellDotText}>{zone.reportCount}</Text>
-                </View>
-                <Text style={[styles.mapCellLabel, { color: zone.color }]} numberOfLines={1}>
-                  {zone.zone.split(" - ")[0]}
-                </Text>
+      {REWARDS.map((reward) => {
+        const canRedeem = points >= reward.cost;
+        return (
+          <View key={reward.id} style={styles.rewardCard}>
+            <View style={styles.rewardInfo}>
+              <MaterialCommunityIcons name={reward.icon} size={32} color="#1565C0" />
+              <View style={styles.rewardText}>
+                <Text style={styles.rewardName}>{reward.name}</Text>
+                <Text style={styles.rewardCost}>Butuh {reward.cost} Poin</Text>
               </View>
-            );
-          })}
-        </View>
-        <Text style={[styles.mapNote, { color: colors.mutedForeground }]}>
-          Visualisasi zona berdasarkan data laporan
-        </Text>
-      </View>
-
-      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Detail Per Zona</Text>
-
-      {zoneData.map((zone) => (
-        <View
-          key={zone.zone}
-          style={[styles.zoneCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}
-        >
-          <View style={styles.zoneHeader}>
-            <View style={[styles.zoneLevelBadge, { backgroundColor: zone.bgColor }]}>
-              <MaterialCommunityIcons
-                name={zone.level === "high" ? "alert-circle" : zone.level === "medium" ? "alert" : "check-circle"}
-                size={20}
-                color={zone.color}
-              />
             </View>
-            <View style={styles.zoneInfo}>
-              <Text style={[styles.zoneName, { color: colors.foreground }]}>{zone.zone}</Text>
-              <Text style={[styles.zoneReports, { color: colors.mutedForeground }]}>
-                {zone.reportCount} laporan
-              </Text>
-            </View>
-            <View style={[styles.zoneStatus, { backgroundColor: zone.bgColor, borderRadius: 8 }]}>
-              <Text style={[styles.zoneStatusText, { color: zone.color }]}>{zone.levelLabel}</Text>
-            </View>
-          </View>
-
-          <View style={styles.zoneBar}>
-            <View
-              style={[
-                styles.zoneBarFill,
+            <Pressable
+              disabled={!canRedeem}
+              onPress={() => {}}
+              style={({ pressed }) => [
+                styles.redeemBtn,
                 {
-                  backgroundColor: zone.color,
-                  width: `${Math.min((zone.reportCount / 10) * 100, 100)}%`,
-                  borderRadius: 4,
+                  backgroundColor: canRedeem ? "#1565C0" : "#E0E0E0",
+                  opacity: !canRedeem ? 0.6 : pressed ? 0.9 : 1,
                 },
               ]}
-            />
+            >
+              <Text style={[styles.redeemBtnText, { color: canRedeem ? "#FFF" : "#757575" }]}>
+                TUKAR
+              </Text>
+            </Pressable>
           </View>
-        </View>
-      ))}
+        );
+      })}
 
-      <View style={[styles.tipCard, { backgroundColor: "#EFF6FF", borderRadius: colors.radius }]}>
-        <Feather name="info" size={20} color="#2563EB" />
-        <View style={styles.tipContent}>
-          <Text style={styles.tipTitle}>Tips Keamanan</Text>
-          <Text style={styles.tipText}>
-            Saat memasuki zona rawan, pastikan hanya membayar kepada jukir resmi yang memiliki QR Code. Laporkan jika diminta biaya tidak wajar.
+      <View style={styles.infoCard}>
+        <MaterialCommunityIcons name="information" size={24} color="#1565C0" />
+        <View style={styles.infoContent}>
+          <Text style={styles.infoTitle}>Cara Mendapat Poin</Text>
+          <Text style={styles.infoText}>
+            {"\u2022"} Setiap pembayaran parkir: 1 poin per Rp 1.000{"\n"}
+            {"\u2022"} Rating jukir setelah parkir: +5 poin bonus
           </Text>
         </View>
       </View>
@@ -219,56 +94,110 @@ export default function PetaRawanScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { paddingHorizontal: 20, marginBottom: 16 },
-  headerTop: { flexDirection: "row", alignItems: "center", gap: 12 },
-  headerIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  headerTextWrap: { flex: 1 },
-  headerTitle: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  headerSubtitle: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
-  legendRow: { flexDirection: "row", paddingHorizontal: 20, gap: 8, marginBottom: 16 },
-  legendItem: { flex: 1, flexDirection: "row", alignItems: "center", padding: 10, gap: 6 },
-  legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendLabel: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  legendText: { fontSize: 10, fontFamily: "Inter_500Medium" },
-  mapPlaceholder: { marginHorizontal: 20, padding: 16, marginBottom: 20 },
-  mapGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  mapCell: {
-    flexBasis: "47%",
-    flexGrow: 1,
-    padding: 14,
+  container: { flex: 1, backgroundColor: "#F5F5F5" },
+
+  header: {
     alignItems: "center",
-    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    marginBottom: 8,
   },
-  mapCellDot: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  pointsValue: {
+    fontSize: 48,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#FBC02D",
+  },
+  pointsLabel: {
+    fontSize: 20,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+    marginBottom: 24,
+  },
+  progressWrap: { width: "100%" },
+  progressBar: {
+    height: 12,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 6,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: 12,
+    backgroundColor: "#1B5E20",
+    borderRadius: 6,
+  },
+  progressText: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    textAlign: "center",
+  },
+
+  sectionTitle: {
+    fontSize: 22,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+    paddingHorizontal: 24,
+    marginBottom: 16,
+  },
+
+  rewardCard: {
+    backgroundColor: "#FFF",
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 20,
+  },
+  rewardInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 16,
+  },
+  rewardText: { flex: 1 },
+  rewardName: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+  },
+  rewardCost: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    marginTop: 4,
+  },
+  redeemBtn: {
+    width: "100%",
+    height: 56,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  mapCellDotText: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#FFF" },
-  mapCellLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-  mapNote: { fontSize: 11, fontFamily: "Inter_400Regular", textAlign: "center", marginTop: 12 },
-  sectionTitle: { fontSize: 17, fontFamily: "Inter_700Bold", paddingHorizontal: 20, marginBottom: 12 },
-  zoneCard: { marginHorizontal: 20, padding: 16, marginBottom: 10 },
-  zoneHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
-  zoneLevelBadge: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  zoneInfo: { flex: 1 },
-  zoneName: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  zoneReports: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  zoneStatus: { paddingHorizontal: 10, paddingVertical: 4 },
-  zoneStatusText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  zoneBar: { height: 6, backgroundColor: "#E5E7EB", borderRadius: 3 },
-  zoneBarFill: { height: 6 },
-  tipCard: {
+  redeemBtnText: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
+
+  infoCard: {
+    flexDirection: "row",
     marginHorizontal: 20,
     marginTop: 8,
+    backgroundColor: "#E3F2FD",
+    borderRadius: 12,
     padding: 16,
-    flexDirection: "row",
     gap: 12,
   },
-  tipContent: { flex: 1 },
-  tipTitle: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#1E40AF", marginBottom: 4 },
-  tipText: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#1E40AF", lineHeight: 18 },
+  infoContent: { flex: 1 },
+  infoTitle: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+    marginBottom: 4,
+  },
+  infoText: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#424242",
+    lineHeight: 22,
+  },
 });

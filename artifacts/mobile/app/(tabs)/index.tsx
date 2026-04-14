@@ -1,10 +1,12 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Linking,
   Platform,
   Pressable,
@@ -22,12 +24,14 @@ import { useColors } from "@/hooks/useColors";
 export default function ScanScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { validateQR, scanHistory } = useApp();
+  const { validateQR, scanHistory, addReport } = useApp();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  const [showCamera, setShowCamera] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
   const [qrInput, setQrInput] = useState("");
   const [validating, setValidating] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const scanCooldown = useRef(false);
 
   const handleScan = async (code: string) => {
@@ -81,38 +85,114 @@ export default function ScanScreen() {
     handleScan(data);
   };
 
+  const handleQuickReport = async () => {
+    setReporting(true);
+    try {
+      let lat: number | null = null;
+      let lng: number | null = null;
+      let addr = "";
+
+      if (Platform.OS === "web") {
+        if (navigator.geolocation) {
+          await new Promise<void>((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                lat = pos.coords.latitude;
+                lng = pos.coords.longitude;
+                addr = `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`;
+                resolve();
+              },
+              () => resolve(),
+              { timeout: 5000 }
+            );
+          });
+        }
+      } else {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+          lat = loc.coords.latitude;
+          lng = loc.coords.longitude;
+          try {
+            const [address] = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+            if (address) addr = [address.street, address.city, address.region].filter(Boolean).join(", ");
+          } catch {
+            addr = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          }
+        }
+      }
+
+      Alert.alert(
+        "Laporkan Pungli",
+        `Kirim laporan lokasi ini ke petugas?\n${addr || "Lokasi tidak diketahui"}`,
+        [
+          { text: "TIDAK", style: "cancel" },
+          {
+            text: "YA, LAPORKAN",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await addReport({
+                  type: "illegal_parking",
+                  description: `Laporan cepat pungli di ${addr || "lokasi tidak diketahui"}`,
+                  latitude: lat,
+                  longitude: lng,
+                  address: addr || null,
+                });
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Alert.alert("Berhasil", "Laporan telah terkirim. Terima kasih!");
+              } catch {
+                Alert.alert("Error", "Gagal mengirim laporan.");
+              }
+            },
+          },
+        ]
+      );
+    } catch {
+      Alert.alert("Error", "Gagal mendapatkan lokasi.");
+    } finally {
+      setReporting(false);
+    }
+  };
+
+  const openCamera = async () => {
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result.granted) {
+        Alert.alert("Akses Ditolak", "Izinkan kamera untuk scan QR Code.");
+        return;
+      }
+    }
+    setShowCamera(true);
+  };
+
   if (showManualInput) {
     return (
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{
           paddingBottom: 100,
-          paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16,
+          paddingTop: Platform.OS === "web" ? 67 + 24 : insets.top + 24,
         }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.manualHeader}>
           <Pressable
             onPress={() => setShowManualInput(false)}
             style={({ pressed }) => [
-              styles.backButton,
-              { backgroundColor: colors.card, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
+              styles.backBtn,
+              { backgroundColor: colors.card, borderRadius: 12, opacity: pressed ? 0.8 : 1 },
             ]}
           >
-            <Feather name="arrow-left" size={20} color={colors.foreground} />
+            <Feather name="arrow-left" size={22} color={colors.foreground} />
           </Pressable>
           <Text style={[styles.manualTitle, { color: colors.foreground }]}>Input Manual</Text>
         </View>
 
-        <View
-          style={[styles.manualCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}
-        >
-          <View style={[styles.scanIconWrapper, { backgroundColor: colors.primary + "10" }]}>
-            <MaterialCommunityIcons name="keyboard" size={36} color={colors.primary} />
-          </View>
+        <View style={[styles.manualCard, { backgroundColor: colors.card, borderRadius: 12 }]}>
           <Text style={[styles.manualDesc, { color: colors.mutedForeground }]}>
-            Masukkan kode QR petugas parkir secara manual{"\n"}
-            Format: LOHPARKIR-DSH-YYYY-NNN
+            Masukkan kode QR petugas parkir{"\n"}Format: LOHPARKIR-DSH-YYYY-NNN
           </Text>
           <View style={styles.inputRow}>
             <TextInput
@@ -122,7 +202,7 @@ export default function ScanScreen() {
                   backgroundColor: colors.background,
                   color: colors.foreground,
                   borderColor: colors.border,
-                  borderRadius: colors.radius,
+                  borderRadius: 12,
                 },
               ]}
               placeholder="LOHPARKIR-DSH-2024-001"
@@ -137,30 +217,26 @@ export default function ScanScreen() {
               onPress={() => handleScan(qrInput)}
               disabled={validating}
               style={({ pressed }) => [
-                styles.scanButton,
-                { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: validating ? 0.5 : pressed ? 0.8 : 1 },
+                styles.searchBtn,
+                { backgroundColor: "#1565C0", borderRadius: 12, opacity: validating ? 0.5 : pressed ? 0.8 : 1 },
               ]}
             >
               {validating ? (
                 <ActivityIndicator size="small" color="#FFF" />
               ) : (
-                <Feather name="search" size={20} color="#FFF" />
+                <Feather name="search" size={22} color="#FFF" />
               )}
             </Pressable>
           </View>
         </View>
 
-        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Demo QR Codes</Text>
-        <Text style={[styles.sectionDesc, { color: colors.mutedForeground }]}>
-          Coba salah satu kode di bawah
-        </Text>
-
-        <View style={styles.demoGrid}>
+        <Text style={[styles.demoTitle, { color: colors.foreground }]}>Demo QR Codes</Text>
+        <View style={styles.demoList}>
           {[
             { code: "LOHPARKIR-DSH-2024-001", name: "Budi Santoso", area: "Zona A" },
             { code: "LOHPARKIR-DSH-2024-002", name: "Siti Rahayu", area: "Zona B" },
             { code: "LOHPARKIR-DSH-2024-003", name: "Ahmad Wijaya", area: "Zona C" },
-            { code: "FAKE-QR-12345", name: "QR Palsu", area: "Tidak Resmi" },
+            { code: "FAKE-QR-12345", name: "QR Palsu (Test)", area: "Tidak Resmi" },
           ].map((item) => (
             <Pressable
               key={item.code}
@@ -169,170 +245,150 @@ export default function ScanScreen() {
               style={({ pressed }) => [
                 styles.demoCard,
                 {
-                  backgroundColor: item.code.startsWith("FAKE")
-                    ? colors.destructive + "10"
-                    : colors.card,
-                  borderColor: item.code.startsWith("FAKE") ? colors.destructive + "30" : colors.border,
-                  borderRadius: colors.radius,
+                  backgroundColor: item.code.startsWith("FAKE") ? "#FFEBEE" : colors.card,
+                  borderColor: item.code.startsWith("FAKE") ? "#B71C1C" + "30" : colors.border,
+                  borderRadius: 12,
                   opacity: validating ? 0.5 : pressed ? 0.8 : 1,
                 },
               ]}
             >
               <MaterialCommunityIcons
                 name={item.code.startsWith("FAKE") ? "alert-circle" : "qrcode"}
-                size={24}
-                color={item.code.startsWith("FAKE") ? colors.destructive : colors.primary}
+                size={28}
+                color={item.code.startsWith("FAKE") ? "#B71C1C" : "#1565C0"}
               />
-              <Text
-                style={[
-                  styles.demoName,
-                  { color: item.code.startsWith("FAKE") ? colors.destructive : colors.foreground },
-                ]}
-                numberOfLines={1}
-              >
-                {item.name}
-              </Text>
-              <Text style={[styles.demoArea, { color: colors.mutedForeground }]}>{item.area}</Text>
+              <View style={styles.demoInfo}>
+                <Text style={[styles.demoName, { color: item.code.startsWith("FAKE") ? "#B71C1C" : colors.foreground }]}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.demoArea, { color: colors.mutedForeground }]}>{item.area}</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color={colors.mutedForeground} />
             </Pressable>
           ))}
         </View>
-
-        {validating && (
-          <View style={styles.validatingOverlay}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.validatingText, { color: colors.primary }]}>Memvalidasi...</Text>
-          </View>
-        )}
       </ScrollView>
     );
   }
 
-  if (!permission) {
+  if (showCamera) {
     return (
-      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
-        <MaterialCommunityIcons name="camera" size={40} color={colors.mutedForeground} />
-        <Text style={[styles.permText, { color: colors.mutedForeground }]}>Memuat kamera...</Text>
-      </View>
-    );
-  }
-
-  if (!permission.granted) {
-    return (
-      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
-        <View style={[styles.permCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
-          <View style={[styles.permIcon, { backgroundColor: colors.primary + "10" }]}>
-            <MaterialCommunityIcons name="camera-off" size={40} color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: "#000" }]}>
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+          onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        />
+        <View style={styles.cameraOverlay}>
+          <View style={[styles.cameraTopBar, { paddingTop: Platform.OS === "web" ? 67 : insets.top + 8 }]}>
+            <Pressable
+              onPress={() => setShowCamera(false)}
+              style={({ pressed }) => [styles.cameraBack, { opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Feather name="arrow-left" size={24} color="#FFF" />
+            </Pressable>
+            <Text style={styles.cameraTitle}>Scan QR Jukir</Text>
           </View>
-          <Text style={[styles.permTitle, { color: colors.foreground }]}>Akses Kamera Diperlukan</Text>
-          <Text style={[styles.permDesc, { color: colors.mutedForeground }]}>
-            LohParkir memerlukan akses kamera untuk men-scan QR Code badge petugas parkir
-          </Text>
-          {permission.status === "denied" && !permission.canAskAgain ? (
+
+          <View style={styles.scanAreaContainer}>
+            {validating ? (
+              <View style={styles.validatingCenter}>
+                <ActivityIndicator size="large" color="#FFF" />
+                <Text style={styles.scanHint}>Memvalidasi QR Code...</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.scanFrame}>
+                  <View style={[styles.corner, styles.cornerTL]} />
+                  <View style={[styles.corner, styles.cornerTR]} />
+                  <View style={[styles.corner, styles.cornerBL]} />
+                  <View style={[styles.corner, styles.cornerBR]} />
+                </View>
+                <Text style={styles.scanHint}>
+                  Arahkan kamera ke kode QR tukang parkir
+                </Text>
+              </>
+            )}
+          </View>
+
+          <View style={[styles.cameraBottom, { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 }]}>
             <Pressable
-              onPress={() => {
-                if (Platform.OS !== "web") {
-                  try { Linking.openSettings(); } catch {}
-                }
-              }}
-              style={({ pressed }) => [
-                styles.permButton,
-                { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
-              ]}
+              onPress={() => { setShowCamera(false); setShowManualInput(true); }}
+              style={({ pressed }) => [styles.cameraBtn, { opacity: pressed ? 0.7 : 1 }]}
             >
-              <Feather name="settings" size={18} color="#FFF" />
-              <Text style={styles.permButtonText}>Buka Pengaturan</Text>
+              <Feather name="edit-3" size={18} color="#FFF" />
+              <Text style={styles.cameraBtnText}>Input Manual</Text>
             </Pressable>
-          ) : (
-            <Pressable
-              onPress={requestPermission}
-              style={({ pressed }) => [
-                styles.permButton,
-                { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
-              ]}
-            >
-              <Feather name="camera" size={18} color="#FFF" />
-              <Text style={styles.permButtonText}>Izinkan Kamera</Text>
-            </Pressable>
-          )}
-          <Pressable
-            onPress={() => setShowManualInput(true)}
-            style={({ pressed }) => [
-              styles.permSecondary,
-              { borderColor: colors.border, borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
-            ]}
-          >
-            <Feather name="edit-3" size={18} color={colors.foreground} />
-            <Text style={[styles.permSecondaryText, { color: colors.foreground }]}>Input Manual</Text>
-          </Pressable>
+          </View>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: "#000" }]}>
-      <CameraView
-        style={StyleSheet.absoluteFill}
-        facing="back"
-        barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.homeContent, { paddingTop: Platform.OS === "web" ? 67 + 40 : insets.top + 40 }]}>
+        <Text style={[styles.homeTitle, { color: colors.foreground }]}>ParkirCerdas</Text>
 
-      <View style={[styles.overlay]}>
-        <View
-          style={[
-            styles.topBar,
-            { paddingTop: Platform.OS === "web" ? 67 : insets.top + 8 },
-          ]}
-        >
-          <View style={styles.topBarContent}>
-            <View style={[styles.logoSmall, { backgroundColor: colors.primary }]}>
-              <MaterialCommunityIcons name="parking" size={18} color="#FFF" />
-            </View>
-            <Text style={styles.topTitle}>LohParkir</Text>
-          </View>
-        </View>
-
-        <View style={styles.scanAreaContainer}>
-          {validating ? (
-            <View style={styles.validatingCenter}>
-              <ActivityIndicator size="large" color="#FFF" />
-              <Text style={styles.scanHint}>Memvalidasi QR Code...</Text>
-            </View>
-          ) : (
-            <>
-              <View style={styles.scanFrame}>
-                <View style={[styles.corner, styles.cornerTL, { borderColor: colors.primary }]} />
-                <View style={[styles.corner, styles.cornerTR, { borderColor: colors.primary }]} />
-                <View style={[styles.corner, styles.cornerBL, { borderColor: colors.primary }]} />
-                <View style={[styles.corner, styles.cornerBR, { borderColor: colors.primary }]} />
-              </View>
-              <Text style={styles.scanHint}>
-                {scanned ? "QR Code terdeteksi..." : "Arahkan kamera ke QR Code petugas parkir"}
-              </Text>
-            </>
-          )}
-        </View>
-
-        <View style={[styles.bottomBar, { paddingBottom: Platform.OS === "web" ? 34 + 84 : insets.bottom + 84 }]}>
+        <View style={styles.homeButtons}>
           <Pressable
-            onPress={() => setShowManualInput(true)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              if (Platform.OS === "web") {
+                setShowManualInput(true);
+              } else {
+                openCamera();
+              }
+            }}
             style={({ pressed }) => [
-              styles.bottomButton,
-              { backgroundColor: "rgba(255,255,255,0.15)", borderRadius: colors.radius, opacity: pressed ? 0.7 : 1 },
+              styles.scanMainBtn,
+              { backgroundColor: "#1565C0", borderRadius: 12, opacity: pressed ? 0.9 : 1 },
             ]}
           >
-            <Feather name="edit-3" size={18} color="#FFF" />
-            <Text style={styles.bottomButtonText}>Input Manual</Text>
+            <MaterialCommunityIcons name="camera" size={28} color="#FFF" />
+            <Text style={styles.scanMainBtnText}>SCAN QR JUKIR</Text>
+            <Text style={styles.scanMainBtnHint}>Arahkan kamera ke kode QR</Text>
           </Pressable>
 
-          {scanHistory.length > 0 && (
-            <View style={[styles.recentBadge, { backgroundColor: "rgba(255,255,255,0.15)", borderRadius: colors.radius }]}>
-              <Feather name="clock" size={14} color="#FFF" />
-              <Text style={styles.recentText}>{scanHistory.length} scan</Text>
-            </View>
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              handleQuickReport();
+            }}
+            disabled={reporting}
+            style={({ pressed }) => [
+              styles.reportMainBtn,
+              { borderColor: "#B71C1C", borderRadius: 12, opacity: reporting ? 0.6 : pressed ? 0.8 : 1 },
+            ]}
+          >
+            {reporting ? (
+              <ActivityIndicator size="small" color="#B71C1C" />
+            ) : (
+              <>
+                <MaterialCommunityIcons name="alert" size={24} color="#B71C1C" />
+                <Text style={styles.reportMainBtnText}>LAPORKAN PUNGLI</Text>
+              </>
+            )}
+          </Pressable>
+
+          {Platform.OS === "web" && (
+            <Pressable
+              onPress={() => setShowManualInput(true)}
+              style={({ pressed }) => [
+                styles.manualBtn,
+                { borderColor: colors.border, borderRadius: 12, opacity: pressed ? 0.8 : 1 },
+              ]}
+            >
+              <Feather name="edit-3" size={20} color={colors.foreground} />
+              <Text style={[styles.manualBtnText, { color: colors.foreground }]}>Input QR Manual</Text>
+            </Pressable>
           )}
         </View>
+
+        <Text style={[styles.homeFooter, { color: colors.mutedForeground }]}>
+          Pastikan jukir memiliki kode resmi sebelum bayar.
+        </Text>
       </View>
     </View>
   );
@@ -340,155 +396,129 @@ export default function ScanScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  center: { justifyContent: "center", alignItems: "center" },
 
-  overlay: { ...StyleSheet.absoluteFillObject, justifyContent: "space-between" },
-  topBar: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: "rgba(0,0,0,0.3)",
+  homeContent: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: "space-between",
+    paddingBottom: 120,
   },
-  topBarContent: { flexDirection: "row", alignItems: "center", gap: 10 },
-  logoSmall: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center" },
-  topTitle: { color: "#FFF", fontSize: 18, fontFamily: "Inter_700Bold" },
+  homeTitle: {
+    fontSize: 28,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  homeButtons: {
+    gap: 16,
+  },
+  scanMainBtn: {
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    elevation: 3,
+    shadowColor: "#1565C0",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  scanMainBtnText: {
+    color: "#FFF",
+    fontSize: 20,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    letterSpacing: 0.5,
+  },
+  scanMainBtnHint: {
+    color: "rgba(255,255,255,0.75)",
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+  },
+  reportMainBtn: {
+    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderWidth: 2,
+    backgroundColor: "transparent",
+  },
+  reportMainBtnText: {
+    color: "#B71C1C",
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
+  manualBtn: {
+    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderWidth: 1.5,
+    backgroundColor: "transparent",
+  },
+  manualBtnText: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
+  homeFooter: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    textAlign: "center",
+    lineHeight: 24,
+  },
 
+  cameraOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: "space-between" },
+  cameraTopBar: { paddingHorizontal: 20, paddingBottom: 16, backgroundColor: "rgba(0,0,0,0.4)", flexDirection: "row", alignItems: "center", gap: 14 },
+  cameraBack: { width: 56, height: 56, alignItems: "center", justifyContent: "center" },
+  cameraTitle: { color: "#FFF", fontSize: 20, fontFamily: "AtkinsonHyperlegible_700Bold" },
   scanAreaContainer: { alignItems: "center", gap: 20 },
   validatingCenter: { alignItems: "center", gap: 16 },
-  scanFrame: { width: 260, height: 260, position: "relative" },
-  corner: { position: "absolute", width: 40, height: 40, borderWidth: 4 },
+  scanFrame: { width: 280, height: 280, position: "relative" },
+  corner: { position: "absolute", width: 44, height: 44, borderWidth: 4, borderColor: "#FFF" },
   cornerTL: { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 12 },
   cornerTR: { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 12 },
   cornerBL: { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 12 },
   cornerBR: { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 12 },
   scanHint: {
     color: "#FFF",
-    fontSize: 14,
-    fontFamily: "Inter_500Medium",
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
     textAlign: "center",
-    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowColor: "rgba(0,0,0,0.6)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
     paddingHorizontal: 40,
   },
+  cameraBottom: { paddingHorizontal: 20, paddingTop: 16, backgroundColor: "rgba(0,0,0,0.4)", alignItems: "center" },
+  cameraBtn: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 14, gap: 8 },
+  cameraBtnText: { color: "#FFF", fontSize: 16, fontFamily: "AtkinsonHyperlegible_700Bold" },
 
-  bottomBar: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-  },
-  bottomButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  bottomButtonText: { color: "#FFF", fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  recentBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 6,
-  },
-  recentText: { color: "#FFF", fontSize: 13, fontFamily: "Inter_500Medium" },
-
-  permCard: { margin: 24, padding: 32, alignItems: "center" },
-  permIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  permTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 10, textAlign: "center" },
-  permDesc: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 24, lineHeight: 22 },
-  permButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    height: 50,
-    gap: 10,
-    marginBottom: 12,
-  },
-  permButtonText: { color: "#FFF", fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  permSecondary: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    height: 50,
-    borderWidth: 1.5,
-    gap: 10,
-  },
-  permSecondaryText: { fontSize: 16, fontFamily: "Inter_600SemiBold" },
-  permText: { fontSize: 15, fontFamily: "Inter_500Medium", marginTop: 12 },
-
-  manualHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    gap: 14,
-  },
-  backButton: { width: 42, height: 42, alignItems: "center", justifyContent: "center" },
-  manualTitle: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  manualCard: { marginHorizontal: 20, padding: 24, alignItems: "center", marginBottom: 28 },
-  scanIconWrapper: {
-    width: 72,
-    height: 72,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  manualDesc: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", marginBottom: 20 },
+  manualHeader: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, marginBottom: 24, gap: 14 },
+  backBtn: { width: 56, height: 56, alignItems: "center", justifyContent: "center" },
+  manualTitle: { fontSize: 22, fontFamily: "AtkinsonHyperlegible_700Bold" },
+  manualCard: { marginHorizontal: 20, padding: 24, marginBottom: 28 },
+  manualDesc: { fontSize: 16, fontFamily: "AtkinsonHyperlegible_400Regular", textAlign: "center", marginBottom: 20, lineHeight: 24 },
   inputRow: { flexDirection: "row", gap: 10, width: "100%" },
   input: {
     flex: 1,
-    height: 48,
+    height: 56,
     paddingHorizontal: 16,
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    borderWidth: 1,
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    borderWidth: 1.5,
   },
-  scanButton: { width: 48, height: 48, alignItems: "center", justifyContent: "center" },
-  sectionTitle: {
-    fontSize: 17,
-    fontFamily: "Inter_600SemiBold",
-    paddingHorizontal: 20,
-    marginBottom: 4,
-  },
-  sectionDesc: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
-  demoGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 20,
-    gap: 10,
-    marginBottom: 28,
-  },
+  searchBtn: { width: 56, height: 56, alignItems: "center", justifyContent: "center" },
+  demoTitle: { fontSize: 20, fontFamily: "AtkinsonHyperlegible_700Bold", paddingHorizontal: 20, marginBottom: 12 },
+  demoList: { paddingHorizontal: 20, gap: 10 },
   demoCard: {
-    width: "48%",
-    flexGrow: 1,
-    flexBasis: "45%",
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderWidth: 1,
-    alignItems: "center",
-    gap: 6,
+    gap: 14,
   },
-  demoName: { fontSize: 13, fontFamily: "Inter_600SemiBold", textAlign: "center" },
-  demoArea: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  validatingOverlay: { alignItems: "center", paddingTop: 20, gap: 10 },
-  validatingText: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  demoInfo: { flex: 1 },
+  demoName: { fontSize: 18, fontFamily: "AtkinsonHyperlegible_700Bold" },
+  demoArea: { fontSize: 14, fontFamily: "AtkinsonHyperlegible_400Regular", marginTop: 2 },
 });

@@ -1,0 +1,328 @@
+Spesifikasi Desain UI/UX Aplikasi ParkirCerdas (Final untuk Lomba)
+Ringkasan Desain Umum
+Tema Warna (Palet Ketat)
+
+Nama Warna	Kode Hex	Penggunaan Eksklusif
+Hijau Tua	#1B5E20	Latar layar penuh saat verifikasi valid/aman.
+Merah Tua	#B71C1C	Latar layar penuh saat verifikasi tidak valid/bahaya.
+Biru Aksi	#1565C0	Tombol utama untuk aksi positif (Bayar, Lanjutkan, Tukar).
+Kuning Waspada	#FBC02D	Elemen peringatan minor, ikon notifikasi, progress bar poin.
+Abu-abu Hangat	#F5F5F5	Latar belakang halaman umum (mengurangi silau mata).
+Putih	#FFFFFF	Latar belakang kartu/konten utama.
+Abu-abu Teks	#424242	Teks isi (kontras tinggi terhadap latar).
+Tipografi
+
+Jenis Font Utama: Atkinson Hyperlegible (harus diunduh dan disematkan sebagai aset aplikasi). Font ini dirancang khusus untuk pembaca dengan gangguan penglihatan.
+
+Ukuran Minimum:
+
+Judul Halaman: 26pt Bold
+
+Teks Isi / Label Tombol: 18pt Regular
+
+Info Penting (Tarif, Poin): 32pt Bold
+
+Nama Jukir: 24pt Bold
+
+Gaya Tombol & Input Global
+
+Tinggi Minimum Area Sentuh: 56dp (standar aksesibilitas untuk pengguna tremor/lansia).
+
+Bentuk: Sudut melengkung radius 12dp.
+
+Tombol Utama (Primary): Lebar penuh layar (full-width), warna latar #1565C0, teks Putih #FFFFFF.
+
+Tombol Sekunder: Outline dengan border #424242, teks #424242, latar transparan.
+
+Input Khusus: Hindari penggunaan keyboard ketik manual untuk Plat Nomor. Gunakan komponen Wheel Picker (pemutar angka/huruf).
+
+Per Halaman / Fitur
+1. Onboarding (Pertama Kali Buka Aplikasi)
+Tata Letak:
+
+Slide 1: Ilustrasi scan QR. Teks besar: "Parkir Aman, Scan QR Jukir Dulu".
+
+Slide 2: Ilustrasi pembayaran digital. Teks besar: "Bayar Pakai QRIS, Uang Langsung ke Pemda".
+
+Slide 3: Ilustrasi laporan. Teks besar: "Lihat Jukir Liar? Laporkan Sekali Sentuh".
+
+Navigasi: Tombol "Lewati" di pojok kanan atas (font 18pt). Tombol "Lanjut" di bawah.
+
+Interaksi:
+
+Geser horizontal untuk berpindah slide.
+
+Setelah selesai atau tekan "Lewati", pengguna langsung masuk Mode Sederhana.
+
+Kemudahan untuk Gaptek:
+
+Suara Panduan: Saat slide muncul, aplikasi membacakan teks besar secara otomatis menggunakan fitur TTS (Text-to-Speech) lokal. Contoh: "Arahkan kamera ke kode QR yang dimiliki tukang parkir."
+
+2. Halaman Beranda (Mode Sederhana - Tampilan Default)
+Catatan Penting Developer: Saat install pertama kali, atau jika toggle "Mode Sederhana" di Pengaturan aktif, halaman ini yang muncul. TIDAK BOLEH ADA PETA, POIN, ATAU RIWAYAT di tampilan ini.
+
+Tata Letak:
+
+Atas (20%): Judul "ParkirCerdas" (rata tengah).
+
+Tengah (60%):
+
+Tombol "📷 SCAN QR JUKIR" (Tinggi 72dp, Lebar penuh, Biru Aksi #1565C0). Di bawah tombol ada teks kecil: "Arahkan kamera ke kode QR".
+
+Tombol "⚠️ LAPORKAN PUNGLI" (Tinggi 56dp, Lebar penuh, Outline Merah #B71C1C).
+
+Bawah (20%): Teks informasi kecil: "Pastikan jukir memiliki kode resmi sebelum bayar."
+
+Interaksi:
+
+Tekan "Scan QR Jukir": Langsung membuka kamera (Halaman 3).
+
+Tekan "Laporkan Pungli": Langsung mengunci GPS, memunculkan popup konfirmasi "Kirim laporan lokasi ini?", lalu selesai (tidak ada form).
+
+Kemudahan untuk Gaptek:
+
+Tidak ada menu yang membingungkan. Hanya 2 pilihan.
+
+Teks tombol sangat deskriptif.
+
+3. Halaman Scan QR & Hasil Verifikasi
+Fungsi: Memindai QR Code Jukir.
+
+A. Tampilan Kamera
+
+Tata Letak: Layar penuh kamera.
+
+Elemen Visual: Kotak panduan persegi di tengah layar (stroke putih tebal). Tombol 🔦 Senter di kiri bawah.
+
+Interaksi: Auto-Scan. Begitu QR terbaca, langsung pindah ke Layar Hasil. Getar pendek (haptic) saat terdeteksi.
+
+Kemudahan Gaptek: Suara otomatis saat kamera terbuka: "Arahkan kotak ke kode QR tukang parkir."
+
+B. Skenario JUKIR VALID (Layar Hijau Solid)
+
+Tata Letak: Seluruh latar belakang layar berubah warna #1B5E20 (Hijau Tua Solid). Tidak ada elemen putih selain konten.
+
+Elemen Visual:
+
+Ikon ✔️ Centang Putih Besar di atas.
+
+Foto Jukir: 200x200 dp, bulat, border putih 4dp.
+
+Nama Jukir: Teks Putih 24pt.
+
+Tarif Parkir: Teks Putih 32pt Bold (Contoh: "Rp 2.000").
+
+Tombol "BAYAR PARKIR SEKARANG": Lebar penuh, tinggi 72dp, warna Biru Aksi #1565C0, teks Putih 20pt.
+
+Interaksi: Tekan tombol Bayar -> Pindah ke Halaman Input Plat (Halaman 4).
+
+Kemudahan Gaptek: Warna hijau menyala di seluruh layar adalah isyarat universal "AMAN". Pengguna tidak perlu membaca teks kecil untuk tahu hasilnya.
+
+C. Skenario JUKIR TIDAK VALID (Layar Merah Solid)
+
+Tata Letak: Seluruh latar belakang layar berubah warna #B71C1C (Merah Tua Solid).
+
+Elemen Visual:
+
+Ikon ⚠️ Segitiga Peringatan Putih Besar.
+
+Teks: "JUKIR TIDAK TERDAFTAR" (Putih, 26pt Bold).
+
+Teks kecil: "Jangan berikan uang tunai."
+
+Tombol "LAPORKAN SEKARANG": Lebar penuh, tinggi 72dp, warna Putih, teks Merah #B71C1C.
+
+Interaksi: Tekan tombol -> Muncul dialog konfirmasi "Laporkan lokasi ini ke petugas?" (Pilihan: YA, LAPORKAN / TIDAK). Jika YA, data GPS & waktu langsung dikirim.
+
+Kemudahan Gaptek: Warna merah menyala adalah isyarat universal "BAHAYA". Aksi langsung tanpa mengisi form panjang.
+
+4. Halaman Pembayaran (Input Plat & QRIS)
+Fungsi: Memasukkan nomor kendaraan dan menampilkan kode bayar.
+
+A. Step 1: Input Plat Nomor
+
+Tata Letak:
+
+Judul: "Masukkan Plat Nomor" (rata tengah).
+
+Komponen Kunci: Wheel Picker (Slot Machine Scroller). Bukan text field ketik. Tampilan 3-4 kolom pemutar (Tergantung format plat daerah).
+
+Kolom 1: Huruf Awal (B, L, D, dll.)
+
+Kolom 2: Angka (0-9)
+
+Kolom 3: Angka (0-9)
+
+Kolom 4: Huruf Akhir (XX, YZ, dll.)
+
+Tombol "LANJUTKAN" (Biru Aksi, full-width).
+
+Interaksi: Geser vertikal pada setiap kolom untuk memilih karakter. Tombol Lanjutkan hanya aktif jika semua kolom terisi.
+
+Kemudahan Gaptek: Menghilangkan kebutuhan mengetik di keyboard kecil. Sangat ramah untuk jari besar atau tremor. Ada panduan suara: "Putar untuk pilih nomor kendaraan Anda."
+
+B. Step 2: Konfirmasi & QRIS
+
+Tata Letak:
+
+Ringkasan: "Plat [Nomor] | Zona [Nama] | Tarif [Rp]".
+
+Gambar QRIS: Ukuran minimal 300x300 dp, tengah layar. Kontras hitam putih tinggi.
+
+Teks Instruksi: "Buka Mobile Banking / E-Wallet Anda, lalu pindai kode ini."
+
+Tombol "SAYA SUDAH BAYAR" (Warna Hijau #1B5E20, full-width).
+
+Interaksi:
+
+Sistem melakukan polling status pembayaran ke backend setiap 3 detik.
+
+Jika pembayaran sukses terdeteksi: Otomatis pindah ke Halaman Karcis Digital (Halaman 5) tanpa perlu tekan tombol apa pun.
+
+Jika pengguna tekan "SAYA SUDAH BAYAR": Aplikasi memaksa cek status manual. Jika belum terbayar, tampilkan Snackbar: "Pembayaran belum terdeteksi. Pastikan transaksi berhasil."
+
+Kemudahan Gaptek:
+
+Jika pengguna diam di halaman ini lebih dari 2 menit, muncul tooltip besar: "Tidak bisa scan? Minta bantuan Jukir untuk menunjukkan kode QR-nya."
+
+5. Halaman Karcis Digital & Rating
+Fungsi: Menampilkan bukti pembayaran sah.
+
+A. Karcis Digital
+
+Tata Letak: Latar belakang Putih #FFFFFF penuh. Animasi Konfeti Singkat (2 detik) saat pertama muncul.
+
+Elemen Visual:
+
+Judul: "PARKIR SAH" (Hijau #1B5E20, 24pt).
+
+Detail (Font 20pt, tebal, #424242):
+
+Plat: [Nomor]
+
+Zona: [Nama]
+
+Tarif: Rp [Jumlah]
+
+Waktu: [HH:MM]
+
+QR Code Bukti: Ukuran 200x200 dp di bawah detail.
+
+Tombol "TAMPILKAN KE JUKIR": Lebar penuh, tinggi 64dp, warna Biru Aksi. Saat ditekan, kecerahan layar otomatis 100% dan mode tidur layar dimatikan sementara.
+
+Tombol "SELESAI" (Outline Abu-abu).
+
+B. Rating Jukir (Popup Otomatis)
+
+Pemicu: Muncul setelah tombol "SELESAI" ditekan atau saat pengguna menutup karcis.
+
+Tata Letak Popup:
+
+Pertanyaan: "Bagaimana pelayanan Pak/Bu [Nama Jukir]?"
+
+Input Rating: Emoji Slider. Pengguna cukup menggeser ikon wajah: 😡 😐 😊 😍 (Bukan bintang 1-5 yang kecil). Ikon berukuran 48x48 dp.
+
+Teks Bonus: *"+5 Poin akan ditambahkan!"*
+
+Interaksi: Begitu emoji dipilih, popup tertutup otomatis dan poin bertambah.
+
+Kemudahan Gaptek: Tidak ada kewajiban mengetik komentar. Emosi lebih mudah dipilih daripada angka.
+
+6. Halaman Riwayat Transaksi (Mode Lengkap)
+Tata Letak:
+
+Daftar vertikal Kartu Bergambar.
+
+Setiap kartu menampilkan:
+
+Ikon Kendaraan (Mobil/Motor) di kiri (ukuran 40dp).
+
+Plat Nomor (Bold 20pt).
+
+Waktu & Zona (Abu-abu 16pt).
+
+Status: Lencana "SUKSES" berwarna Hijau.
+
+Interaksi:
+
+Ketuk kartu untuk melihat ulang Karcis Digital lengkap.
+
+Geser ke kiri untuk hapus riwayat (konfirmasi hapus).
+
+Kemudahan Gaptek:
+
+Tampilan visual berbasis ikon lebih mudah diingat daripada deretan teks angka.
+
+7. Halaman Poin & Hadiah (Mode Lengkap)
+Tata Letak:
+
+Atas:
+
+Saldo Poin: Font 48pt Bold warna Kuning #FBC02D.
+
+Progress Bar hijau menuju reward berikutnya.
+
+Bawah (Daftar Hadiah - 1 Kolom Saja):
+
+Item 1: 🎫 Gratis Parkir 1x (Butuh 25 Poin). Tombol "TUKAR" full-width.
+
+Item 2: 🏢 Diskon Langganan Bulanan 10% (Butuh 100 Poin). Tombol "TUKAR" full-width.
+
+Catatan: Tampilan 1 kolom vertikal memastikan teks tetap besar dan tidak mengecil seperti layout grid 2 kolom.
+
+Interaksi:
+
+Tekan "TUKAR" -> Konfirmasi "Gunakan 25 Poin?" -> Poin terpotong, muncul kode voucher di layar.
+
+8. Aplikasi Mitra Jukir (ParkirCerdas Mitra)
+Target Pengguna: Juru Parkir (Asumsi Gaptek Berat).
+
+Prinsip Utama: Mode Kiosk / Terkunci. Aplikasi ini tidak memiliki tombol Logout, Settings, atau Update Profile yang terlihat oleh pengguna biasa.
+
+A. Layar Utama (Siaga)
+
+Tata Letak: Latar Putih.
+
+Elemen Visual:
+
+Status Zona: "ANDA SEDANG BERTUGAS" (Teks Hijau 24pt, Bold).
+
+Kotak Notifikasi Transaksi: Area putih dengan border abu-abu, tinggi 200dp. Menampilkan pesan terbaru dengan font 20pt: "B 1234 XYZ | Rp 5.000 | BERHASIL". Mirip seperti layar notifikasi aplikasi ojek online jadul.
+
+Interaksi: Tidak ada. Hanya melihat notifikasi masuk real-time.
+
+B. Tampilkan QR Saya
+
+Akses: Tombol besar di bawah layar: "KODE QR SAYA" (Tinggi 72dp, Biru).
+
+Fungsi: Menampilkan QR Code jukir dalam ukuran layar penuh agar bisa di-scan warga.
+
+Kemudahan Gaptek: Menu sesederhana mungkin. Tidak ada istilah teknis seperti "Sinkronisasi" atau "Akun". Hanya "Tugas" dan "QR".
+
+9. Mode Aksesibilitas / Senior Mode
+Cara Aktif: Toggle di halaman Pengaturan (dengan ikon "Mata Tua / Kacamata"). Catatan Penting: Saat aplikasi fresh install, toggle ini OTOMATIS AKTIF.
+
+Efek yang Terjadi Saat Mode Aktif:
+
+Halaman Beranda berubah dari tampilan lengkap (dengan peta) menjadi Mode Sederhana (Hanya Tombol Scan & Lapor seperti dijelaskan di Poin 2).
+
+Semua ukuran font ditambah +15% dari spesifikasi dasar di atas.
+
+Semua animasi transisi halaman dihilangkan. Pergantian halaman menggunakan Fade sederhana (mencegah mabuk layar/motion sickness pada lansia).
+
+Peta interaktif di halaman utama (jika mode lengkap diaktifkan manual) berubah menjadi Kartu Teks Statis yang hanya menampilkan: "Lokasi Anda: Zona Aman" atau "Lokasi Anda: Zona Rawan".
+
+10. Panduan Suara (Voice Guidance)
+Implementasi:
+
+Gunakan fitur TTS (Text-to-Speech) bawaan perangkat.
+
+Pemicu:
+
+Saat kamera Scan terbuka: "Arahkan kamera ke kode QR."
+
+Saat hasil Scan Merah: "Bahaya. Jukir tidak terdaftar. Laporkan sekarang."
+
+Saat pembayaran sukses: "Pembayaran berhasil. Tunjukan layar ke petugas."
+
+Volume: Mengikuti volume media perangkat. Tidak perlu pengaturan internal.

@@ -1,30 +1,28 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp, type Payment } from "@/contexts/AppContext";
-import { useColors } from "@/hooks/useColors";
 
-const DURATION_OPTIONS = [
-  { hours: 1, label: "1 Jam" },
-  { hours: 2, label: "2 Jam" },
-  { hours: 3, label: "3 Jam" },
-  { hours: 5, label: "5 Jam" },
-];
+const PLATE_LETTERS = ["BK", "B", "D", "L", "H", "N", "AG", "AB", "AD", "K", "R", "G", "E", "T", "Z", "F", "A", "W", "S", "P"];
+const PLATE_NUMBERS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+const PLATE_SUFFIX = ["AA", "AB", "AC", "AD", "BA", "BB", "BC", "CA", "DA", "EA", "FA", "GA", "HA", "XY", "XZ", "YZ"];
 
 export default function PaymentScreen() {
-  const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { addPayment, addPoints } = useApp();
   const params = useLocalSearchParams<{
     officerId: string;
@@ -35,22 +33,22 @@ export default function PaymentScreen() {
     badgeNumber: string;
   }>();
 
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [paymentComplete, setPaymentComplete] = useState(false);
   const [paymentData, setPaymentData] = useState<Payment | null>(null);
-  const [plateNumber, setPlateNumber] = useState("");
-  const [selectedDuration, setSelectedDuration] = useState(1);
   const [earnedPoints, setEarnedPoints] = useState(0);
 
-  const ratePerHour = Number(params.rate || 0);
-  const totalAmount = ratePerHour * selectedDuration;
+  const [platePrefix, setPlatePrefix] = useState(0);
+  const [plateNum1, setPlateNum1] = useState(0);
+  const [plateNum2, setPlateNum2] = useState(0);
+  const [plateNum3, setPlateNum3] = useState(0);
+  const [plateNum4, setPlateNum4] = useState(0);
+  const [plateSuffix, setPlateSuffix] = useState(0);
+
+  const rate = Number(params.rate || 0);
+  const plateNumber = `${PLATE_LETTERS[platePrefix]} ${PLATE_NUMBERS[plateNum1]}${PLATE_NUMBERS[plateNum2]}${PLATE_NUMBERS[plateNum3]}${PLATE_NUMBERS[plateNum4]} ${PLATE_SUFFIX[plateSuffix]}`;
 
   const handlePayment = async () => {
-    if (!plateNumber.trim()) {
-      Alert.alert("Error", "Nomor plat kendaraan wajib diisi");
-      return;
-    }
-
     setLoading(true);
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -58,87 +56,113 @@ export default function PaymentScreen() {
       const payment = await addPayment({
         officerId: params.officerId ? Number(params.officerId) : null,
         officerName: params.officerName || "",
-        amount: totalAmount,
+        amount: rate,
         method: "qris",
         area: params.area || "",
-        plateNumber: plateNumber.trim().toUpperCase(),
-        duration: selectedDuration,
+        plateNumber: plateNumber,
+        duration: 1,
       });
 
-      const pts = Math.floor(totalAmount / 1000);
+      const pts = Math.floor(rate / 1000);
       addPoints(pts);
       setEarnedPoints(pts);
-
       setPaymentData(payment);
-      setPaymentComplete(true);
+      setStep(3);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Pembayaran gagal. Silakan coba lagi.");
+      Alert.alert("Error", err.message || "Pembayaran gagal.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (paymentComplete && paymentData) {
-    return (
-      <ScrollView
-        style={[styles.container, { backgroundColor: "#059669" }]}
-        contentContainerStyle={styles.receiptContent}
+  const WheelColumn = ({
+    items,
+    selected,
+    onSelect,
+    width,
+  }: {
+    items: string[];
+    selected: number;
+    onSelect: (idx: number) => void;
+    width: number;
+  }) => (
+    <View style={[styles.wheelColumn, { width }]}>
+      <Pressable
+        onPress={() => onSelect((selected - 1 + items.length) % items.length)}
+        style={styles.wheelArrow}
       >
-        <View style={styles.receiptHeader}>
-          <View style={styles.successCircle}>
-            <Feather name="check" size={40} color="#059669" />
+        <Feather name="chevron-up" size={28} color="#757575" />
+      </Pressable>
+      <View style={styles.wheelValue}>
+        <Text style={styles.wheelValueText}>{items[selected]}</Text>
+      </View>
+      <Pressable
+        onPress={() => onSelect((selected + 1) % items.length)}
+        style={styles.wheelArrow}
+      >
+        <Feather name="chevron-down" size={28} color="#757575" />
+      </Pressable>
+    </View>
+  );
+
+  if (step === 3 && paymentData) {
+    return (
+      <View style={[styles.container, { backgroundColor: "#FFF" }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: Platform.OS === "web" ? 67 + 32 : insets.top + 32, paddingBottom: insets.bottom + 40 },
+          ]}
+        >
+          <Text style={styles.karcisTitle}>PARKIR SAH</Text>
+
+          <View style={styles.karcisDetails}>
+            {[
+              { label: "Plat", value: plateNumber },
+              { label: "Zona", value: params.area || "-" },
+              { label: "Tarif", value: `Rp ${rate.toLocaleString("id-ID")}` },
+              { label: "Waktu", value: new Date(paymentData.createdAt).toLocaleString("id-ID", { hour: "2-digit", minute: "2-digit" }) },
+              { label: "Petugas", value: params.officerName },
+              { label: "No. Transaksi", value: paymentData.transactionId },
+            ].map((item) => (
+              <View key={item.label} style={styles.karcisRow}>
+                <Text style={styles.karcisLabel}>{item.label}:</Text>
+                <Text style={styles.karcisValue}>{item.value}</Text>
+              </View>
+            ))}
           </View>
-          <Text style={styles.receiptSuccessTitle}>Pembayaran Berhasil!</Text>
-          <Text style={styles.receiptSuccessAmount}>
-            Rp {totalAmount.toLocaleString("id-ID")}
-          </Text>
-        </View>
 
-        <View style={[styles.karcisCard, { borderRadius: colors.radius }]}>
-          <View style={styles.karcisHeader}>
-            <MaterialCommunityIcons name="parking" size={24} color="#059669" />
-            <Text style={styles.karcisTitle}>Karcis Digital Parkir</Text>
+          <View style={styles.qrProof}>
+            <MaterialCommunityIcons name="qrcode" size={200} color="#000" />
           </View>
 
-          <View style={styles.karcisDivider} />
-
-          {[
-            { label: "No. Transaksi", value: paymentData.transactionId },
-            { label: "Plat Nomor", value: plateNumber.toUpperCase() },
-            { label: "Petugas", value: params.officerName },
-            { label: "Badge", value: params.badgeNumber || "-" },
-            { label: "Zona Parkir", value: params.area || "-" },
-            { label: "Durasi", value: `${selectedDuration} Jam` },
-            { label: "Tarif/Jam", value: `Rp ${ratePerHour.toLocaleString("id-ID")}` },
-            { label: "Total Bayar", value: `Rp ${totalAmount.toLocaleString("id-ID")}` },
-            { label: "Metode", value: "QRIS" },
-            { label: "Status", value: "LUNAS" },
-            { label: "Waktu", value: new Date(paymentData.createdAt).toLocaleString("id-ID") },
-          ].map((item) => (
-            <View key={item.label} style={styles.karcisRow}>
-              <Text style={styles.karcisLabel}>{item.label}</Text>
-              <Text style={[
-                styles.karcisValue,
-                item.label === "Status" && { color: "#059669", fontFamily: "Inter_700Bold" },
-                item.label === "Total Bayar" && { color: "#059669", fontFamily: "Inter_700Bold" },
-              ]}>{item.value}</Text>
-            </View>
-          ))}
-
-          <View style={styles.karcisDivider} />
-
-          <View style={styles.pointsEarned}>
-            <MaterialCommunityIcons name="star-circle" size={20} color="#F59E0B" />
-            <Text style={styles.pointsEarnedText}>
-              +{earnedPoints} Poin Parkir diperoleh!
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.receiptActions}>
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.push({
+                pathname: "/karcis",
+                params: {
+                  plateNumber,
+                  area: params.area,
+                  rate: params.rate,
+                  officerName: params.officerName,
+                  transactionId: paymentData.transactionId,
+                  createdAt: paymentData.createdAt,
+                  officerId: params.officerId,
+                },
+              });
+            }}
+            style={({ pressed }) => [
+              styles.showBtn,
+              { opacity: pressed ? 0.9 : 1 },
+            ]}
+          >
+            <MaterialCommunityIcons name="cellphone" size={22} color="#FFF" />
+            <Text style={styles.showBtnText}>TAMPILKAN KE JUKIR</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
               router.push({
                 pathname: "/rating",
                 params: {
@@ -150,278 +174,326 @@ export default function PaymentScreen() {
               });
             }}
             style={({ pressed }) => [
-              styles.rateButton,
-              { borderRadius: colors.radius, opacity: pressed ? 0.9 : 1 },
+              styles.outlineBtn,
+              { opacity: pressed ? 0.8 : 1 },
             ]}
           >
-            <Feather name="star" size={20} color="#F59E0B" />
-            <Text style={styles.rateButtonText}>Beri Rating Jukir</Text>
+            <Text style={styles.outlineBtnText}>SELESAI</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (step === 2) {
+    return (
+      <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: Platform.OS === "web" ? 67 + 24 : insets.top + 24, paddingBottom: insets.bottom + 40 },
+          ]}
+        >
+          <Text style={styles.stepTitle}>Konfirmasi & Bayar</Text>
+
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLine}>Plat: <Text style={styles.summaryBold}>{plateNumber}</Text></Text>
+            <Text style={styles.summaryLine}>Zona: <Text style={styles.summaryBold}>{params.area}</Text></Text>
+            <Text style={styles.summaryLine}>Tarif: <Text style={styles.summaryBold}>Rp {rate.toLocaleString("id-ID")}</Text></Text>
+          </View>
+
+          <View style={styles.qrisCard}>
+            <MaterialCommunityIcons name="qrcode" size={300} color="#000" />
+            <Text style={styles.qrisInstruction}>
+              Buka Mobile Banking / E-Wallet Anda,{"\n"}lalu pindai kode ini.
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={handlePayment}
+            disabled={loading}
+            style={({ pressed }) => [
+              styles.payConfirmBtn,
+              { backgroundColor: "#1B5E20", opacity: loading ? 0.6 : pressed ? 0.9 : 1 },
+            ]}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <Text style={styles.payConfirmBtnText}>SAYA SUDAH BAYAR</Text>
+            )}
           </Pressable>
 
           <Pressable
-            onPress={() => {
-              router.dismissAll();
-              router.replace("/(tabs)");
-            }}
-            style={({ pressed }) => [
-              styles.homeButton,
-              { borderRadius: colors.radius, opacity: pressed ? 0.8 : 1 },
-            ]}
+            onPress={() => setStep(1)}
+            style={({ pressed }) => [styles.backLink, { opacity: pressed ? 0.7 : 1 }]}
           >
-            <Feather name="home" size={20} color="#FFF" />
-            <Text style={styles.homeButtonText}>Kembali ke Beranda</Text>
+            <Text style={styles.backLinkText}>Kembali</Text>
           </Pressable>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     );
   }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingBottom: 40 }}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View style={[styles.headerCard, { backgroundColor: colors.primary + "10", borderRadius: colors.radius }]}>
-        <View style={[styles.qrisIcon, { backgroundColor: colors.primary + "15" }]}>
-          <MaterialCommunityIcons name="qrcode" size={48} color={colors.primary} />
-        </View>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Pembayaran QRIS</Text>
-        <Text style={[styles.headerDesc, { color: colors.mutedForeground }]}>
-          Bayar parkir resmi langsung ke kas daerah via QRIS
-        </Text>
-      </View>
+    <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: Platform.OS === "web" ? 67 + 24 : insets.top + 24, paddingBottom: insets.bottom + 40 },
+        ]}
+      >
+        <Text style={styles.stepTitle}>Masukkan Plat Nomor</Text>
 
-      <View style={[styles.formCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
-        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Nomor Plat Kendaraan</Text>
-        <TextInput
-          style={[
-            styles.plateInput,
-            {
-              backgroundColor: colors.background,
-              color: colors.foreground,
-              borderColor: plateNumber.trim() ? colors.primary : colors.border,
-              borderRadius: colors.radius,
-            },
-          ]}
-          placeholder="Contoh: BK 1234 AB"
-          placeholderTextColor={colors.mutedForeground}
-          value={plateNumber}
-          onChangeText={setPlateNumber}
-          autoCapitalize="characters"
-        />
-      </View>
-
-      <View style={[styles.formCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
-        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Durasi Parkir</Text>
-        <View style={styles.durationGrid}>
-          {DURATION_OPTIONS.map((opt) => (
-            <Pressable
-              key={opt.hours}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                setSelectedDuration(opt.hours);
-              }}
-              style={({ pressed }) => [
-                styles.durationOption,
-                {
-                  backgroundColor: selectedDuration === opt.hours ? colors.primary + "15" : colors.background,
-                  borderColor: selectedDuration === opt.hours ? colors.primary : colors.border,
-                  borderRadius: colors.radius,
-                  opacity: pressed ? 0.8 : 1,
-                },
-              ]}
-            >
-              <Text style={[
-                styles.durationLabel,
-                { color: selectedDuration === opt.hours ? colors.primary : colors.mutedForeground },
-              ]}>
-                {opt.label}
-              </Text>
-              <Text style={[
-                styles.durationPrice,
-                { color: selectedDuration === opt.hours ? colors.primary : colors.foreground },
-              ]}>
-                Rp {(ratePerHour * opt.hours).toLocaleString("id-ID")}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View style={[styles.formCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
-        <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Detail Pembayaran</Text>
-        {[
-          { label: "Petugas", value: params.officerName || "-" },
-          { label: "Zona", value: params.area || "-" },
-          { label: "Tarif/Jam", value: `Rp ${ratePerHour.toLocaleString("id-ID")}` },
-          { label: "Durasi", value: `${selectedDuration} Jam` },
-        ].map((item) => (
-          <View key={item.label} style={[styles.detailRow, { borderBottomColor: colors.border }]}>
-            <Text style={[styles.detailLabel, { color: colors.mutedForeground }]}>{item.label}</Text>
-            <Text style={[styles.detailValue, { color: colors.foreground }]}>{item.value}</Text>
-          </View>
-        ))}
-
-        <View style={[styles.totalRow, { backgroundColor: colors.primary + "08", borderRadius: colors.radius }]}>
-          <Text style={[styles.totalLabel, { color: colors.foreground }]}>Total Bayar</Text>
-          <Text style={[styles.totalValue, { color: colors.primary }]}>
-            Rp {totalAmount.toLocaleString("id-ID")}
-          </Text>
+        <View style={styles.wheelContainer}>
+          <WheelColumn items={PLATE_LETTERS} selected={platePrefix} onSelect={setPlatePrefix} width={72} />
+          <WheelColumn items={PLATE_NUMBERS} selected={plateNum1} onSelect={setPlateNum1} width={52} />
+          <WheelColumn items={PLATE_NUMBERS} selected={plateNum2} onSelect={setPlateNum2} width={52} />
+          <WheelColumn items={PLATE_NUMBERS} selected={plateNum3} onSelect={setPlateNum3} width={52} />
+          <WheelColumn items={PLATE_NUMBERS} selected={plateNum4} onSelect={setPlateNum4} width={52} />
+          <WheelColumn items={PLATE_SUFFIX} selected={plateSuffix} onSelect={setPlateSuffix} width={72} />
         </View>
 
-        <View style={[styles.pointsPreview, { backgroundColor: "#FEF3C7", borderRadius: colors.radius }]}>
-          <MaterialCommunityIcons name="star-circle" size={18} color="#F59E0B" />
-          <Text style={styles.pointsPreviewText}>
-            Anda akan mendapat +{Math.floor(totalAmount / 1000)} Poin Parkir
-          </Text>
+        <View style={styles.platePreview}>
+          <Text style={styles.platePreviewText}>{plateNumber}</Text>
         </View>
-      </View>
 
-      <View style={styles.submitContainer}>
+        <Text style={styles.wheelHint}>Putar untuk pilih nomor kendaraan Anda</Text>
+
         <Pressable
-          onPress={handlePayment}
-          disabled={loading}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            setStep(2);
+          }}
           style={({ pressed }) => [
-            styles.payButton,
-            {
-              backgroundColor: colors.primary,
-              borderRadius: colors.radius,
-              opacity: loading ? 0.6 : pressed ? 0.8 : 1,
-            },
+            styles.continueBtn,
+            { opacity: pressed ? 0.9 : 1 },
           ]}
         >
-          {loading ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <>
-              <MaterialCommunityIcons name="qrcode" size={22} color="#FFF" />
-              <Text style={styles.payButtonText}>Bayar Sekarang via QRIS</Text>
-            </>
-          )}
+          <Text style={styles.continueBtnText}>LANJUTKAN</Text>
         </Pressable>
-      </View>
-    </ScrollView>
+
+        <Pressable
+          onPress={() => router.back()}
+          style={({ pressed }) => [styles.backLink, { opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Text style={styles.backLinkText}>Kembali</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  receiptContent: { paddingBottom: 40 },
-  headerCard: { margin: 20, padding: 28, alignItems: "center" },
-  qrisIcon: {
-    width: 88,
-    height: 88,
-    borderRadius: 24,
+  scrollContent: { alignItems: "center", paddingHorizontal: 24 },
+
+  stepTitle: {
+    fontSize: 26,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+    textAlign: "center",
+    marginBottom: 32,
+  },
+
+  wheelContainer: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    gap: 4,
+    marginBottom: 24,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 16,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  headerTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 6 },
-  headerDesc: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" },
-  formCard: { marginHorizontal: 20, padding: 20, marginBottom: 12 },
-  sectionLabel: { fontSize: 15, fontFamily: "Inter_600SemiBold", marginBottom: 12 },
-  plateInput: {
-    height: 52,
-    paddingHorizontal: 16,
-    fontSize: 18,
-    fontFamily: "Inter_700Bold",
+  wheelColumn: { alignItems: "center" },
+  wheelArrow: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  wheelValue: {
+    height: 56,
+    alignItems: "center",
+    justifyContent: "center",
+    borderTopWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: "#1565C0",
+    paddingHorizontal: 4,
+    minWidth: 44,
+  },
+  wheelValueText: {
+    fontSize: 24,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+  },
+
+  platePreview: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
     borderWidth: 2,
+    borderColor: "#424242",
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    marginBottom: 12,
+  },
+  platePreviewText: {
+    fontSize: 28,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
     textAlign: "center",
     letterSpacing: 2,
   },
-  durationGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  durationOption: {
-    flexBasis: "47%",
-    flexGrow: 1,
-    padding: 14,
-    borderWidth: 1.5,
-    alignItems: "center",
+
+  wheelHint: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    textAlign: "center",
+    marginBottom: 32,
   },
-  durationLabel: { fontSize: 13, fontFamily: "Inter_600SemiBold", marginBottom: 4 },
-  durationPrice: { fontSize: 14, fontFamily: "Inter_700Bold" },
-  detailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-  },
-  detailLabel: { fontSize: 14, fontFamily: "Inter_400Regular" },
-  detailValue: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    marginTop: 16,
-  },
-  totalLabel: { fontSize: 16, fontFamily: "Inter_700Bold" },
-  totalValue: { fontSize: 22, fontFamily: "Inter_700Bold" },
-  pointsPreview: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    marginTop: 12,
-    gap: 8,
-  },
-  pointsPreviewText: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#92400E" },
-  submitContainer: { paddingHorizontal: 20, marginTop: 12 },
-  payButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+
+  continueBtn: {
+    width: "100%",
     height: 56,
-    gap: 10,
-  },
-  payButtonText: { color: "#FFF", fontSize: 17, fontFamily: "Inter_700Bold" },
-  receiptHeader: { alignItems: "center", paddingTop: 60, paddingBottom: 24 },
-  successCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FFF",
+    borderRadius: 12,
+    backgroundColor: "#1565C0",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  receiptSuccessTitle: { fontSize: 22, fontFamily: "Inter_700Bold", color: "#FFF", marginBottom: 8 },
-  receiptSuccessAmount: { fontSize: 32, fontFamily: "Inter_700Bold", color: "#FFF" },
-  karcisCard: { backgroundColor: "#FFF", marginHorizontal: 20, padding: 20, marginBottom: 16 },
-  karcisHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 4 },
-  karcisTitle: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#111" },
-  karcisDivider: { height: 1, backgroundColor: "#E5E7EB", marginVertical: 12, borderStyle: "dashed" },
+  continueBtnText: {
+    color: "#FFF",
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
+
+  backLink: { paddingVertical: 12 },
+  backLinkText: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    textDecorationLine: "underline",
+  },
+
+  summaryCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 20,
+    width: "100%",
+    marginBottom: 24,
+  },
+  summaryLine: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#424242",
+    marginBottom: 8,
+  },
+  summaryBold: {
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
+
+  qrisCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 24,
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 24,
+  },
+  qrisInstruction: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    textAlign: "center",
+    marginTop: 16,
+    lineHeight: 24,
+  },
+
+  payConfirmBtn: {
+    width: "100%",
+    height: 56,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  payConfirmBtnText: {
+    color: "#FFF",
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
+
+  karcisTitle: {
+    fontSize: 24,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#1B5E20",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  karcisDetails: {
+    width: "100%",
+    marginBottom: 24,
+  },
   karcisRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 8,
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#E0E0E0",
   },
-  karcisLabel: { fontSize: 13, fontFamily: "Inter_400Regular", color: "#6B7280" },
-  karcisValue: { fontSize: 13, fontFamily: "Inter_600SemiBold", color: "#111", maxWidth: "55%", textAlign: "right" },
-  pointsEarned: {
+  karcisLabel: {
+    fontSize: 20,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+  },
+  karcisValue: {
+    fontSize: 20,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+    maxWidth: "60%",
+    textAlign: "right",
+  },
+  qrProof: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+
+  showBtn: {
+    width: "100%",
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: "#1565C0",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingVertical: 8,
-  },
-  pointsEarnedText: { fontSize: 14, fontFamily: "Inter_700Bold", color: "#92400E" },
-  receiptActions: { paddingHorizontal: 20, gap: 12 },
-  rateButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    height: 52,
-    backgroundColor: "#FFF",
     gap: 10,
+    marginBottom: 12,
   },
-  rateButtonText: { fontSize: 16, fontFamily: "Inter_700Bold", color: "#92400E" },
-  homeButton: {
-    flexDirection: "row",
+  showBtnText: {
+    color: "#FFF",
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
+
+  outlineBtn: {
+    width: "100%",
+    height: 56,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#424242",
     alignItems: "center",
     justifyContent: "center",
-    height: 48,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    gap: 8,
   },
-  homeButtonText: { fontSize: 15, fontFamily: "Inter_600SemiBold", color: "#FFF" },
+  outlineBtnText: {
+    color: "#424242",
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
 });

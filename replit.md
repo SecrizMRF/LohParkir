@@ -1,8 +1,8 @@
-# LohParkir
+# ParkirCerdas (LohParkir)
 
 ## Overview
 
-LohParkir is a QR code-based parking verification and management system for Indonesian Dinas Perhubungan (Dishub). Public users scan QR codes on officer badges to verify legitimacy, report illegal parking, and pay via QRIS. Dishub admins monitor a real-time dashboard, manage reports, and register parking officers.
+ParkirCerdas is a QR code-based parking verification and management system for Indonesian Dinas Perhubungan (Dishub Kota Medan). Public users scan QR codes on officer badges to verify legitimacy, report illegal parking, and pay via QRIS. Dishub admins monitor a real-time dashboard, manage reports, and register parking officers.
 
 ## Stack
 
@@ -15,7 +15,8 @@ LohParkir is a QR code-based parking verification and management system for Indo
 - **Database**: PostgreSQL with Drizzle ORM
 - **Auth**: JWT (8h expiry) with role-based middleware
 - **State management**: React Context + API client + AsyncStorage offline cache
-- **UI**: React Native StyleSheet with Inter font family
+- **UI**: React Native StyleSheet with Atkinson Hyperlegible font family
+- **Font**: `AtkinsonHyperlegible_400Regular` and `AtkinsonHyperlegible_700Bold` from `@expo-google-fonts/atkinson-hyperlegible`
 
 ## Architecture
 
@@ -41,27 +42,55 @@ LohParkir is a QR code-based parking verification and management system for Indo
 - **admin**: Manage officers, reports, view dashboard (JWT required)
 - **superadmin**: Full access (JWT required)
 
+## Design System (ParkirCerdas Spec)
+
+### Colors
+- Primary Blue: `#1565C0`
+- Valid Green: `#1B5E20` (solid full-screen backgrounds)
+- Invalid Red: `#B71C1C` (solid full-screen backgrounds)
+- Yellow/Warning: `#FBC02D`
+- Background: `#F5F5F5`
+- Text Primary: `#424242`
+- Text Muted: `#757575`
+
+### Typography
+- Font: Atkinson Hyperlegible (accessibility-first)
+- Bold: `AtkinsonHyperlegible_700Bold`
+- Regular: `AtkinsonHyperlegible_400Regular`
+- No Inter font — fully migrated
+
+### Accessibility
+- Minimum button height: 56dp
+- Button border radius: 12
+- Full-width primary buttons
+- High contrast text on colored backgrounds
+
 ## Screens (5 Tabs + Stack)
-- **Scan Tab** (`(tabs)/index.tsx`): QR scanner with camera + manual input, demo QR codes
-- **Peta Tab** (`(tabs)/peta-rawan.tsx`): Zona rawan pungli visualization with color-coded grid, legend, and danger levels
-- **Laporan Tab** (`(tabs)/reports.tsx`): View reports, FAB to create new
-- **Riwayat Tab** (`(tabs)/payments.tsx`): Payment history with points card (Poin Parkir) and summary stats
+
+### Tab Screens
+- **Scan Tab** (`(tabs)/index.tsx`): Two large buttons — "SCAN QR JUKIR" (blue filled) and "LAPORKAN PUNGLI" (red outlined), plus "Input QR Manual" link
+- **Laporan Tab** (`(tabs)/reports.tsx`): View reports list, FAB to create new
+- **Riwayat Tab** (`(tabs)/payments.tsx`): Card-based payment history with vehicle icons (car/motorbike), plate numbers, amounts, success badges
+- **Poin Tab** (`(tabs)/peta-rawan.tsx`): Points display (48pt yellow), progress bar, rewards redemption (Gratis Parkir 1x, Diskon 10%)
 - **Admin Tab** (`(tabs)/admin.tsx`): Dashboard stats, login, officer/report management
-- **Scan Result** (`scan-result.tsx`): Enhanced full-screen green (valid) / red (invalid) verification display with officer details
-- **Payment** (`payment.tsx`): QRIS payment with plate number input, duration selection (1-5 hrs), enhanced Karcis Digital receipt, points earned
-- **Rating** (`rating.tsx`): Officer rating (1-5 stars) for 3 criteria (Keramahan, Kebersihan, Keamanan) with +5 bonus points
+
+### Stack Screens
+- **Scan Result** (`scan-result.tsx`): Full-screen solid green (#1B5E20) for valid / red (#B71C1C) for invalid, officer photo circle, details, action buttons
+- **Payment** (`payment.tsx`): 3-step flow — (1) wheel picker for plate number, (2) QRIS display + confirm, (3) Karcis Digital receipt
+- **Karcis Digital** (`karcis.tsx`): Digital parking receipt shown after payment
+- **Rating** (`rating.tsx`): 4 emoji choices (Buruk/Biasa/Baik/Sangat Baik), auto-navigates home 1.5s after selection, +5 bonus points
 - **Report Form** (`report-form.tsx`): Submit reports with photo & GPS
 - **Report Detail** (`report-detail.tsx`): View report, admin status changes + notes
 - **Officer Form** (`officer-form.tsx`): Register officers with NIP/badge validation
 - **Officers List** (`officers-list.tsx`): View/manage officers, activate/deactivate
-- **Reports Manage** (`reports-manage.tsx`): Filter reports by status (pending/in_progress/resolved/rejected)
+- **Reports Manage** (`reports-manage.tsx`): Filter reports by status
 
 ## Points System
 - Users earn points from payments: 1 point per Rp 1.000 spent
 - Users earn +5 bonus points for rating officers
 - Points persisted in AsyncStorage (`parkingPoints` key)
-- 1000 points = parking discount (future feature)
-- Displayed on Riwayat tab in golden card
+- Rewards: 25 points = Gratis Parkir 1x, 100 points = Diskon Langganan Bulanan 10%
+- Displayed on Poin tab with progress bar
 
 ## QR Code Format
 - Badge: `DSH-YYYY-NNN` (e.g., DSH-2024-001)
@@ -96,11 +125,3 @@ LohParkir is a QR code-based parking verification and management system for Indo
 - `GET /api/dashboard/stats` — dashboard statistics
 - `GET /api/dashboard/recent-scans` — recent scan history
 - `GET /api/dashboard/recent-reports` — recent reports
-
-## Color Theme
-- Primary: #0066CC (blue)
-- Secondary: #0EA5E9 (teal)
-- Background: #F0F4F8
-- Success: #10B981 (green)
-- Destructive: #EF4444 (red)
-- Warning: #F59E0B (amber)

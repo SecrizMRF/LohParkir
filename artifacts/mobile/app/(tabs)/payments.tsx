@@ -1,115 +1,80 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import React, { useEffect } from "react";
 import {
   FlatList,
   Platform,
+  Pressable,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 
 import { useApp, type Payment } from "@/contexts/AppContext";
-import { useColors } from "@/hooks/useColors";
-
-function PaymentItem({ item }: { item: Payment }) {
-  const colors = useColors();
+function PaymentItem({ item, onPress }: { item: Payment; onPress: () => void }) {
+  const isCar = (item.amount || 0) >= 3000;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
-      <View style={styles.cardHeader}>
-        <View style={[styles.icon, { backgroundColor: colors.success + "15" }]}>
-          <Feather name="credit-card" size={18} color={colors.success} />
-        </View>
-        <View style={styles.cardInfo}>
-          <Text style={[styles.txnId, { color: colors.foreground }]}>{item.transactionId}</Text>
-          <Text style={[styles.officer, { color: colors.mutedForeground }]}>{item.officerName}</Text>
-        </View>
-        <Text style={[styles.amount, { color: colors.success }]}>
-          Rp {item.amount.toLocaleString("id-ID")}
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: "#FFF", borderRadius: 12, opacity: pressed ? 0.9 : 1 },
+      ]}
+    >
+      <View style={[styles.cardIcon, { backgroundColor: isCar ? "#E3F2FD" : "#E8F5E9" }]}>
+        <MaterialCommunityIcons
+          name={isCar ? "car" : "motorbike"}
+          size={28}
+          color={isCar ? "#1565C0" : "#1B5E20"}
+        />
+      </View>
+      <View style={styles.cardInfo}>
+        <Text style={styles.cardPlate}>{(item as any).plateNumber || item.transactionId}</Text>
+        <Text style={styles.cardMeta}>
+          {new Date(item.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+          {" | "}
+          {item.area || "-"}
         </Text>
       </View>
-      <View style={[styles.detailRow, { borderTopColor: colors.border }]}>
-        <View style={styles.detailItem}>
-          <Feather name="map-pin" size={12} color={colors.mutedForeground} />
-          <Text style={[styles.detailText, { color: colors.mutedForeground }]} numberOfLines={1}>
-            {item.area || "-"}
-          </Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Feather name="tag" size={12} color={colors.mutedForeground} />
-          <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
-            {(item.method || "qris").toUpperCase()}
-          </Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Feather name="clock" size={12} color={colors.mutedForeground} />
-          <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
-            {new Date(item.createdAt).toLocaleDateString("id-ID")}
-          </Text>
+      <View style={styles.cardRight}>
+        <Text style={styles.cardAmount}>Rp {item.amount.toLocaleString("id-ID")}</Text>
+        <View style={styles.successBadge}>
+          <Text style={styles.successBadgeText}>SUKSES</Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
 export default function PaymentsScreen() {
-  const colors = useColors();
-  const { payments, refreshData, dashboardStats, points } = useApp();
+  const { payments, refreshData } = useApp();
 
   useEffect(() => {
     refreshData();
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.pointsCard, { borderRadius: colors.radius }]}>
-        <View style={styles.pointsLeft}>
-          <View style={styles.pointsIconWrap}>
-            <MaterialCommunityIcons name="star-circle" size={36} color="#F59E0B" />
-          </View>
-          <View>
-            <Text style={styles.pointsLabel}>Poin Parkir Anda</Text>
-            <Text style={styles.pointsValue}>{points} Poin</Text>
-          </View>
-        </View>
-        <View style={styles.pointsRight}>
-          <Text style={styles.pointsHint}>1000 poin = diskon parkir</Text>
-        </View>
-      </View>
-
-      <View style={[styles.summaryCard, { backgroundColor: colors.primary + "10", borderRadius: colors.radius }]}>
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: colors.primary }]}>
-              Rp {dashboardStats.totalRevenue.toLocaleString("id-ID")}
-            </Text>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Total Pembayaran</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: colors.primary }]}>
-              {dashboardStats.totalPayments}
-            </Text>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Transaksi</Text>
-          </View>
-        </View>
-      </View>
-
+    <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
       <FlatList
         data={payments}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <PaymentItem item={item} />}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+        renderItem={({ item }) => (
+          <PaymentItem item={item} onPress={() => {}} />
+        )}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingBottom: 100,
+          paddingTop: Platform.OS === "web" ? 67 + 16 : 16,
+        }}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={payments.length > 0}
+        ListHeaderComponent={
+          <Text style={styles.listTitle}>Riwayat Transaksi</Text>
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <View style={[styles.emptyIcon, { backgroundColor: colors.muted }]}>
-              <Feather name="credit-card" size={32} color={colors.mutedForeground} />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Belum Ada Pembayaran</Text>
-            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-              Riwayat pembayaran parkir akan muncul di sini
-            </Text>
+            <MaterialCommunityIcons name="receipt" size={48} color="#BDBDBD" />
+            <Text style={styles.emptyTitle}>Belum Ada Transaksi</Text>
+            <Text style={styles.emptyDesc}>Riwayat pembayaran parkir akan muncul di sini</Text>
           </View>
         }
       />
@@ -119,63 +84,72 @@ export default function PaymentsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  pointsCard: {
-    marginHorizontal: 20,
-    marginTop: Platform.OS === "web" ? 67 + 16 : 16,
-    marginBottom: 12,
-    padding: 16,
-    backgroundColor: "#FEF3C7",
+  listTitle: {
+    fontSize: 26,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+    marginBottom: 16,
+  },
+  card: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    padding: 16,
+    marginBottom: 10,
+    gap: 14,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  pointsLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
-  pointsIconWrap: {
+  cardIcon: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(245,158,11,0.15)",
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
-  pointsLabel: { fontSize: 12, fontFamily: "Inter_400Regular", color: "#92400E" },
-  pointsValue: { fontSize: 20, fontFamily: "Inter_700Bold", color: "#92400E" },
-  pointsRight: { alignItems: "flex-end" },
-  pointsHint: { fontSize: 10, fontFamily: "Inter_400Regular", color: "#92400E" },
-  summaryCard: {
-    marginHorizontal: 20,
-    marginBottom: 16,
-    padding: 20,
-  },
-  summaryRow: { flexDirection: "row", justifyContent: "space-around" },
-  summaryItem: { alignItems: "center" },
-  summaryValue: { fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 4 },
-  summaryLabel: { fontSize: 12, fontFamily: "Inter_400Regular" },
-  card: { padding: 14, marginBottom: 10 },
-  cardHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
-  icon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   cardInfo: { flex: 1 },
-  txnId: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
-  officer: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  amount: { fontSize: 15, fontFamily: "Inter_700Bold" },
-  detailRow: {
-    flexDirection: "row",
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 0.5,
-    gap: 16,
+  cardPlate: {
+    fontSize: 20,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
   },
-  detailItem: { flexDirection: "row", alignItems: "center", gap: 4 },
-  detailText: { fontSize: 11, fontFamily: "Inter_400Regular" },
-  empty: { alignItems: "center", paddingTop: 60 },
-  emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
+  cardMeta: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    marginTop: 2,
   },
-  emptyTitle: { fontSize: 17, fontFamily: "Inter_600SemiBold", marginBottom: 6 },
-  emptyDesc: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 260 },
+  cardRight: { alignItems: "flex-end", gap: 6 },
+  cardAmount: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+  },
+  successBadge: {
+    backgroundColor: "#E8F5E9",
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  successBadgeText: {
+    fontSize: 12,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#1B5E20",
+  },
+  empty: { alignItems: "center", paddingTop: 80 },
+  emptyTitle: {
+    fontSize: 20,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyDesc: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    textAlign: "center",
+  },
 });

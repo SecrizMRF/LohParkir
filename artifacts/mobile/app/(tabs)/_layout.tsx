@@ -16,17 +16,17 @@ function NativeTabLayout() {
         <Icon sf={{ default: "qrcode.viewfinder", selected: "qrcode.viewfinder" }} />
         <Label>Scan</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="peta-rawan">
-        <Icon sf={{ default: "map", selected: "map.fill" }} />
-        <Label>Peta</Label>
-      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="reports">
         <Icon sf={{ default: "doc.text", selected: "doc.text.fill" }} />
         <Label>Laporan</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="payments">
-        <Icon sf={{ default: "creditcard", selected: "creditcard.fill" }} />
+        <Icon sf={{ default: "clock", selected: "clock.fill" }} />
         <Label>Riwayat</Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="peta-rawan">
+        <Icon sf={{ default: "star", selected: "star.fill" }} />
+        <Label>Poin</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="admin">
         <Icon sf={{ default: "shield", selected: "shield.fill" }} />
@@ -46,14 +46,14 @@ function ClassicTabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
+        tabBarActiveTintColor: "#1565C0",
+        tabBarInactiveTintColor: "#757575",
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.card,
+          backgroundColor: isIOS ? "transparent" : "#FFFFFF",
           borderTopWidth: isWeb ? 1 : 0,
-          borderTopColor: colors.border,
+          borderTopColor: "#E0E0E0",
           elevation: 0,
           ...(isWeb ? { height: 84 } : {}),
         },
@@ -66,12 +66,12 @@ function ClassicTabLayout() {
             />
           ) : isWeb ? (
             <View
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]}
+              style={[StyleSheet.absoluteFill, { backgroundColor: "#FFFFFF" }]}
             />
           ) : null,
         tabBarLabelStyle: {
-          fontFamily: "Inter_500Medium",
-          fontSize: 10,
+          fontFamily: "AtkinsonHyperlegible_700Bold",
+          fontSize: 11,
         },
       }}
     >
@@ -83,19 +83,7 @@ function ClassicTabLayout() {
             isIOS ? (
               <SymbolView name="qrcode.viewfinder" tintColor={color} size={22} />
             ) : (
-              <Feather name="maximize" size={20} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="peta-rawan"
-        options={{
-          title: "Peta",
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="map" tintColor={color} size={22} />
-            ) : (
-              <MaterialCommunityIcons name="map-marker-alert" size={22} color={color} />
+              <MaterialCommunityIcons name="qrcode-scan" size={22} color={color} />
             ),
         }}
       />
@@ -117,9 +105,21 @@ function ClassicTabLayout() {
           title: "Riwayat",
           tabBarIcon: ({ color }) =>
             isIOS ? (
-              <SymbolView name="creditcard" tintColor={color} size={22} />
+              <SymbolView name="clock" tintColor={color} size={22} />
             ) : (
-              <Feather name="credit-card" size={20} color={color} />
+              <Feather name="clock" size={20} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="peta-rawan"
+        options={{
+          title: "Poin",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="star" tintColor={color} size={22} />
+            ) : (
+              <MaterialCommunityIcons name="star" size={22} color={color} />
             ),
         }}
       />
