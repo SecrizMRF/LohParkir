@@ -1,11 +1,10 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Animated,
   Platform,
   Pressable,
   ScrollView,
@@ -17,10 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp, type Payment } from "@/contexts/AppContext";
 
-const PLATE_LETTERS = ["BK", "B", "D", "L", "H", "N", "AG", "AB", "AD", "K", "R", "G", "E", "T", "Z", "F", "A", "W", "S", "P"];
-const PLATE_NUMBERS = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
-const PLATE_SUFFIX = ["AA", "AB", "AC", "AD", "BA", "BB", "BC", "CA", "DA", "EA", "FA", "GA", "HA", "XY", "XZ", "YZ"];
-
 export default function PaymentScreen() {
   const insets = useSafeAreaInsets();
   const { addPayment, addPoints } = useApp();
@@ -31,135 +26,105 @@ export default function PaymentScreen() {
     area: string;
     location: string;
     badgeNumber: string;
+    method: string;
   }>();
 
-  const [step, setStep] = useState(1);
+  const isCash = params.method === "cash";
+  const rate = Number(params.rate || 0);
+
+  const [step, setStep] = useState<"qris" | "waiting" | "success" | "cash_confirm">(isCash ? "cash_confirm" : "qris");
   const [loading, setLoading] = useState(false);
   const [paymentData, setPaymentData] = useState<Payment | null>(null);
-  const [earnedPoints, setEarnedPoints] = useState(0);
+  const [countdown, setCountdown] = useState(5);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [platePrefix, setPlatePrefix] = useState(0);
-  const [plateNum1, setPlateNum1] = useState(0);
-  const [plateNum2, setPlateNum2] = useState(0);
-  const [plateNum3, setPlateNum3] = useState(0);
-  const [plateNum4, setPlateNum4] = useState(0);
-  const [plateSuffix, setPlateSuffix] = useState(0);
-
-  const rate = Number(params.rate || 0);
-  const plateNumber = `${PLATE_LETTERS[platePrefix]} ${PLATE_NUMBERS[plateNum1]}${PLATE_NUMBERS[plateNum2]}${PLATE_NUMBERS[plateNum3]}${PLATE_NUMBERS[plateNum4]} ${PLATE_SUFFIX[plateSuffix]}`;
-
-  const handlePayment = async () => {
+  const processPayment = async (method: string) => {
     setLoading(true);
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
 
       const payment = await addPayment({
         officerId: params.officerId ? Number(params.officerId) : null,
         officerName: params.officerName || "",
         amount: rate,
-        method: "qris",
+        method,
         area: params.area || "",
-        plateNumber: plateNumber,
+        plateNumber: "-",
         duration: 1,
       });
 
       const pts = Math.floor(rate / 1000);
       addPoints(pts);
-      setEarnedPoints(pts);
       setPaymentData(payment);
-      setStep(3);
+      setStep("success");
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Pembayaran gagal.");
+      if (Platform.OS === "web") {
+        window.alert(err.message || "Pembayaran gagal.");
+      } else {
+        Alert.alert("Error", err.message || "Pembayaran gagal.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const WheelColumn = ({
-    items,
-    selected,
-    onSelect,
-    width,
-  }: {
-    items: string[];
-    selected: number;
-    onSelect: (idx: number) => void;
-    width: number;
-  }) => (
-    <View style={[styles.wheelColumn, { width }]}>
-      <Pressable
-        onPress={() => onSelect((selected - 1 + items.length) % items.length)}
-        style={styles.wheelArrow}
-      >
-        <Feather name="chevron-up" size={28} color="#757575" />
-      </Pressable>
-      <View style={styles.wheelValue}>
-        <Text style={styles.wheelValueText}>{items[selected]}</Text>
-      </View>
-      <Pressable
-        onPress={() => onSelect((selected + 1) % items.length)}
-        style={styles.wheelArrow}
-      >
-        <Feather name="chevron-down" size={28} color="#757575" />
-      </Pressable>
-    </View>
-  );
+  const startPaymentDetection = () => {
+    setStep("waiting");
+    setCountdown(5);
 
-  if (step === 3 && paymentData) {
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          processPayment("qris");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, []);
+
+  if (step === "success" && paymentData) {
     return (
-      <View style={[styles.container, { backgroundColor: "#FFF" }]}>
+      <View style={[styles.container, { backgroundColor: "#1B5E20" }]}>
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingTop: Platform.OS === "web" ? 67 + 32 : insets.top + 32, paddingBottom: insets.bottom + 40 },
+            { paddingTop: Platform.OS === "web" ? 67 + 48 : insets.top + 48, paddingBottom: insets.bottom + 40 },
           ]}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.karcisTitle}>PARKIR SAH</Text>
+          <View style={styles.successIcon}>
+            <MaterialCommunityIcons name="check-circle" size={96} color="#FFF" />
+          </View>
+          <Text style={styles.successTitle}>Pembayaran Berhasil!</Text>
+          <Text style={styles.successAmount}>Rp {rate.toLocaleString("id-ID")}</Text>
 
-          <View style={styles.karcisDetails}>
+          <View style={styles.receiptCard}>
             {[
-              { label: "Plat", value: plateNumber },
-              { label: "Zona", value: params.area || "-" },
-              { label: "Tarif", value: `Rp ${rate.toLocaleString("id-ID")}` },
-              { label: "Waktu", value: new Date(paymentData.createdAt).toLocaleString("id-ID", { hour: "2-digit", minute: "2-digit" }) },
-              { label: "Petugas", value: params.officerName },
               { label: "No. Transaksi", value: paymentData.transactionId },
+              { label: "Petugas", value: params.officerName },
+              { label: "Zona", value: params.area || "-" },
+              { label: "Metode", value: isCash ? "Tunai" : "QRIS" },
+              { label: "Waktu", value: new Date(paymentData.createdAt).toLocaleString("id-ID", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short", year: "numeric" }) },
             ].map((item) => (
-              <View key={item.label} style={styles.karcisRow}>
-                <Text style={styles.karcisLabel}>{item.label}:</Text>
-                <Text style={styles.karcisValue}>{item.value}</Text>
+              <View key={item.label} style={styles.receiptRow}>
+                <Text style={styles.receiptLabel}>{item.label}</Text>
+                <Text style={styles.receiptValue}>{item.value}</Text>
               </View>
             ))}
           </View>
 
-          <View style={styles.qrProof}>
-            <MaterialCommunityIcons name="qrcode" size={200} color="#000" />
+          <View style={styles.pointsBanner}>
+            <MaterialCommunityIcons name="star" size={24} color="#FBC02D" />
+            <Text style={styles.pointsText}>+{Math.floor(rate / 1000)} Poin ditambahkan!</Text>
           </View>
-
-          <Pressable
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              router.push({
-                pathname: "/karcis",
-                params: {
-                  plateNumber,
-                  area: params.area,
-                  rate: params.rate,
-                  officerName: params.officerName,
-                  transactionId: paymentData.transactionId,
-                  createdAt: paymentData.createdAt,
-                  officerId: params.officerId,
-                },
-              });
-            }}
-            style={({ pressed }) => [
-              styles.showBtn,
-              { opacity: pressed ? 0.9 : 1 },
-            ]}
-          >
-            <MaterialCommunityIcons name="cellphone" size={22} color="#FFF" />
-            <Text style={styles.showBtnText}>TAMPILKAN KE JUKIR</Text>
-          </Pressable>
 
           <Pressable
             onPress={() => {
@@ -173,19 +138,84 @@ export default function PaymentScreen() {
                 },
               });
             }}
-            style={({ pressed }) => [
-              styles.outlineBtn,
-              { opacity: pressed ? 0.8 : 1 },
-            ]}
+            style={({ pressed }) => [styles.primaryBtn, { backgroundColor: "#FFF", opacity: pressed ? 0.9 : 1 }]}
           >
-            <Text style={styles.outlineBtnText}>SELESAI</Text>
+            <Text style={[styles.primaryBtnText, { color: "#1B5E20" }]}>BERI RATING PETUGAS</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.replace("/")}
+            style={({ pressed }) => [styles.ghostBtn, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text style={styles.ghostBtnText}>Kembali ke Beranda</Text>
           </Pressable>
         </ScrollView>
       </View>
     );
   }
 
-  if (step === 2) {
+  if (step === "waiting") {
+    return (
+      <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: Platform.OS === "web" ? 67 + 48 : insets.top + 48, paddingBottom: insets.bottom + 40 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <ActivityIndicator size="large" color="#1565C0" style={{ marginBottom: 24 }} />
+          <Text style={styles.waitingTitle}>Menunggu Pembayaran...</Text>
+          <Text style={styles.waitingDesc}>
+            Silakan selesaikan pembayaran di aplikasi e-wallet atau mobile banking Anda
+          </Text>
+
+          <View style={styles.waitingAmountCard}>
+            <Text style={styles.waitingAmountLabel}>Total Pembayaran</Text>
+            <Text style={styles.waitingAmount}>Rp {rate.toLocaleString("id-ID")}</Text>
+          </View>
+
+          <View style={styles.detectingCard}>
+            <MaterialCommunityIcons name="radar" size={28} color="#1565C0" />
+            <Text style={styles.detectingText}>
+              Mendeteksi pembayaran otomatis...{"\n"}
+              Konfirmasi dalam {countdown} detik
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => {
+              if (countdownRef.current) clearInterval(countdownRef.current);
+              processPayment("qris");
+            }}
+            disabled={loading}
+            style={({ pressed }) => [
+              styles.primaryBtn,
+              { backgroundColor: "#1B5E20", opacity: loading ? 0.6 : pressed ? 0.9 : 1 },
+            ]}
+          >
+            {loading ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <Text style={styles.primaryBtnText}>SAYA SUDAH BAYAR</Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            onPress={() => {
+              if (countdownRef.current) clearInterval(countdownRef.current);
+              setStep("qris");
+            }}
+            style={({ pressed }) => [styles.backLink, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text style={styles.backLinkText}>Kembali</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  if (step === "cash_confirm") {
     return (
       <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
         <ScrollView
@@ -193,39 +223,47 @@ export default function PaymentScreen() {
             styles.scrollContent,
             { paddingTop: Platform.OS === "web" ? 67 + 24 : insets.top + 24, paddingBottom: insets.bottom + 40 },
           ]}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.stepTitle}>Konfirmasi & Bayar</Text>
+          <View style={styles.cashIcon}>
+            <MaterialCommunityIcons name="cash-multiple" size={64} color="#1B5E20" />
+          </View>
+          <Text style={styles.stepTitle}>Pembayaran Tunai</Text>
 
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLine}>Plat: <Text style={styles.summaryBold}>{plateNumber}</Text></Text>
-            <Text style={styles.summaryLine}>Zona: <Text style={styles.summaryBold}>{params.area}</Text></Text>
-            <Text style={styles.summaryLine}>Tarif: <Text style={styles.summaryBold}>Rp {rate.toLocaleString("id-ID")}</Text></Text>
+          <View style={styles.cashCard}>
+            <Text style={styles.cashCardLabel}>Bayar ke petugas sebesar:</Text>
+            <Text style={styles.cashCardAmount}>Rp {rate.toLocaleString("id-ID")}</Text>
+            <View style={styles.cashCardDivider} />
+            <View style={styles.cashCardInfo}>
+              <Text style={styles.cashCardInfoText}>Petugas: {params.officerName}</Text>
+              <Text style={styles.cashCardInfoText}>Zona: {params.area}</Text>
+            </View>
           </View>
 
-          <View style={styles.qrisCard}>
-            <MaterialCommunityIcons name="qrcode" size={300} color="#000" />
-            <Text style={styles.qrisInstruction}>
-              Buka Mobile Banking / E-Wallet Anda,{"\n"}lalu pindai kode ini.
+          <View style={styles.warningCard}>
+            <MaterialCommunityIcons name="information" size={20} color="#E65100" />
+            <Text style={styles.warningText}>
+              Pastikan tarif sesuai dengan yang tertera. Jangan bayar lebih dari tarif resmi.
             </Text>
           </View>
 
           <Pressable
-            onPress={handlePayment}
+            onPress={() => processPayment("cash")}
             disabled={loading}
             style={({ pressed }) => [
-              styles.payConfirmBtn,
+              styles.primaryBtn,
               { backgroundColor: "#1B5E20", opacity: loading ? 0.6 : pressed ? 0.9 : 1 },
             ]}
           >
             {loading ? (
               <ActivityIndicator color="#FFF" size="small" />
             ) : (
-              <Text style={styles.payConfirmBtnText}>SAYA SUDAH BAYAR</Text>
+              <Text style={styles.primaryBtnText}>SUDAH BAYAR TUNAI</Text>
             )}
           </Pressable>
 
           <Pressable
-            onPress={() => setStep(1)}
+            onPress={() => router.back()}
             style={({ pressed }) => [styles.backLink, { opacity: pressed ? 0.7 : 1 }]}
           >
             <Text style={styles.backLinkText}>Kembali</Text>
@@ -242,35 +280,46 @@ export default function PaymentScreen() {
           styles.scrollContent,
           { paddingTop: Platform.OS === "web" ? 67 + 24 : insets.top + 24, paddingBottom: insets.bottom + 40 },
         ]}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.stepTitle}>Masukkan Plat Nomor</Text>
+        <Text style={styles.stepTitle}>Pembayaran QRIS</Text>
 
-        <View style={styles.wheelContainer}>
-          <WheelColumn items={PLATE_LETTERS} selected={platePrefix} onSelect={setPlatePrefix} width={72} />
-          <WheelColumn items={PLATE_NUMBERS} selected={plateNum1} onSelect={setPlateNum1} width={52} />
-          <WheelColumn items={PLATE_NUMBERS} selected={plateNum2} onSelect={setPlateNum2} width={52} />
-          <WheelColumn items={PLATE_NUMBERS} selected={plateNum3} onSelect={setPlateNum3} width={52} />
-          <WheelColumn items={PLATE_NUMBERS} selected={plateNum4} onSelect={setPlateNum4} width={52} />
-          <WheelColumn items={PLATE_SUFFIX} selected={plateSuffix} onSelect={setPlateSuffix} width={72} />
+        <View style={styles.qrisCard}>
+          <View style={styles.qrisHeader}>
+            <MaterialCommunityIcons name="qrcode-scan" size={20} color="#1565C0" />
+            <Text style={styles.qrisHeaderText}>Scan untuk Bayar</Text>
+          </View>
+
+          <View style={styles.qrisQrWrap}>
+            <MaterialCommunityIcons name="qrcode" size={240} color="#000" />
+          </View>
+
+          <View style={styles.qrisAmount}>
+            <Text style={styles.qrisAmountLabel}>Total Pembayaran</Text>
+            <Text style={styles.qrisAmountValue}>Rp {rate.toLocaleString("id-ID")}</Text>
+          </View>
+
+          <Text style={styles.qrisInstruction}>
+            Buka aplikasi e-wallet atau mobile banking Anda,{"\n"}lalu scan kode QR di atas
+          </Text>
         </View>
 
-        <View style={styles.platePreview}>
-          <Text style={styles.platePreviewText}>{plateNumber}</Text>
+        <View style={styles.merchantInfo}>
+          <Text style={styles.merchantLabel}>Merchant: Dishub Kota Medan - Parkir</Text>
+          <Text style={styles.merchantLabel}>Petugas: {params.officerName}</Text>
         </View>
-
-        <Text style={styles.wheelHint}>Putar untuk pilih nomor kendaraan Anda</Text>
 
         <Pressable
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setStep(2);
+            try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+            startPaymentDetection();
           }}
           style={({ pressed }) => [
-            styles.continueBtn,
-            { opacity: pressed ? 0.9 : 1 },
+            styles.primaryBtn,
+            { backgroundColor: "#1565C0", opacity: pressed ? 0.9 : 1 },
           ]}
         >
-          <Text style={styles.continueBtnText}>LANJUTKAN</Text>
+          <Text style={styles.primaryBtnText}>SUDAH SCAN & BAYAR</Text>
         </Pressable>
 
         <Pressable
@@ -293,82 +342,87 @@ const styles = StyleSheet.create({
     fontFamily: "AtkinsonHyperlegible_700Bold",
     color: "#424242",
     textAlign: "center",
-    marginBottom: 32,
+    marginBottom: 24,
   },
 
-  wheelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    marginBottom: 24,
+  qrisCard: {
     backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    width: "100%",
+    marginBottom: 20,
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  wheelColumn: { alignItems: "center" },
-  wheelArrow: {
-    width: 48,
-    height: 48,
+  qrisHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
+    marginBottom: 16,
   },
-  wheelValue: {
-    height: 56,
-    alignItems: "center",
-    justifyContent: "center",
-    borderTopWidth: 2,
-    borderBottomWidth: 2,
-    borderColor: "#1565C0",
-    paddingHorizontal: 4,
-    minWidth: 44,
-  },
-  wheelValueText: {
-    fontSize: 24,
+  qrisHeaderText: {
+    fontSize: 16,
     fontFamily: "AtkinsonHyperlegible_700Bold",
-    color: "#424242",
+    color: "#1565C0",
   },
-
-  platePreview: {
+  qrisQrWrap: {
+    padding: 16,
     backgroundColor: "#FFF",
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#424242",
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    marginBottom: 12,
+    borderColor: "#E0E0E0",
+    marginBottom: 20,
   },
-  platePreviewText: {
-    fontSize: 28,
+  qrisAmount: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  qrisAmountLabel: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    marginBottom: 4,
+  },
+  qrisAmountValue: {
+    fontSize: 32,
     fontFamily: "AtkinsonHyperlegible_700Bold",
     color: "#424242",
-    textAlign: "center",
-    letterSpacing: 2,
   },
-
-  wheelHint: {
-    fontSize: 16,
+  qrisInstruction: {
+    fontSize: 14,
     fontFamily: "AtkinsonHyperlegible_400Regular",
     color: "#757575",
     textAlign: "center",
-    marginBottom: 32,
+    lineHeight: 22,
   },
 
-  continueBtn: {
+  merchantInfo: {
+    width: "100%",
+    backgroundColor: "#E3F2FD",
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 24,
+    gap: 4,
+  },
+  merchantLabel: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#424242",
+  },
+
+  primaryBtn: {
     width: "100%",
     height: 56,
     borderRadius: 12,
-    backgroundColor: "#1565C0",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
   },
-  continueBtnText: {
+  primaryBtnText: {
     color: "#FFF",
     fontSize: 18,
     fontFamily: "AtkinsonHyperlegible_700Bold",
@@ -382,118 +436,179 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
 
-  summaryCard: {
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 20,
-    width: "100%",
-    marginBottom: 24,
-  },
-  summaryLine: {
-    fontSize: 18,
-    fontFamily: "AtkinsonHyperlegible_400Regular",
+  waitingTitle: {
+    fontSize: 24,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
     color: "#424242",
+    textAlign: "center",
     marginBottom: 8,
   },
-  summaryBold: {
-    fontFamily: "AtkinsonHyperlegible_700Bold",
+  waitingDesc: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    textAlign: "center",
+    marginBottom: 32,
+    lineHeight: 24,
   },
-
-  qrisCard: {
+  waitingAmountCard: {
     backgroundColor: "#FFF",
     borderRadius: 12,
     padding: 24,
     alignItems: "center",
     width: "100%",
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  qrisInstruction: {
+  waitingAmountLabel: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    marginBottom: 4,
+  },
+  waitingAmount: {
+    fontSize: 36,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+  },
+  detectingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#E3F2FD",
+    borderRadius: 12,
+    padding: 16,
+    width: "100%",
+    marginBottom: 32,
+  },
+  detectingText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#424242",
+    lineHeight: 22,
+  },
+
+  cashIcon: { marginBottom: 8 },
+  cashCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  cashCardLabel: {
     fontSize: 16,
     fontFamily: "AtkinsonHyperlegible_400Regular",
     color: "#757575",
-    textAlign: "center",
-    marginTop: 16,
-    lineHeight: 24,
+    marginBottom: 8,
   },
-
-  payConfirmBtn: {
-    width: "100%",
-    height: 56,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 12,
-  },
-  payConfirmBtnText: {
-    color: "#FFF",
-    fontSize: 18,
-    fontFamily: "AtkinsonHyperlegible_700Bold",
-  },
-
-  karcisTitle: {
-    fontSize: 24,
+  cashCardAmount: {
+    fontSize: 40,
     fontFamily: "AtkinsonHyperlegible_700Bold",
     color: "#1B5E20",
-    textAlign: "center",
-    marginBottom: 24,
+    marginBottom: 16,
   },
-  karcisDetails: {
+  cashCardDivider: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginBottom: 16,
+  },
+  cashCardInfo: { width: "100%", gap: 6 },
+  cashCardInfoText: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#424242",
+  },
+
+  warningCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "#FFF3E0",
+    borderRadius: 10,
+    padding: 14,
     width: "100%",
     marginBottom: 24,
   },
-  karcisRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#E0E0E0",
+  warningText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#E65100",
+    lineHeight: 22,
   },
-  karcisLabel: {
-    fontSize: 20,
+
+  successIcon: { marginBottom: 16 },
+  successTitle: {
+    fontSize: 28,
     fontFamily: "AtkinsonHyperlegible_700Bold",
-    color: "#424242",
+    color: "#FFF",
+    textAlign: "center",
+    marginBottom: 8,
   },
-  karcisValue: {
-    fontSize: 20,
+  successAmount: {
+    fontSize: 36,
     fontFamily: "AtkinsonHyperlegible_700Bold",
-    color: "#424242",
-    maxWidth: "60%",
-    textAlign: "right",
-  },
-  qrProof: {
-    alignItems: "center",
+    color: "#FFF",
+    textAlign: "center",
     marginBottom: 32,
   },
 
-  showBtn: {
-    width: "100%",
-    height: 64,
+  receiptCard: {
+    backgroundColor: "rgba(255,255,255,0.15)",
     borderRadius: 12,
-    backgroundColor: "#1565C0",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 12,
+    padding: 20,
+    width: "100%",
+    marginBottom: 20,
   },
-  showBtnText: {
-    color: "#FFF",
-    fontSize: 18,
+  receiptRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(255,255,255,0.2)",
+  },
+  receiptLabel: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "rgba(255,255,255,0.7)",
+  },
+  receiptValue: {
+    fontSize: 14,
     fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#FFF",
+    maxWidth: "60%",
+    textAlign: "right",
   },
 
-  outlineBtn: {
-    width: "100%",
-    height: 56,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#424242",
+  pointsBanner: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginBottom: 32,
   },
-  outlineBtnText: {
-    color: "#424242",
-    fontSize: 18,
+  pointsText: {
+    fontSize: 16,
     fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#FBC02D",
+  },
+
+  ghostBtn: { paddingVertical: 12, marginTop: 8 },
+  ghostBtnText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    textDecorationLine: "underline",
   },
 });

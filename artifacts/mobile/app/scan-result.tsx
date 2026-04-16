@@ -1,12 +1,13 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ScanResultScreen() {
   const insets = useSafeAreaInsets();
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
   const params = useLocalSearchParams<{
     valid: string;
     officerName?: string;
@@ -20,35 +21,117 @@ export default function ScanResultScreen() {
   }>();
 
   const isValid = params.valid === "true";
-  const bgColor = isValid ? "#1B5E20" : "#B71C1C";
+
+  if (!isValid) {
+    return (
+      <View style={[styles.container, { backgroundColor: "#B71C1C" }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingTop: Platform.OS === "web" ? 67 + 32 : insets.top + 32, paddingBottom: insets.bottom + 40 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.iconWrap}>
+            <MaterialCommunityIcons name="alert" size={80} color="#FFF" />
+          </View>
+          <Text style={styles.dangerTitle}>JUKIR TIDAK TERDAFTAR</Text>
+          <Text style={styles.dangerSub}>Jangan berikan uang tunai.</Text>
+          {params.qrCode && (
+            <Text style={styles.qrCodeDisplay}>Kode: {params.qrCode}</Text>
+          )}
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              router.push({
+                pathname: "/report-form",
+                params: { prefillType: "fake_qr", qrCode: params.qrCode },
+              });
+            }}
+            style={({ pressed }) => [styles.reportBtn, { opacity: pressed ? 0.9 : 1 }]}
+          >
+            <Text style={styles.reportBtnText}>LAPORKAN SEKARANG</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.back()}
+            style={({ pressed }) => [styles.ghostBtn, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <Text style={styles.ghostBtnText}>Kembali</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
-    <View style={[styles.container, { backgroundColor: bgColor }]}>
+    <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
-          { paddingTop: Platform.OS === "web" ? 67 + 32 : insets.top + 32, paddingBottom: insets.bottom + 40 },
+          { paddingTop: Platform.OS === "web" ? 67 + 24 : insets.top + 24, paddingBottom: insets.bottom + 40 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {isValid ? (
-          <>
-            <View style={styles.iconWrap}>
-              <MaterialCommunityIcons name="check-circle" size={80} color="#FFF" />
-            </View>
+        <View style={styles.verifiedBadge}>
+          <MaterialCommunityIcons name="check-decagram" size={28} color="#FFF" />
+          <Text style={styles.verifiedText}>PETUGAS TERVERIFIKASI</Text>
+        </View>
 
-            <View style={styles.photoPlaceholder}>
-              <Feather name="user" size={64} color="#1B5E20" />
+        <View style={styles.idCard}>
+          <View style={styles.photoContainer}>
+            <View style={styles.photo}>
+              <Feather name="user" size={56} color="#757575" />
             </View>
+          </View>
 
-            <Text style={styles.officerName}>{params.officerName}</Text>
-            <Text style={styles.tarif}>
-              Rp {Number(params.rate || 0).toLocaleString("id-ID")}
-            </Text>
-            <Text style={styles.subInfo}>
-              {params.area} | {params.location}
-            </Text>
-            <Text style={styles.subInfo}>Badge: {params.badgeNumber}</Text>
+          <Text style={styles.officerName}>{params.officerName}</Text>
+
+          <View style={styles.idBadge}>
+            <Text style={styles.idBadgeLabel}>ID Petugas</Text>
+            <Text style={styles.idBadgeValue}>{params.badgeNumber}</Text>
+          </View>
+
+          <View style={styles.separator} />
+
+          <View style={styles.detailsGrid}>
+            <View style={styles.detailItem}>
+              <MaterialCommunityIcons name="map-marker" size={20} color="#1565C0" />
+              <View>
+                <Text style={styles.detailLabel}>Zona Tugas</Text>
+                <Text style={styles.detailValue}>{params.area}</Text>
+              </View>
+            </View>
+            <View style={styles.detailItem}>
+              <MaterialCommunityIcons name="road-variant" size={20} color="#1565C0" />
+              <View>
+                <Text style={styles.detailLabel}>Lokasi</Text>
+                <Text style={styles.detailValue}>{params.location}</Text>
+              </View>
+            </View>
+            <View style={styles.detailItem}>
+              <MaterialCommunityIcons name="cash" size={20} color="#1565C0" />
+              <View>
+                <Text style={styles.detailLabel}>Tarif Resmi</Text>
+                <Text style={styles.detailValue}>Rp {Number(params.rate || 0).toLocaleString("id-ID")}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {!showPaymentOptions ? (
+          <Pressable
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setShowPaymentOptions(true);
+            }}
+            style={({ pressed }) => [styles.payBtn, { opacity: pressed ? 0.9 : 1 }]}
+          >
+            <MaterialCommunityIcons name="wallet" size={24} color="#FFF" />
+            <Text style={styles.payBtnText}>BAYAR PARKIR</Text>
+          </Pressable>
+        ) : (
+          <View style={styles.paymentOptions}>
+            <Text style={styles.paymentOptionsTitle}>Pilih Metode Pembayaran</Text>
 
             <Pressable
               onPress={() => {
@@ -62,61 +145,64 @@ export default function ScanResultScreen() {
                     area: params.area,
                     location: params.location,
                     badgeNumber: params.badgeNumber,
+                    method: "qris",
                   },
                 });
               }}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { backgroundColor: "#1565C0", opacity: pressed ? 0.9 : 1 },
-              ]}
+              style={({ pressed }) => [styles.methodBtn, styles.qrisBtn, { opacity: pressed ? 0.9 : 1 }]}
             >
-              <Text style={styles.primaryBtnText}>BAYAR PARKIR SEKARANG</Text>
+              <View style={styles.methodIcon}>
+                <MaterialCommunityIcons name="qrcode-scan" size={32} color="#1565C0" />
+              </View>
+              <View style={styles.methodInfo}>
+                <Text style={styles.methodTitle}>QRIS</Text>
+                <Text style={styles.methodDesc}>Bayar dengan scan QR dari e-wallet atau mobile banking</Text>
+              </View>
+              <Feather name="chevron-right" size={24} color="#757575" />
             </Pressable>
-
-            <Pressable
-              onPress={() => router.back()}
-              style={({ pressed }) => [styles.ghostBtn, { opacity: pressed ? 0.7 : 1 }]}
-            >
-              <Text style={styles.ghostBtnText}>Kembali</Text>
-            </Pressable>
-          </>
-        ) : (
-          <>
-            <View style={styles.iconWrap}>
-              <MaterialCommunityIcons name="alert" size={80} color="#FFF" />
-            </View>
-
-            <Text style={styles.dangerTitle}>JUKIR TIDAK TERDAFTAR</Text>
-            <Text style={styles.dangerSub}>Jangan berikan uang tunai.</Text>
-
-            {params.qrCode && (
-              <Text style={styles.qrCodeDisplay}>Kode: {params.qrCode}</Text>
-            )}
 
             <Pressable
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                 router.push({
-                  pathname: "/report-form",
-                  params: { prefillType: "fake_qr", qrCode: params.qrCode },
+                  pathname: "/payment",
+                  params: {
+                    officerId: params.officerId,
+                    officerName: params.officerName,
+                    rate: params.rate,
+                    area: params.area,
+                    location: params.location,
+                    badgeNumber: params.badgeNumber,
+                    method: "cash",
+                  },
                 });
               }}
-              style={({ pressed }) => [
-                styles.reportBtn,
-                { opacity: pressed ? 0.9 : 1 },
-              ]}
+              style={({ pressed }) => [styles.methodBtn, styles.cashBtn, { opacity: pressed ? 0.9 : 1 }]}
             >
-              <Text style={styles.reportBtnText}>LAPORKAN SEKARANG</Text>
+              <View style={[styles.methodIcon, { backgroundColor: "#E8F5E9" }]}>
+                <MaterialCommunityIcons name="cash" size={32} color="#1B5E20" />
+              </View>
+              <View style={styles.methodInfo}>
+                <Text style={styles.methodTitle}>Tunai</Text>
+                <Text style={styles.methodDesc}>Bayar langsung ke petugas parkir</Text>
+              </View>
+              <Feather name="chevron-right" size={24} color="#757575" />
             </Pressable>
-
-            <Pressable
-              onPress={() => router.back()}
-              style={({ pressed }) => [styles.ghostBtn, { opacity: pressed ? 0.7 : 1 }]}
-            >
-              <Text style={styles.ghostBtnText}>Kembali</Text>
-            </Pressable>
-          </>
+          </View>
         )}
+
+        <Pressable
+          onPress={() => {
+            if (showPaymentOptions) {
+              setShowPaymentOptions(false);
+            } else {
+              router.back();
+            }
+          }}
+          style={({ pressed }) => [styles.backLink, { opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Text style={styles.backLinkText}>Kembali</Text>
+        </Pressable>
       </ScrollView>
     </View>
   );
@@ -126,73 +212,168 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { flexGrow: 1, alignItems: "center", paddingHorizontal: 24 },
 
-  iconWrap: { marginBottom: 24 },
-
-  photoPlaceholder: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 4,
-    borderColor: "#FFF",
-    backgroundColor: "rgba(255,255,255,0.9)",
+  verifiedBadge: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
+    gap: 8,
+    backgroundColor: "#1B5E20",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    marginBottom: 24,
+  },
+  verifiedText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    letterSpacing: 0.5,
   },
 
+  idCard: {
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 24,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 24,
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  },
+  photoContainer: { marginBottom: 16 },
+  photo: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#F5F5F5",
+    borderWidth: 3,
+    borderColor: "#1B5E20",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   officerName: {
     fontSize: 24,
     fontFamily: "AtkinsonHyperlegible_700Bold",
-    color: "#FFF",
+    color: "#424242",
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  tarif: {
-    fontSize: 32,
-    fontFamily: "AtkinsonHyperlegible_700Bold",
-    color: "#FFF",
-    textAlign: "center",
-    marginBottom: 8,
+  idBadge: {
+    backgroundColor: "#E3F2FD",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    alignItems: "center",
+    marginBottom: 16,
   },
-  subInfo: {
-    fontSize: 18,
+  idBadgeLabel: {
+    fontSize: 12,
     fontFamily: "AtkinsonHyperlegible_400Regular",
-    color: "rgba(255,255,255,0.85)",
-    textAlign: "center",
-    marginBottom: 4,
+    color: "#757575",
+    marginBottom: 2,
+  },
+  idBadgeValue: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#1565C0",
+    letterSpacing: 1,
+  },
+  separator: {
+    width: "100%",
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginBottom: 16,
+  },
+  detailsGrid: { width: "100%", gap: 14 },
+  detailItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  detailLabel: {
+    fontSize: 13,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+  },
+  detailValue: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
   },
 
-  primaryBtn: {
+  payBtn: {
     width: "100%",
-    height: 72,
+    height: 64,
     borderRadius: 12,
+    backgroundColor: "#1565C0",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 32,
-    elevation: 4,
-    shadowColor: "#000",
+    gap: 10,
+    elevation: 3,
+    shadowColor: "#1565C0",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-  primaryBtnText: {
+  payBtnText: {
     color: "#FFF",
     fontSize: 20,
     fontFamily: "AtkinsonHyperlegible_700Bold",
     letterSpacing: 0.5,
   },
 
-  ghostBtn: {
-    paddingVertical: 16,
-    marginTop: 12,
+  paymentOptions: { width: "100%", gap: 12 },
+  paymentOptionsTitle: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+    marginBottom: 4,
   },
-  ghostBtnText: {
-    color: "rgba(255,255,255,0.7)",
+  methodBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 16,
+    gap: 14,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  qrisBtn: { borderColor: "#1565C0" },
+  cashBtn: { borderColor: "#1B5E20" },
+  methodIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: "#E3F2FD",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  methodInfo: { flex: 1 },
+  methodTitle: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+  },
+  methodDesc: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    marginTop: 2,
+  },
+
+  backLink: { paddingVertical: 16, marginTop: 8 },
+  backLinkText: {
     fontSize: 18,
     fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
     textDecorationLine: "underline",
   },
 
+  iconWrap: { marginBottom: 24 },
   dangerTitle: {
     fontSize: 26,
     fontFamily: "AtkinsonHyperlegible_700Bold",
@@ -214,7 +395,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 8,
   },
-
   reportBtn: {
     width: "100%",
     height: 72,
@@ -228,5 +408,12 @@ const styles = StyleSheet.create({
     color: "#B71C1C",
     fontSize: 20,
     fontFamily: "AtkinsonHyperlegible_700Bold",
+  },
+  ghostBtn: { paddingVertical: 16, marginTop: 12 },
+  ghostBtnText: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    textDecorationLine: "underline",
   },
 });
