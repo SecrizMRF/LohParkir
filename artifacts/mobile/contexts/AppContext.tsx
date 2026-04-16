@@ -238,7 +238,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           },
         };
       }
-      return { isValid: false, message: "QR code tidak valid (offline)", officer: null };
+      return { isValid: false, message: "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.", officer: null };
     }
   }, [officers]);
 

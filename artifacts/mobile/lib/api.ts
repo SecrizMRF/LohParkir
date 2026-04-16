@@ -4,8 +4,10 @@ const getBaseUrl = () => {
   if (Platform.OS === "web") {
     return "/api";
   }
-  const devDomain = process.env.EXPO_PUBLIC_API_URL;
-  if (devDomain) return devDomain;
+  const explicit = process.env.EXPO_PUBLIC_API_URL;
+  if (explicit) return explicit;
+  const replitDomain = process.env.EXPO_PUBLIC_DOMAIN;
+  if (replitDomain) return `https://${replitDomain}/api`;
   return "http://localhost:8080/api";
 };
 
