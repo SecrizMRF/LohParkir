@@ -1,13 +1,11 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -24,14 +22,13 @@ import { useColors } from "@/hooks/useColors";
 export default function ScanScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { validateQR, scanHistory, addReport } = useApp();
+  const { validateQR, scanHistory } = useApp();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [showManualInput, setShowManualInput] = useState(false);
   const [qrInput, setQrInput] = useState("");
   const [validating, setValidating] = useState(false);
-  const [reporting, setReporting] = useState(false);
   const scanCooldown = useRef(false);
 
   const handleScan = async (code: string) => {
@@ -83,103 +80,6 @@ export default function ScanScreen() {
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (scanned) return;
     handleScan(data);
-  };
-
-  const getLocation = async (): Promise<{ lat: number | null; lng: number | null; addr: string }> => {
-    try {
-      if (Platform.OS === "web") {
-        if (navigator.geolocation) {
-          return await Promise.race([
-            new Promise<{ lat: number | null; lng: number | null; addr: string }>((resolve) => {
-              navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                  resolve({
-                    lat: pos.coords.latitude,
-                    lng: pos.coords.longitude,
-                    addr: `${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`,
-                  });
-                },
-                () => resolve({ lat: null, lng: null, addr: "" }),
-              );
-            }),
-            new Promise<{ lat: number | null; lng: number | null; addr: string }>((resolve) =>
-              setTimeout(() => resolve({ lat: null, lng: null, addr: "" }), 3000)
-            ),
-          ]);
-        }
-      } else {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === "granted") {
-          const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-          let addr = `${loc.coords.latitude.toFixed(4)}, ${loc.coords.longitude.toFixed(4)}`;
-          try {
-            const [address] = await Location.reverseGeocodeAsync({
-              latitude: loc.coords.latitude,
-              longitude: loc.coords.longitude,
-            });
-            if (address) addr = [address.street, address.city, address.region].filter(Boolean).join(", ");
-          } catch {}
-          return { lat: loc.coords.latitude, lng: loc.coords.longitude, addr };
-        }
-      }
-    } catch {}
-    return { lat: null, lng: null, addr: "" };
-  };
-
-  const handleQuickReport = async () => {
-    setReporting(true);
-    try {
-      const { lat, lng, addr } = await getLocation();
-      const locationText = addr || "Lokasi tidak diketahui";
-
-      const submitReport = async () => {
-        try {
-          await addReport({
-            type: "illegal_parking",
-            description: `Laporan cepat pungli di ${locationText}`,
-            latitude: lat,
-            longitude: lng,
-            address: addr || null,
-          });
-          try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
-          if (Platform.OS === "web") {
-            window.alert("Laporan telah terkirim. Terima kasih!");
-          } else {
-            Alert.alert("Berhasil", "Laporan telah terkirim. Terima kasih!");
-          }
-        } catch {
-          if (Platform.OS === "web") {
-            window.alert("Gagal mengirim laporan.");
-          } else {
-            Alert.alert("Error", "Gagal mengirim laporan.");
-          }
-        }
-      };
-
-      if (Platform.OS === "web") {
-        const confirmed = window.confirm(`Kirim laporan lokasi ini ke petugas?\n${locationText}`);
-        if (confirmed) {
-          await submitReport();
-        }
-      } else {
-        Alert.alert(
-          "Laporkan Pungli",
-          `Kirim laporan lokasi ini ke petugas?\n${locationText}`,
-          [
-            { text: "TIDAK", style: "cancel" },
-            { text: "YA, LAPORKAN", style: "destructive", onPress: submitReport },
-          ]
-        );
-      }
-    } catch {
-      if (Platform.OS === "web") {
-        window.alert("Gagal mendapatkan lokasi.");
-      } else {
-        Alert.alert("Error", "Gagal mendapatkan lokasi.");
-      }
-    } finally {
-      setReporting(false);
-    }
   };
 
   const openCamera = async () => {
@@ -377,24 +277,17 @@ export default function ScanScreen() {
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              handleQuickReport();
+              router.push("/report-form");
             }}
-            disabled={reporting}
             accessibilityRole="button"
             accessibilityLabel="LAPORKAN PUNGLI"
             style={({ pressed }) => [
               styles.reportMainBtn,
-              { borderColor: "#B71C1C", borderRadius: 12, opacity: reporting ? 0.6 : pressed ? 0.8 : 1 },
+              { borderColor: "#B71C1C", borderRadius: 12, opacity: pressed ? 0.8 : 1 },
             ]}
           >
-            {reporting ? (
-              <ActivityIndicator size="small" color="#B71C1C" />
-            ) : (
-              <>
-                <MaterialCommunityIcons name="alert" size={24} color="#B71C1C" />
-                <Text style={styles.reportMainBtnText}>LAPORKAN PUNGLI</Text>
-              </>
-            )}
+            <MaterialCommunityIcons name="alert" size={24} color="#B71C1C" />
+            <Text style={styles.reportMainBtnText}>LAPORKAN PUNGLI</Text>
           </Pressable>
 
           {Platform.OS === "web" && (
