@@ -113,3 +113,15 @@ id = "jXhoi03SKVx1Me2DNSZ-T"
 uri = "file://docs/Use_Case_Specification_LohParkir.docx"
 type = "word_document"
 title = "Use Case Specification — LohParkir (.docx)"
+
+[[outputs]]
+id = "Kf4mjWQlUi0x0t4zTD1O1"
+uri = "file://qr-demo/qr-resmi.png"
+type = "image"
+title = "QR Petugas RESMI - Budi Santoso (DSH-2024-001)"
+
+[[outputs]]
+id = "d6TF-BNW32y8wHASY9g1n"
+uri = "file://qr-demo/qr-palsu.png"
+type = "image"
+title = "QR PALSU - Untuk Testing"
