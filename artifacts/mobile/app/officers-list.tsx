@@ -1,9 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { hapticImpact, showAlert } from "@/lib/platform";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import {
-  Alert,
   FlatList,
   Pressable,
   StyleSheet,
@@ -59,8 +58,8 @@ function OfficerItem({ item, onToggleStatus, onRemove }: { item: Officer; onTogg
         </Text>
         <Pressable
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            Alert.alert("Hapus Petugas", `Yakin ingin menghapus ${item.name}?`, [
+            hapticImpact();
+            showAlert("Hapus Petugas", `Yakin ingin menghapus ${item.name}?`, [
               { text: "Batal", style: "cancel" },
               { text: "Hapus", style: "destructive", onPress: () => onRemove(item.id) },
             ]);
@@ -85,7 +84,7 @@ export default function OfficersListScreen() {
     try {
       await updateOfficer(id, { status: newStatus } as any);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Gagal mengubah status petugas");
+      showAlert("Error", err.message || "Gagal mengubah status petugas");
     }
   };
 
@@ -93,7 +92,7 @@ export default function OfficersListScreen() {
     try {
       await removeOfficer(id);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Gagal menghapus petugas");
+      showAlert("Error", err.message || "Gagal menghapus petugas");
     }
   };
 
@@ -120,7 +119,7 @@ export default function OfficersListScreen() {
       />
       <Pressable
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          hapticImpact();
           router.push("/officer-form");
         }}
         style={({ pressed }) => [

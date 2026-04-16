@@ -1,10 +1,8 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -17,6 +15,7 @@ import {
 import { StatCard } from "@/components/StatCard";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { hapticImpact, showAlert } from "@/lib/platform";
 
 export default function AdminScreen() {
   const colors = useColors();
@@ -36,7 +35,7 @@ export default function AdminScreen() {
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert("Error", "Username dan password wajib diisi");
+      showAlert("Error", "Username dan password wajib diisi");
       return;
     }
     setLoginLoading(true);
@@ -45,23 +44,23 @@ export default function AdminScreen() {
       setShowLogin(false);
       setUsername("");
       setPassword("");
-      Alert.alert("Berhasil", "Login berhasil sebagai Admin Dishub");
+      showAlert("Berhasil", "Login berhasil sebagai Admin Dishub");
     } catch (err: any) {
-      Alert.alert("Login Gagal", err.message || "Username atau password salah");
+      showAlert("Login Gagal", err.message || "Username atau password salah");
     } finally {
       setLoginLoading(false);
     }
   };
 
   const handleLogout = async () => {
-    Alert.alert("Logout", "Yakin ingin keluar dari mode admin?", [
+    showAlert("Logout", "Yakin ingin keluar dari mode admin?", [
       { text: "Batal", style: "cancel" },
       {
         text: "Logout",
         style: "destructive",
         onPress: async () => {
           await logout();
-          Alert.alert("Berhasil", "Anda telah keluar dari mode admin");
+          showAlert("Berhasil", "Anda telah keluar dari mode admin");
         },
       },
     ]);
@@ -284,7 +283,7 @@ export default function AdminScreen() {
               <Pressable
                 key={item.label}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  hapticImpact();
                   item.onPress();
                 }}
                 style={({ pressed }) => [

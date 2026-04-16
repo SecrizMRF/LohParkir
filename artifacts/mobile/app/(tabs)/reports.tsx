@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { hapticImpact } from "@/lib/platform";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import {
@@ -115,7 +115,7 @@ export default function ReportsScreen() {
       />
       <Pressable
         onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          hapticImpact();
           router.push("/report-form");
         }}
         style={({ pressed }) => [

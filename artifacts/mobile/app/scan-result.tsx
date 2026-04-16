@@ -1,9 +1,10 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { hapticImpact } from "@/lib/platform";
 
 export default function ScanResultScreen() {
   const insets = useSafeAreaInsets();
@@ -25,6 +26,7 @@ export default function ScanResultScreen() {
   if (!isValid) {
     return (
       <View style={[styles.container, { backgroundColor: "#B71C1C" }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#B71C1C" />
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -42,7 +44,7 @@ export default function ScanResultScreen() {
           )}
           <Pressable
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+              hapticImpact();
               router.push({
                 pathname: "/report-form",
                 params: { prefillType: "fake_qr", qrCode: params.qrCode },
@@ -65,6 +67,7 @@ export default function ScanResultScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -96,21 +99,21 @@ export default function ScanResultScreen() {
           <View style={styles.detailsGrid}>
             <View style={styles.detailItem}>
               <MaterialCommunityIcons name="map-marker" size={20} color="#1565C0" />
-              <View>
+              <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Zona Tugas</Text>
                 <Text style={styles.detailValue}>{params.area}</Text>
               </View>
             </View>
             <View style={styles.detailItem}>
               <MaterialCommunityIcons name="road-variant" size={20} color="#1565C0" />
-              <View>
+              <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Lokasi</Text>
                 <Text style={styles.detailValue}>{params.location}</Text>
               </View>
             </View>
             <View style={styles.detailItem}>
               <MaterialCommunityIcons name="cash" size={20} color="#1565C0" />
-              <View>
+              <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Tarif Resmi</Text>
                 <Text style={styles.detailValue}>Rp {Number(params.rate || 0).toLocaleString("id-ID")}</Text>
               </View>
@@ -121,7 +124,7 @@ export default function ScanResultScreen() {
         {!showPaymentOptions ? (
           <Pressable
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              hapticImpact();
               setShowPaymentOptions(true);
             }}
             style={({ pressed }) => [styles.payBtn, { opacity: pressed ? 0.9 : 1 }]}
@@ -135,7 +138,7 @@ export default function ScanResultScreen() {
 
             <Pressable
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                hapticImpact();
                 router.push({
                   pathname: "/payment",
                   params: {
@@ -163,7 +166,7 @@ export default function ScanResultScreen() {
 
             <Pressable
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                hapticImpact();
                 router.push({
                   pathname: "/payment",
                   params: {
@@ -236,11 +239,11 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     marginBottom: 24,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6 },
+      android: { elevation: 3 },
+      web: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6 },
+    }),
   },
   photoContainer: { marginBottom: 16 },
   photo: {
@@ -252,6 +255,7 @@ const styles = StyleSheet.create({
     borderColor: "#1B5E20",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
   officerName: {
     fontSize: 24,
@@ -292,6 +296,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
+  detailContent: { flex: 1 },
   detailLabel: {
     fontSize: 13,
     fontFamily: "AtkinsonHyperlegible_400Regular",
@@ -312,11 +317,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    elevation: 3,
-    shadowColor: "#1565C0",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    ...Platform.select({
+      ios: { shadowColor: "#1565C0", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+      android: { elevation: 4 },
+      web: { shadowColor: "#1565C0", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
+    }),
   },
   payBtnText: {
     color: "#FFF",

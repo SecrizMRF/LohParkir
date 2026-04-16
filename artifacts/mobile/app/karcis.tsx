@@ -1,16 +1,18 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
 import {
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { hapticImpact } from "@/lib/platform";
 
 export default function KarcisScreen() {
   const insets = useSafeAreaInsets();
@@ -28,6 +30,7 @@ export default function KarcisScreen() {
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -62,7 +65,7 @@ export default function KarcisScreen() {
 
         <Pressable
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            hapticImpact();
             router.dismissAll();
             router.replace("/(tabs)");
           }}

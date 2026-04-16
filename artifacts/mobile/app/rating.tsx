@@ -1,11 +1,11 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/contexts/AppContext";
+import { hapticNotification } from "@/lib/platform";
 
 const EMOJIS = [
   { icon: "emoticon-angry", label: "Buruk", color: "#B71C1C" },
@@ -35,7 +36,7 @@ export default function RatingScreen() {
 
   const handleSelect = async (idx: number) => {
     setSelected(idx);
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    await hapticNotification();
     addPoints(5);
 
     setTimeout(() => {
@@ -47,6 +48,7 @@ export default function RatingScreen() {
   if (selected !== null) {
     return (
       <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
         <View style={[styles.centerContent, { paddingTop: Platform.OS === "web" ? 67 + 60 : insets.top + 60 }]}>
           <MaterialCommunityIcons
             name={EMOJIS[selected].icon as any}

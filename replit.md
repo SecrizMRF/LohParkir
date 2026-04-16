@@ -68,15 +68,15 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 ## Screens (5 Tabs + Stack)
 
 ### Tab Screens
-- **Scan Tab** (`(tabs)/index.tsx`): Two large buttons — "SCAN QR JUKIR" (blue filled) and "LAPORKAN PUNGLI" (red outlined), plus "Input QR Manual" link
+- **Scan Tab** (`(tabs)/index.tsx`): Three buttons — "SCAN QR JUKIR" (blue filled), "LAPORKAN PUNGLI" (red outlined), "Input QR Manual" (all platforms)
 - **Laporan Tab** (`(tabs)/reports.tsx`): View reports list, FAB to create new
 - **Riwayat Tab** (`(tabs)/payments.tsx`): Card-based payment history with vehicle icons (car/motorbike), plate numbers, amounts, success badges
 - **Poin Tab** (`(tabs)/peta-rawan.tsx`): Points display (48pt yellow), progress bar, rewards redemption (Gratis Parkir 1x, Diskon 10%)
 - **Admin Tab** (`(tabs)/admin.tsx`): Dashboard stats, login, officer/report management
 
 ### Stack Screens
-- **Scan Result** (`scan-result.tsx`): Full-screen solid green (#1B5E20) for valid / red (#B71C1C) for invalid, officer photo circle, details, action buttons
-- **Payment** (`payment.tsx`): 3-step flow — (1) wheel picker for plate number, (2) QRIS display + confirm, (3) Karcis Digital receipt
+- **Scan Result** (`scan-result.tsx`): Valid — white card with officer photo, name, ID badge, zona/lokasi/tarif details, "BAYAR PARKIR" button expanding to QRIS/Tunai options. Invalid — full red screen with alert.
+- **Payment** (`payment.tsx`): Method-based flow — QRIS: QR code display → "SUDAH SCAN & BAYAR" → waiting/auto-detect (5s countdown) → success. Cash: amount card + warning → "SUDAH BAYAR TUNAI" → success. Success: green screen with receipt + points.
 - **Karcis Digital** (`karcis.tsx`): Digital parking receipt shown after payment
 - **Rating** (`rating.tsx`): 4 emoji choices (Buruk/Biasa/Baik/Sangat Baik), auto-navigates home 1.5s after selection, +5 bonus points
 - **Report Form** (`report-form.tsx`): Submit reports with photo & GPS
@@ -102,6 +102,13 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 - Admin login: `admin` / `admin123`
 - Superadmin login: `superadmin` / `superadmin123`
 - Seed endpoint: `POST /api/seed`
+
+## Cross-Platform Utilities (`lib/platform.ts`)
+- `showAlert(title, message, buttons?)` — cross-platform alert (Alert.alert on native, window.confirm/alert on web)
+- `hapticImpact(style?)` — safe haptic feedback with try/catch (no crash on unsupported devices)
+- `hapticNotification(type?)` — safe notification haptic with try/catch
+- All screens use `StatusBar` component for native status bar color management
+- Shadows use `Platform.select` (iOS: shadow*, Android: elevation)
 
 ## Key Commands
 - `pnpm run typecheck` — full typecheck across all packages

@@ -1,13 +1,12 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -15,6 +14,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp, type Payment } from "@/contexts/AppContext";
+import { hapticImpact, hapticNotification, showAlert } from "@/lib/platform";
 
 export default function PaymentScreen() {
   const insets = useSafeAreaInsets();
@@ -41,7 +41,7 @@ export default function PaymentScreen() {
   const processPayment = async (method: string) => {
     setLoading(true);
     try {
-      try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+      await hapticNotification();
 
       const payment = await addPayment({
         officerId: params.officerId ? Number(params.officerId) : null,
@@ -58,11 +58,7 @@ export default function PaymentScreen() {
       setPaymentData(payment);
       setStep("success");
     } catch (err: any) {
-      if (Platform.OS === "web") {
-        window.alert(err.message || "Pembayaran gagal.");
-      } else {
-        Alert.alert("Error", err.message || "Pembayaran gagal.");
-      }
+      showAlert("Error", err.message || "Pembayaran gagal.");
     } finally {
       setLoading(false);
     }
@@ -93,6 +89,7 @@ export default function PaymentScreen() {
   if (step === "success" && paymentData) {
     return (
       <View style={[styles.container, { backgroundColor: "#1B5E20" }]}>
+        <StatusBar barStyle="light-content" backgroundColor="#1B5E20" />
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -157,6 +154,7 @@ export default function PaymentScreen() {
   if (step === "waiting") {
     return (
       <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -218,6 +216,7 @@ export default function PaymentScreen() {
   if (step === "cash_confirm") {
     return (
       <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -275,6 +274,7 @@ export default function PaymentScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F5F5F5" />
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -311,7 +311,7 @@ export default function PaymentScreen() {
 
         <Pressable
           onPress={() => {
-            try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); } catch {}
+            hapticImpact();
             startPaymentDetection();
           }}
           style={({ pressed }) => [
@@ -352,11 +352,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     marginBottom: 20,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+      android: { elevation: 2 },
+      web: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+    }),
   },
   qrisHeader: {
     flexDirection: "row",
@@ -496,11 +496,11 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     marginBottom: 20,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+      android: { elevation: 2 },
+      web: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+    }),
   },
   cashCardLabel: {
     fontSize: 16,

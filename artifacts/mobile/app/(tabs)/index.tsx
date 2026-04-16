@@ -1,11 +1,10 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import * as Haptics from "expo-haptics";
+import { hapticImpact, showAlert } from "@/lib/platform";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -38,7 +37,7 @@ export default function ScanScreen() {
     setScanned(true);
     setValidating(true);
 
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await hapticImpact();
 
     try {
       const result = await validateQR(code.trim());
@@ -86,7 +85,7 @@ export default function ScanScreen() {
     if (!permission?.granted) {
       const result = await requestPermission();
       if (!result.granted) {
-        Alert.alert("Akses Ditolak", "Izinkan kamera untuk scan QR Code.");
+        showAlert("Akses Ditolak", "Izinkan kamera untuk scan QR Code.");
         return;
       }
     }
@@ -261,7 +260,7 @@ export default function ScanScreen() {
         <View style={styles.homeButtons}>
           <Pressable
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              hapticImpact();
               openCamera();
             }}
             style={({ pressed }) => [
@@ -276,7 +275,7 @@ export default function ScanScreen() {
 
           <Pressable
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              hapticImpact();
               router.push("/report-form");
             }}
             accessibilityRole="button"
@@ -290,18 +289,16 @@ export default function ScanScreen() {
             <Text style={styles.reportMainBtnText}>LAPORKAN PUNGLI</Text>
           </Pressable>
 
-          {Platform.OS === "web" && (
-            <Pressable
-              onPress={() => setShowManualInput(true)}
-              style={({ pressed }) => [
-                styles.manualBtn,
-                { borderColor: colors.border, borderRadius: 12, opacity: pressed ? 0.8 : 1 },
-              ]}
-            >
-              <Feather name="edit-3" size={20} color={colors.foreground} />
-              <Text style={[styles.manualBtnText, { color: colors.foreground }]}>Input QR Manual</Text>
-            </Pressable>
-          )}
+          <Pressable
+            onPress={() => setShowManualInput(true)}
+            style={({ pressed }) => [
+              styles.manualBtn,
+              { borderColor: colors.border, borderRadius: 12, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Feather name="edit-3" size={20} color={colors.foreground} />
+            <Text style={[styles.manualBtnText, { color: colors.foreground }]}>Input QR Manual</Text>
+          </Pressable>
         </View>
 
         <Text style={[styles.homeFooter, { color: colors.mutedForeground }]}>

@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { hapticImpact, showAlert } from "@/lib/platform";
 import { useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { useApp, type Report } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -44,12 +44,12 @@ export default function ReportDetailScreen() {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      await hapticImpact();
       await updateReportStatus(report.id, newStatus, adminNotes || undefined);
       setAdminNotes("");
       setShowNotes(false);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Gagal mengubah status");
+      showAlert("Error", err.message || "Gagal mengubah status");
     }
   };
 

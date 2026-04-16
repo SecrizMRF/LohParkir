@@ -1,10 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { hapticNotification, showAlert } from "@/lib/platform";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -31,19 +30,19 @@ export default function OfficerFormScreen() {
 
   const handleSubmit = async () => {
     if (!name.trim() || !nip.trim() || !badgeNumber.trim() || !area.trim() || !location.trim()) {
-      Alert.alert("Error", "NIP, nama, nomor badge, area, dan lokasi wajib diisi");
+      showAlert("Error", "NIP, nama, nomor badge, area, dan lokasi wajib diisi");
       return;
     }
 
     const badgePattern = /^DSH-\d{4}-\d{3}$/;
     if (!badgePattern.test(badgeNumber.trim().toUpperCase())) {
-      Alert.alert("Error", "Format nomor badge harus DSH-YYYY-NNN (contoh: DSH-2024-004)");
+      showAlert("Error", "Format nomor badge harus DSH-YYYY-NNN (contoh: DSH-2024-004)");
       return;
     }
 
     setLoading(true);
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await hapticNotification();
       const officer = await addOfficer({
         nip: nip.trim(),
         name: name.trim(),
@@ -54,13 +53,13 @@ export default function OfficerFormScreen() {
         phone: phone.trim() || undefined,
       });
 
-      Alert.alert(
+      showAlert(
         "Petugas Terdaftar",
         `${officer.name} telah berhasil didaftarkan.\n\nQR Code: ${officer.qrCode}`,
         [{ text: "OK", onPress: () => router.back() }],
       );
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Gagal mendaftarkan petugas.");
+      showAlert("Error", err.message || "Gagal mendaftarkan petugas.");
     } finally {
       setLoading(false);
     }

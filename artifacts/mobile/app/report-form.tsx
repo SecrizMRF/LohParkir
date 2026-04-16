@@ -1,12 +1,10 @@
 import { Feather } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Platform,
   Pressable,
@@ -19,6 +17,7 @@ import {
 
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { hapticImpact, hapticNotification, showAlert } from "@/lib/platform";
 
 type ReportType = "illegal_parking" | "fake_qr";
 
@@ -109,13 +108,13 @@ export default function ReportFormScreen() {
 
   const handleSubmit = async () => {
     if (!description.trim()) {
-      Alert.alert("Error", "Deskripsi laporan wajib diisi");
+      showAlert("Error", "Deskripsi laporan wajib diisi");
       return;
     }
 
     setLoading(true);
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await hapticNotification();
       const report = await addReport({
         type,
         description: description.trim(),
@@ -126,13 +125,13 @@ export default function ReportFormScreen() {
         relatedQrCode: params.qrCode || null,
       });
 
-      Alert.alert(
+      showAlert(
         "Laporan Terkirim",
         `Nomor tiket: ${report.ticketNumber}\n\nLaporan Anda telah diterima dan akan segera ditindaklanjuti.`,
         [{ text: "OK", onPress: () => router.back() }],
       );
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Gagal mengirim laporan. Coba lagi.");
+      showAlert("Error", err.message || "Gagal mengirim laporan. Coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -154,7 +153,7 @@ export default function ReportFormScreen() {
             <Pressable
               key={item.value}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                hapticImpact();
                 setType(item.value);
               }}
               style={({ pressed }) => [
