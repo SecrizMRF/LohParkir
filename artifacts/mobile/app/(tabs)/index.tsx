@@ -335,11 +335,7 @@ export default function ScanScreen() {
           <Pressable
             onPress={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              if (Platform.OS === "web") {
-                setShowManualInput(true);
-              } else {
-                openCamera();
-              }
+              openCamera();
             }}
             style={({ pressed }) => [
               styles.scanMainBtn,
