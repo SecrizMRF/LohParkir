@@ -2,7 +2,7 @@
   "expo": {
     "name": "LohParkir",
     "slug": "mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mobile",
@@ -14,9 +14,18 @@
       "backgroundColor": "#F0F4F8"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "id.go.dishub.medan.lohparkir"
     },
-    "android": {},
+    "android": {
+      "package": "id.go.dishub.medan.lohparkir",
+      "versionCode": 2,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#F0F4F8"
+      },
+      "icon": "./assets/images/icon.png"
+    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
