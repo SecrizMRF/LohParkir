@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { officersTable, officerQrCodesTable, scansTable, VEHICLE_TYPES } from "@workspace/db/schema";
+import { officersTable, officerQrCodesTable, paymentsTable, scansTable, VEHICLE_TYPES } from "@workspace/db/schema";
 import { eq } from "drizzle-orm";
 import { authMiddleware } from "../middlewares/auth";
 
@@ -122,6 +122,55 @@ router.get("/qr/my-codes", authMiddleware, async (req: any, res) => {
     });
   } catch (err: any) {
     res.status(500).json({ error: "Gagal mengambil QR codes", details: err.message });
+  }
+});
+
+router.post("/qr/cash-payment", authMiddleware, async (req: any, res) => {
+  try {
+    if (req.user.role !== "officer") {
+      res.status(403).json({ error: "Hanya petugas yang bisa mencatat pembayaran tunai" });
+      return;
+    }
+    const { vehicleType } = req.body as { vehicleType?: string };
+    if (!vehicleType || !VEHICLE_TYPES[vehicleType as keyof typeof VEHICLE_TYPES]) {
+      res.status(400).json({ error: "Tipe kendaraan tidak valid" });
+      return;
+    }
+    const [officer] = await db.select().from(officersTable).where(eq(officersTable.userId, req.user.userId)).limit(1);
+    if (!officer || officer.status !== "active") {
+      res.status(403).json({ error: "Akun petugas tidak aktif" });
+      return;
+    }
+    const [qrRow] = await db.select().from(officerQrCodesTable)
+      .where(eq(officerQrCodesTable.officerId, officer.id))
+      .limit(50);
+    const matching = await db.select().from(officerQrCodesTable)
+      .where(eq(officerQrCodesTable.officerId, officer.id));
+    const vehicleQr = matching.find((q) => q.vehicleType === vehicleType);
+    const amount = vehicleQr?.rate ?? VEHICLE_TYPES[vehicleType as keyof typeof VEHICLE_TYPES].rate;
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+    const rand = Math.floor(Math.random() * 100000).toString().padStart(5, "0");
+    const transactionId = `TXN-${dateStr}-${rand}`;
+
+    const [payment] = await db.insert(paymentsTable).values({
+      transactionId,
+      officerId: officer.id,
+      officerName: officer.name,
+      amount,
+      method: "cash",
+      status: "completed",
+      area: officer.area,
+    }).returning();
+
+    res.status(201).json({
+      message: "Pembayaran tunai berhasil dicatat",
+      payment,
+      vehicleLabel: VEHICLE_TYPES[vehicleType as keyof typeof VEHICLE_TYPES].label,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal mencatat pembayaran tunai", details: err.message });
   }
 });
 

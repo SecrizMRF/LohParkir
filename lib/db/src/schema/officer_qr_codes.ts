@@ -19,8 +19,8 @@ export type InsertOfficerQrCode = z.infer<typeof insertOfficerQrCodeSchema>;
 export type OfficerQrCode = typeof officerQrCodesTable.$inferSelect;
 
 export const VEHICLE_TYPES = {
-  motor: { label: "Motor / Roda 2", rate: 3000, icon: "motorbike" },
-  mobil: { label: "Mobil / Roda 4", rate: 5000, icon: "car" },
+  motor: { label: "Motor / Roda 2", rate: 2000, icon: "motorbike" },
+  mobil: { label: "Mobil / Roda 4", rate: 4000, icon: "car" },
 } as const;
 
 export type VehicleType = keyof typeof VEHICLE_TYPES;

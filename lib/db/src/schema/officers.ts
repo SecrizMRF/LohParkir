@@ -12,7 +12,7 @@ export const officersTable = pgTable("officers", {
   qrCode: varchar("qr_code", { length: 100 }).notNull().unique(),
   area: varchar("area", { length: 200 }).notNull(),
   location: text("location").notNull(),
-  rate: integer("rate").notNull().default(3000),
+  rate: integer("rate").notNull().default(2000),
   status: varchar("status", { length: 20 }).notNull().default("active"),
   phone: varchar("phone", { length: 20 }),
   photoUrl: text("photo_url"),

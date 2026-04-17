@@ -93,7 +93,7 @@ router.post("/officers", authMiddleware, requireRole("admin", "superadmin"), asy
       qrCode,
       area,
       location,
-      rate: rate || 3000,
+      rate: rate || 2000,
       phone: phone || null,
     }).returning();
 

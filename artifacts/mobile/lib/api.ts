@@ -231,4 +231,11 @@ export const api = {
     request<MyQrCodesResult>("/qr/my-codes", {
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  recordCashPayment: (token: string, vehicleType: string) =>
+    request<{ message: string; payment: ApiPayment; vehicleLabel: string }>("/qr/cash-payment", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ vehicleType }),
+    }),
 };

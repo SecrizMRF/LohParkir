@@ -59,6 +59,10 @@ async function ensureOfficerQrCodes(officerId: number, badgeNumber: string) {
         rate: info.rate,
         status: "active",
       });
+    } else if (existing[0].rate !== info.rate) {
+      await db.update(officerQrCodesTable)
+        .set({ rate: info.rate, updatedAt: new Date() })
+        .where(eq(officerQrCodesTable.id, existing[0].id));
     }
   }
 }
@@ -98,7 +102,7 @@ router.post("/seed", async (_req, res) => {
           qrCode: `LOHPARKIR-${seed.badgeNumber}`,
           area: seed.area,
           location: seed.location,
-          rate: 3000,
+          rate: 2000,
           status: "active",
           phone: seed.phone,
         }).returning();

@@ -200,7 +200,9 @@ export default function ScanResultScreen() {
               </View>
               <View style={styles.methodInfo}>
                 <Text style={styles.methodTitle}>Tunai</Text>
-                <Text style={styles.methodDesc}>Bayar langsung ke petugas parkir</Text>
+                <Text style={styles.methodDesc}>
+                  Bayar langsung ke petugas dengan uang tunai. Petugas akan menandai pembayaran Anda sebagai lunas dari aplikasi LohParkir mereka.
+                </Text>
               </View>
               <Feather name="chevron-right" size={24} color="#757575" />
             </Pressable>

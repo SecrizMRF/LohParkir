@@ -25,6 +25,35 @@ export default function OfficerDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ApiOfficerQrCode | null>(null);
   const [mode, setMode] = useState<"verify" | "qris">("verify");
+  const [cashLoading, setCashLoading] = useState(false);
+
+  const handleCashPayment = async () => {
+    if (!authToken || !selected) return;
+    showAlert(
+      "Konfirmasi Pembayaran Tunai",
+      `Tandai pembayaran TUNAI ${selected.vehicleLabel} sebesar Rp ${selected.rate.toLocaleString("id-ID")}?`,
+      [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Ya, Tandai Lunas",
+          onPress: async () => {
+            setCashLoading(true);
+            try {
+              const result = await api.recordCashPayment(authToken, selected.vehicleType);
+              showAlert(
+                "Pembayaran Tunai Tercatat",
+                `${result.vehicleLabel} — Rp ${result.payment.amount.toLocaleString("id-ID")}\nNo. Transaksi: ${result.payment.transactionId}`,
+              );
+            } catch (err: any) {
+              showAlert("Gagal", err.message || "Tidak dapat mencatat pembayaran tunai");
+            } finally {
+              setCashLoading(false);
+            }
+          },
+        },
+      ],
+    );
+  };
 
   useEffect(() => {
     if (appLoading) return;
@@ -177,6 +206,27 @@ export default function OfficerDashboardScreen() {
               </Text>
             </View>
           </View>
+
+          <Pressable
+            onPress={handleCashPayment}
+            disabled={cashLoading}
+            style={({ pressed }) => [
+              styles.cashPayBtn,
+              { opacity: cashLoading ? 0.6 : pressed ? 0.9 : 1 },
+            ]}
+          >
+            {cashLoading ? (
+              <ActivityIndicator color="#FFF" />
+            ) : (
+              <>
+                <MaterialCommunityIcons name="cash-multiple" size={22} color="#FFF" />
+                <Text style={styles.cashPayBtnText}>USER BAYAR TUNAI</Text>
+              </>
+            )}
+          </Pressable>
+          <Text style={styles.cashPayHint}>
+            Tekan jika user memilih membayar langsung dengan uang tunai (tanpa scan QRIS)
+          </Text>
 
           <View style={styles.officerInfoCard}>
             <Text style={styles.officerInfoLabel}>Petugas</Text>
@@ -397,6 +447,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: "AtkinsonHyperlegible_700Bold",
     color: "#212121",
+  },
+  cashPayBtn: {
+    width: "100%",
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: "#E65100",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 18,
+  },
+  cashPayBtnText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    letterSpacing: 0.5,
+  },
+  cashPayHint: {
+    fontSize: 12,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    textAlign: "center",
+    marginTop: 8,
+    lineHeight: 17,
   },
   instructionBox: {
     flexDirection: "row",

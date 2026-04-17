@@ -24,7 +24,7 @@ export default function OfficerFormScreen() {
   const [badgeNumber, setBadgeNumber] = useState("");
   const [area, setArea] = useState("");
   const [location, setLocation] = useState("");
-  const [rate, setRate] = useState("3000");
+  const [rate, setRate] = useState("2000");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +49,7 @@ export default function OfficerFormScreen() {
         badgeNumber: badgeNumber.trim().toUpperCase(),
         area: area.trim(),
         location: location.trim(),
-        rate: Number(rate) || 3000,
+        rate: Number(rate) || 2000,
         phone: phone.trim() || undefined,
       });
 
@@ -71,7 +71,7 @@ export default function OfficerFormScreen() {
     { label: "Nomor Badge", value: badgeNumber, onChange: setBadgeNumber, placeholder: "Contoh: DSH-2024-004", icon: "credit-card" as const, autoCapitalize: "characters" as const },
     { label: "Area Kerja", value: area, onChange: setArea, placeholder: "Contoh: Zona D - Jl. Asia Afrika", icon: "map" as const },
     { label: "Lokasi", value: location, onChange: setLocation, placeholder: "Contoh: Jl. Asia Afrika No. 1-40", icon: "map-pin" as const },
-    { label: "Tarif (Rp)", value: rate, onChange: setRate, placeholder: "3000", icon: "tag" as const, keyboardType: "numeric" as const },
+    { label: "Tarif (Rp)", value: rate, onChange: setRate, placeholder: "2000", icon: "tag" as const, keyboardType: "numeric" as const },
     { label: "No. HP (opsional)", value: phone, onChange: setPhone, placeholder: "Contoh: 081234567893", icon: "phone" as const, keyboardType: "phone-pad" as const },
   ];
 
