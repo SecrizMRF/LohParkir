@@ -1,5 +1,6 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { LinearGradient } from "expo-linear-gradient";
 import { hapticImpact, showAlert } from "@/lib/platform";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -254,8 +255,28 @@ export default function ScanScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.homeContent, { paddingTop: Platform.OS === "web" ? 67 + 40 : insets.top + 40 }]}>
-        <Text style={[styles.homeTitle, { color: colors.foreground }]}>ParkirCerdas</Text>
+      <View style={[styles.homeContent, { paddingTop: Platform.OS === "web" ? 67 + 32 : insets.top + 32 }]}>
+        <View style={styles.logoSection}>
+          <LinearGradient
+            colors={["#1976D2", "#0D47A1"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.logoCircle}
+          >
+            <MaterialCommunityIcons name="parking" size={56} color="#FFF" />
+            <View style={styles.logoCheckBadge}>
+              <MaterialCommunityIcons name="check-decagram" size={28} color="#1B5E20" />
+            </View>
+          </LinearGradient>
+          <Text style={[styles.homeTitle, { color: colors.foreground }]}>ParkirCerdas</Text>
+          <View style={styles.taglineRow}>
+            <View style={[styles.taglineDot, { backgroundColor: "#1565C0" }]} />
+            <Text style={[styles.homeTagline, { color: colors.mutedForeground }]}>
+              Dishub Kota Medan
+            </Text>
+            <View style={[styles.taglineDot, { backgroundColor: "#1565C0" }]} />
+          </View>
+        </View>
 
         <View style={styles.homeButtons}>
           <Pressable
@@ -318,11 +339,53 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingBottom: 120,
   },
+  logoSection: {
+    alignItems: "center",
+    gap: 16,
+  },
+  logoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    ...Platform.select({
+      ios: { shadowColor: "#1565C0", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16 },
+      android: { elevation: 8 },
+      web: { shadowColor: "#1565C0", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16 },
+    }),
+  },
+  logoCheckBadge: {
+    position: "absolute",
+    bottom: -4,
+    right: -4,
+    backgroundColor: "#FFF",
+    borderRadius: 18,
+    padding: 2,
+  },
   homeTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: "AtkinsonHyperlegible_700Bold",
     textAlign: "center",
-    marginBottom: 8,
+    letterSpacing: -0.5,
+  },
+  taglineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  taglineDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
+  homeTagline: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    textAlign: "center",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
   },
   homeButtons: {
     gap: 16,
