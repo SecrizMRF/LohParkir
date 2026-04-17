@@ -87,6 +87,7 @@ export default function PaymentScreen() {
   }, []);
 
   if (step === "success" && paymentData) {
+    const paidAmount = Number(paymentData.amount ?? rate);
     return (
       <View style={[styles.container, { backgroundColor: "#1B5E20" }]}>
         <StatusBar barStyle="light-content" backgroundColor="#1B5E20" />
@@ -101,13 +102,14 @@ export default function PaymentScreen() {
             <MaterialCommunityIcons name="check-circle" size={96} color="#FFF" />
           </View>
           <Text style={styles.successTitle}>Pembayaran Berhasil!</Text>
-          <Text style={styles.successAmount}>Rp {rate.toLocaleString("id-ID")}</Text>
+          <Text style={styles.successAmount}>Rp {paidAmount.toLocaleString("id-ID")}</Text>
 
           <View style={styles.receiptCard}>
             {[
               { label: "No. Transaksi", value: paymentData.transactionId },
               { label: "Petugas", value: params.officerName },
               { label: "Zona", value: params.area || "-" },
+              { label: "Nominal", value: `Rp ${paidAmount.toLocaleString("id-ID")}` },
               { label: "Metode", value: isCash ? "Tunai" : "QRIS" },
               { label: "Waktu", value: new Date(paymentData.createdAt).toLocaleString("id-ID", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short", year: "numeric" }) },
             ].map((item) => (
@@ -120,7 +122,7 @@ export default function PaymentScreen() {
 
           <View style={styles.pointsBanner}>
             <MaterialCommunityIcons name="star" size={24} color="#FBC02D" />
-            <Text style={styles.pointsText}>+{Math.floor(rate / 1000)} Poin ditambahkan!</Text>
+            <Text style={styles.pointsText}>+{Math.floor(paidAmount / 1000)} Poin ditambahkan!</Text>
           </View>
 
           <Pressable
