@@ -15,11 +15,13 @@ import QRCode from "react-native-qrcode-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/contexts/AppContext";
+import { useRequireOfficer } from "@/hooks/useRoleGuard";
 import { api, type ApiOfficerQrCode, type MyQrCodesResult } from "@/lib/api";
 import { hapticImpact, showAlert } from "@/lib/platform";
 
 export default function OfficerDashboardScreen() {
   const insets = useSafeAreaInsets();
+  useRequireOfficer();
   const { authToken, authUser, logout, loading: appLoading } = useApp();
   const [data, setData] = useState<MyQrCodesResult | null>(null);
   const [loading, setLoading] = useState(true);

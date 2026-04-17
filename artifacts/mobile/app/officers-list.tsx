@@ -12,6 +12,7 @@ import {
 
 import { useApp, type Officer } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useRequireAdmin } from "@/hooks/useRoleGuard";
 
 function OfficerItem({ item, onToggleStatus, onRemove }: { item: Officer; onToggleStatus: (id: number, status: string) => void; onRemove: (id: number) => void }) {
   const colors = useColors();
@@ -74,6 +75,7 @@ function OfficerItem({ item, onToggleStatus, onRemove }: { item: Officer; onTogg
 
 export default function OfficersListScreen() {
   const colors = useColors();
+  useRequireAdmin();
   const { officers, removeOfficer, updateOfficer, refreshData } = useApp();
 
   useEffect(() => {

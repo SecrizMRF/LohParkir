@@ -7,9 +7,20 @@ import { Feather, MaterialCommunityIcons } from "@/components/Icon";
 import React from "react";
 import { Platform, StyleSheet, View, useColorScheme } from "react-native";
 
+import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 
-function NativeTabLayout() {
+function NativeTabLayout({ isAdmin }: { isAdmin: boolean }) {
+  if (isAdmin) {
+    return (
+      <NativeTabs>
+        <NativeTabs.Trigger name="admin">
+          <Icon sf={{ default: "shield", selected: "shield.fill" }} />
+          <Label>Admin</Label>
+        </NativeTabs.Trigger>
+      </NativeTabs>
+    );
+  }
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
@@ -28,15 +39,11 @@ function NativeTabLayout() {
         <Icon sf={{ default: "star", selected: "star.fill" }} />
         <Label>Poin</Label>
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="admin">
-        <Icon sf={{ default: "shield", selected: "shield.fill" }} />
-        <Label>Admin</Label>
-      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
 
-function ClassicTabLayout() {
+function ClassicTabLayout({ isAdmin }: { isAdmin: boolean }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -45,6 +52,7 @@ function ClassicTabLayout() {
 
   return (
     <Tabs
+      initialRouteName={isAdmin ? "admin" : "index"}
       screenOptions={{
         tabBarActiveTintColor: "#1565C0",
         tabBarInactiveTintColor: "#757575",
@@ -79,6 +87,7 @@ function ClassicTabLayout() {
         name="index"
         options={{
           title: "Scan",
+          href: isAdmin ? null : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="qrcode.viewfinder" tintColor={color} size={22} />
@@ -91,6 +100,7 @@ function ClassicTabLayout() {
         name="reports"
         options={{
           title: "Laporan",
+          href: isAdmin ? null : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="doc.text" tintColor={color} size={22} />
@@ -103,6 +113,7 @@ function ClassicTabLayout() {
         name="payments"
         options={{
           title: "Riwayat",
+          href: isAdmin ? null : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="clock" tintColor={color} size={22} />
@@ -115,6 +126,7 @@ function ClassicTabLayout() {
         name="peta-rawan"
         options={{
           title: "Poin",
+          href: isAdmin ? null : undefined,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="star" tintColor={color} size={22} />
@@ -127,6 +139,7 @@ function ClassicTabLayout() {
         name="admin"
         options={{
           title: "Admin",
+          href: isAdmin ? undefined : null,
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="shield" tintColor={color} size={22} />
@@ -140,8 +153,10 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
+  const { userRole } = useApp();
+  const isAdmin = userRole === "admin";
   if (isLiquidGlassAvailable()) {
-    return <NativeTabLayout />;
+    return <NativeTabLayout isAdmin={isAdmin} />;
   }
-  return <ClassicTabLayout />;
+  return <ClassicTabLayout isAdmin={isAdmin} />;
 }

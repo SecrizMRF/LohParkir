@@ -14,9 +14,11 @@ import {
 
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useRequireAdmin } from "@/hooks/useRoleGuard";
 
 export default function OfficerFormScreen() {
   const colors = useColors();
+  useRequireAdmin();
   const { addOfficer } = useApp();
 
   const [name, setName] = useState("");

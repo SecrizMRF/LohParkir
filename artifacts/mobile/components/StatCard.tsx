@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { useColors } from "@/hooks/useColors";
 
 interface StatCardProps {
-  icon: keyof typeof Feather.glyphMap;
+  icon: string;
   label: string;
   value: string | number;
   color?: string;

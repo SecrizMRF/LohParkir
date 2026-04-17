@@ -12,6 +12,7 @@ import {
 
 import { useApp, type Report } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useRequireAdmin } from "@/hooks/useRoleGuard";
 
 type FilterType = "all" | "pending" | "in_progress" | "resolved" | "rejected";
 
@@ -88,6 +89,7 @@ function ReportManageItem({ item }: { item: Report }) {
 
 export default function ReportsManageScreen() {
   const colors = useColors();
+  useRequireAdmin();
   const { reports, refreshData } = useApp();
   const [filter, setFilter] = useState<FilterType>("all");
 

@@ -21,10 +21,12 @@ interface AppContextType {
   scanHistory: ScanRecord[];
   payments: Payment[];
   userRole: "public" | "admin" | "officer";
+  roleChosen: boolean;
   authToken: string | null;
   authUser: { id: number; username: string; fullName: string; role: string } | null;
   points: number;
   setUserRole: (role: "public" | "admin" | "officer") => void;
+  resetRole: () => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   addOfficer: (data: { nip: string; name: string; badgeNumber: string; area: string; location: string; rate?: number; phone?: string }) => Promise<Officer>;
@@ -62,6 +64,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [scanHistory, setScanHistory] = useState<ScanRecord[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [userRole, setUserRoleState] = useState<"public" | "admin" | "officer">("public");
+  const [roleChosen, setRoleChosen] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<{ id: number; username: string; fullName: string; role: string } | null>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(defaultStats);
@@ -74,17 +77,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const loadInitialData = async () => {
     try {
-      const [storedToken, storedUser, storedRole, storedPoints] = await Promise.all([
+      const [storedToken, storedUser, storedRole, storedPoints, storedRoleChosen] = await Promise.all([
         AsyncStorage.getItem("authToken"),
         AsyncStorage.getItem("authUser"),
         AsyncStorage.getItem("userRole"),
         AsyncStorage.getItem("parkingPoints"),
+        AsyncStorage.getItem("roleChosen"),
       ]);
 
       if (storedToken) setAuthToken(storedToken);
       if (storedUser) setAuthUser(JSON.parse(storedUser));
       if (storedRole) setUserRoleState(storedRole as "public" | "admin" | "officer");
       if (storedPoints) setPoints(Number(storedPoints) || 0);
+      if (storedRoleChosen === "1") setRoleChosen(true);
 
       const results = await Promise.allSettled([
         api.getOfficers(),
@@ -190,7 +195,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setUserRole = useCallback(async (role: "public" | "admin" | "officer") => {
     setUserRoleState(role);
-    await AsyncStorage.setItem("userRole", role);
+    setRoleChosen(true);
+    await AsyncStorage.multiSet([
+      ["userRole", role],
+      ["roleChosen", "1"],
+    ]);
+  }, []);
+
+  const resetRole = useCallback(async () => {
+    setAuthToken(null);
+    setAuthUser(null);
+    setUserRoleState("public");
+    setRoleChosen(false);
+    await Promise.all([
+      AsyncStorage.removeItem("authToken"),
+      AsyncStorage.removeItem("authUser"),
+      AsyncStorage.removeItem("userRole"),
+      AsyncStorage.removeItem("roleChosen"),
+    ]);
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
@@ -201,10 +223,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.setItem("authUser", JSON.stringify(response.user));
     if (response.user.role === "admin" || response.user.role === "superadmin") {
       setUserRoleState("admin");
-      await AsyncStorage.setItem("userRole", "admin");
+      setRoleChosen(true);
+      await AsyncStorage.multiSet([["userRole", "admin"], ["roleChosen", "1"]]);
     } else if (response.user.role === "officer") {
       setUserRoleState("officer");
-      await AsyncStorage.setItem("userRole", "officer");
+      setRoleChosen(true);
+      await AsyncStorage.multiSet([["userRole", "officer"], ["roleChosen", "1"]]);
     }
   }, []);
 
@@ -212,10 +236,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAuthToken(null);
     setAuthUser(null);
     setUserRoleState("public");
+    setRoleChosen(false);
     await Promise.all([
       AsyncStorage.removeItem("authToken"),
       AsyncStorage.removeItem("authUser"),
-      AsyncStorage.setItem("userRole", "public"),
+      AsyncStorage.removeItem("userRole"),
+      AsyncStorage.removeItem("roleChosen"),
     ]);
   }, []);
 
@@ -300,10 +326,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         scanHistory,
         payments,
         userRole,
+        roleChosen,
         authToken,
         authUser,
         points,
         setUserRole,
+        resetRole,
         login,
         logout,
         addOfficer,
