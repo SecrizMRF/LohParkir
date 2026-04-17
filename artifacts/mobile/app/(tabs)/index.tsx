@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -257,18 +258,14 @@ export default function ScanScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.homeContent, { paddingTop: Platform.OS === "web" ? 67 + 32 : insets.top + 32 }]}>
         <View style={styles.logoSection}>
-          <LinearGradient
-            colors={["#1976D2", "#0D47A1"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.logoCircle}
-          >
-            <MaterialCommunityIcons name="parking" size={56} color="#FFF" />
-            <View style={styles.logoCheckBadge}>
-              <MaterialCommunityIcons name="check-decagram" size={28} color="#1B5E20" />
-            </View>
-          </LinearGradient>
-          <Text style={[styles.homeTitle, { color: colors.foreground }]}>ParkirCerdas</Text>
+          <View style={styles.logoImageWrap}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
+          </View>
+          <Text style={[styles.homeTitle, { color: colors.foreground }]}>LohParkir</Text>
           <View style={styles.taglineRow}>
             <View style={[styles.taglineDot, { backgroundColor: "#1565C0" }]} />
             <Text style={[styles.homeTagline, { color: colors.mutedForeground }]}>
@@ -343,27 +340,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
   },
-  logoCircle: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
+  logoImageWrap: {
+    width: 132,
+    height: 132,
+    borderRadius: 32,
+    overflow: "hidden",
+    backgroundColor: "#FFF",
     ...Platform.select({
-      ios: { shadowColor: "#1565C0", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16 },
-      android: { elevation: 8 },
-      web: { shadowColor: "#1565C0", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16 },
+      ios: { shadowColor: "#1565C0", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.35, shadowRadius: 18 },
+      android: { elevation: 10 },
+      web: { shadowColor: "#1565C0", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.35, shadowRadius: 18 },
     }),
   },
-  logoCheckBadge: {
-    position: "absolute",
-    bottom: -4,
-    right: -4,
-    backgroundColor: "#FFF",
-    borderRadius: 18,
-    padding: 2,
-  },
+  logoImage: { width: "100%", height: "100%" },
   homeTitle: {
     fontSize: 32,
     fontFamily: "AtkinsonHyperlegible_700Bold",
