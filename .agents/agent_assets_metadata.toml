@@ -131,3 +131,9 @@ id = "zHztz5WxrMtnblYhJALvu"
 uri = "file://attached_assets/proposal_lohparkir_bab3-6.md"
 type = "text"
 title = "Isian Proposal LohParkir — BAB 3 sampai BAB 6"
+
+[[outputs]]
+id = "r3Lkc-BJCgIjbP3smKSqQ"
+uri = "file://attached_assets/Proposal_LohParkir_BAB3-6.docx"
+type = "word_document"
+title = "Proposal LohParkir — BAB 3 sampai BAB 6 (.docx)"
