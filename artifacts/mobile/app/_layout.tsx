@@ -53,6 +53,8 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     AtkinsonHyperlegible_400Regular,
     AtkinsonHyperlegible_700Bold,
+    "material-community": require("../assets/fonts/MaterialCommunityIcons.ttf"),
+    "Feather": require("../assets/fonts/Feather.ttf"),
   });
 
   useEffect(() => {
