@@ -241,6 +241,31 @@ export default function PaymentScreen() {
             </View>
           </View>
 
+          <View style={styles.tariffCard}>
+            <Text style={styles.tariffCardTitle}>Tarif Resmi Parkir</Text>
+            <View style={styles.tariffRow}>
+              <View style={styles.tariffLeft}>
+                <View style={[styles.tariffIcon, { backgroundColor: "#E8F5E9" }]}>
+                  <MaterialCommunityIcons name="motorbike" size={22} color="#1B5E20" />
+                </View>
+                <Text style={styles.tariffLabel}>Sepeda Motor</Text>
+              </View>
+              <Text style={styles.tariffAmount}>Rp 2.000</Text>
+            </View>
+            <View style={styles.tariffRow}>
+              <View style={styles.tariffLeft}>
+                <View style={[styles.tariffIcon, { backgroundColor: "#E3F2FD" }]}>
+                  <MaterialCommunityIcons name="car" size={22} color="#1565C0" />
+                </View>
+                <Text style={styles.tariffLabel}>Mobil</Text>
+              </View>
+              <Text style={styles.tariffAmount}>Rp 4.000</Text>
+            </View>
+            <Text style={styles.tariffNote}>
+              Sesuai Perda Kota Medan. Pastikan Anda membayar tepat sesuai jenis kendaraan.
+            </Text>
+          </View>
+
           <View style={styles.warningCard}>
             <MaterialCommunityIcons name="information" size={20} color="#E65100" />
             <Text style={styles.warningText}>
@@ -602,6 +627,60 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "AtkinsonHyperlegible_400Regular",
     color: "#424242",
+  },
+
+  tariffCard: {
+    width: "100%",
+    backgroundColor: "#FFF",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+  },
+  tariffCardTitle: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#1565C0",
+    letterSpacing: 0.5,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  tariffRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+  },
+  tariffLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  tariffIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tariffLabel: {
+    fontSize: 16,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#212121",
+  },
+  tariffAmount: {
+    fontSize: 18,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#1B5E20",
+  },
+  tariffNote: {
+    fontSize: 12,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    textAlign: "center",
+    marginTop: 10,
+    lineHeight: 17,
   },
 
   warningCard: {
