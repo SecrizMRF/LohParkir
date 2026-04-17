@@ -2,6 +2,7 @@ import { Feather } from "@/components/Icon";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { StatCard } from "@/components/StatCard";
 import { useApp } from "@/contexts/AppContext";
@@ -11,6 +12,7 @@ import { hapticImpact, showAlert } from "@/lib/platform";
 
 export default function AdminScreen() {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   useRequireAdmin();
   const { dashboardStats, officers, scanHistory, authUser, logout, refreshData } = useApp();
 
@@ -61,7 +63,7 @@ export default function AdminScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={{
         paddingBottom: 100,
-        paddingTop: Platform.OS === "web" ? 67 + 16 : 16,
+        paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16,
       }}
       showsVerticalScrollIndicator={false}
     >

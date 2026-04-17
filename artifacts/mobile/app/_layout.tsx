@@ -28,7 +28,7 @@ function AuthGate() {
   useEffect(() => {
     if (loading) return;
     const seg0 = segments[0];
-    const inAuthFlow = seg0 === "role-select" || seg0 === "login";
+    const inAuthFlow = seg0 === "role-select" || seg0 === "login" || seg0 === "user-auth";
     const needsLogin = userRole === "admin" || userRole === "officer";
 
     if (!roleChosen) {
@@ -69,12 +69,13 @@ function RootLayoutNav() {
       >
         <Stack.Screen name="role-select" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="user-auth" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="scan-result" options={{ title: "Hasil Verifikasi", headerShown: false }} />
         <Stack.Screen name="report-form" options={{ title: "Buat Laporan" }} />
         <Stack.Screen name="payment" options={{ title: "Pembayaran", headerShown: false }} />
         <Stack.Screen name="officer-form" options={{ title: "Tambah Petugas" }} />
-        <Stack.Screen name="report-detail" options={{ title: "Detail Laporan" }} />
+        <Stack.Screen name="report-detail" options={{ title: "Detail Laporan", headerShown: false }} />
         <Stack.Screen name="officers-list" options={{ title: "Daftar Petugas" }} />
         <Stack.Screen name="reports-manage" options={{ title: "Kelola Laporan" }} />
         <Stack.Screen name="rating" options={{ title: "Rating Jukir", headerShown: false }} />

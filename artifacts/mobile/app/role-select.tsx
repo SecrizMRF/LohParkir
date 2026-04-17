@@ -51,6 +51,8 @@ export default function RoleSelectScreen() {
     hapticImpact();
     if (opt.needsLogin) {
       router.push({ pathname: "/login", params: { role: opt.key } });
+    } else if (opt.key === "public") {
+      router.push("/user-auth");
     } else {
       await setUserRole(opt.key);
       router.replace("/(tabs)");

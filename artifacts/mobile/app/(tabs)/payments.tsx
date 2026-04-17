@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp, type Payment } from "@/contexts/AppContext";
 function PaymentItem({ item, onPress }: { item: Payment; onPress: () => void }) {
@@ -47,6 +48,7 @@ function PaymentItem({ item, onPress }: { item: Payment; onPress: () => void }) 
 }
 
 export default function PaymentsScreen() {
+  const insets = useSafeAreaInsets();
   const { payments, refreshData } = useApp();
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function PaymentsScreen() {
         contentContainerStyle={{
           paddingHorizontal: 20,
           paddingBottom: 100,
-          paddingTop: Platform.OS === "web" ? 67 + 16 : 16,
+          paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16,
         }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={

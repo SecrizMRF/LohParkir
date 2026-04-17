@@ -23,7 +23,45 @@ import { useColors } from "@/hooks/useColors";
 export default function ScanScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { validateQR, scanHistory } = useApp();
+  const { validateQR, scanHistory, demoUser, signOutDemo, resetRole } = useApp();
+
+  const handleAccountMenu = () => {
+    hapticImpact();
+    if (demoUser) {
+      showAlert(`Halo, ${demoUser.name}`, demoUser.email, [
+        { text: "Batal", style: "cancel" },
+        {
+          text: "Ganti Peran",
+          onPress: async () => {
+            await resetRole();
+            router.replace("/role-select");
+          },
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await signOutDemo();
+          },
+        },
+      ]);
+    } else {
+      showAlert("Mode Tamu", "Anda dapat login atau membuat akun untuk menyimpan poin & riwayat parkir.", [
+        { text: "Tutup", style: "cancel" },
+        {
+          text: "Login / Daftar",
+          onPress: () => router.push("/user-auth"),
+        },
+        {
+          text: "Ganti Peran",
+          onPress: async () => {
+            await resetRole();
+            router.replace("/role-select");
+          },
+        },
+      ]);
+    }
+  };
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
@@ -258,7 +296,40 @@ export default function ScanScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.homeContent, { paddingTop: Platform.OS === "web" ? 67 + 32 : insets.top + 32 }]}>
+      <View style={[styles.homeContent, { paddingTop: Platform.OS === "web" ? 67 + 16 : insets.top + 16 }]}>
+        <View style={styles.topBar}>
+          <View style={styles.topBarUser}>
+            <View
+              style={[
+                styles.topBarAvatar,
+                { backgroundColor: demoUser ? colors.primary + "18" : colors.muted },
+              ]}
+            >
+              <Feather
+                name={demoUser ? (demoUser.provider === "google" ? "mail" : "user") : "user"}
+                size={14}
+                color={demoUser ? colors.primary : colors.mutedForeground}
+              />
+            </View>
+            <Text style={[styles.topBarText, { color: colors.foreground }]} numberOfLines={1}>
+              {demoUser ? demoUser.name : "Tamu"}
+            </Text>
+          </View>
+          <Pressable
+            onPress={handleAccountMenu}
+            style={({ pressed }) => [
+              styles.topBarBtn,
+              { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.8 : 1 },
+            ]}
+            hitSlop={8}
+          >
+            <Feather name={demoUser ? "log-out" : "log-in"} size={14} color={colors.foreground} />
+            <Text style={[styles.topBarBtnText, { color: colors.foreground }]}>
+              {demoUser ? "Akun" : "Masuk"}
+            </Text>
+          </Pressable>
+        </View>
+
         <View style={styles.logoSection}>
           <View style={styles.logoImageWrap}>
             <Image
@@ -338,6 +409,31 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingBottom: 120,
   },
+  topBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  topBarUser: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
+  topBarAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  topBarText: { fontSize: 13, fontFamily: "AtkinsonHyperlegible_700Bold" },
+  topBarBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  topBarBtnText: { fontSize: 12, fontFamily: "AtkinsonHyperlegible_700Bold" },
   logoSection: {
     alignItems: "center",
     gap: 16,

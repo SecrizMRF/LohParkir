@@ -24,11 +24,14 @@ interface AppContextType {
   roleChosen: boolean;
   authToken: string | null;
   authUser: { id: number; username: string; fullName: string; role: string } | null;
+  demoUser: { name: string; email: string; provider: "email" | "google" } | null;
   points: number;
   setUserRole: (role: "public" | "admin" | "officer") => void;
   resetRole: () => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  signInDemo: (data: { name: string; email: string; provider: "email" | "google" }) => Promise<void>;
+  signOutDemo: () => Promise<void>;
   addOfficer: (data: { nip: string; name: string; badgeNumber: string; area: string; location: string; rate?: number; phone?: string }) => Promise<Officer>;
   removeOfficer: (id: number) => Promise<void>;
   updateOfficer: (id: number, data: Partial<Officer>) => Promise<Officer>;
@@ -67,6 +70,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [roleChosen, setRoleChosen] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<{ id: number; username: string; fullName: string; role: string } | null>(null);
+  const [demoUser, setDemoUser] = useState<{ name: string; email: string; provider: "email" | "google" } | null>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(defaultStats);
   const [points, setPoints] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -77,12 +81,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const loadInitialData = async () => {
     try {
-      const [storedToken, storedUser, storedRole, storedPoints, storedRoleChosen] = await Promise.all([
+      const [storedToken, storedUser, storedRole, storedPoints, storedRoleChosen, storedDemoUser] = await Promise.all([
         AsyncStorage.getItem("authToken"),
         AsyncStorage.getItem("authUser"),
         AsyncStorage.getItem("userRole"),
         AsyncStorage.getItem("parkingPoints"),
         AsyncStorage.getItem("roleChosen"),
+        AsyncStorage.getItem("demoUser"),
       ]);
 
       if (storedToken) setAuthToken(storedToken);
@@ -90,6 +95,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (storedRole) setUserRoleState(storedRole as "public" | "admin" | "officer");
       if (storedPoints) setPoints(Number(storedPoints) || 0);
       if (storedRoleChosen === "1") setRoleChosen(true);
+      if (storedDemoUser) {
+        try { setDemoUser(JSON.parse(storedDemoUser)); } catch {}
+      }
 
       const results = await Promise.allSettled([
         api.getOfficers(),
@@ -205,6 +213,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const resetRole = useCallback(async () => {
     setAuthToken(null);
     setAuthUser(null);
+    setDemoUser(null);
     setUserRoleState("public");
     setRoleChosen(false);
     await Promise.all([
@@ -212,7 +221,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       AsyncStorage.removeItem("authUser"),
       AsyncStorage.removeItem("userRole"),
       AsyncStorage.removeItem("roleChosen"),
+      AsyncStorage.removeItem("demoUser"),
     ]);
+  }, []);
+
+  const signInDemo = useCallback(async (data: { name: string; email: string; provider: "email" | "google" }) => {
+    setDemoUser(data);
+    setUserRoleState("public");
+    setRoleChosen(true);
+    await Promise.all([
+      AsyncStorage.setItem("demoUser", JSON.stringify(data)),
+      AsyncStorage.setItem("userRole", "public"),
+      AsyncStorage.setItem("roleChosen", "1"),
+    ]);
+  }, []);
+
+  const signOutDemo = useCallback(async () => {
+    setDemoUser(null);
+    await AsyncStorage.removeItem("demoUser");
   }, []);
 
   const login = useCallback(async (username: string, password: string) => {
@@ -235,6 +261,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     setAuthToken(null);
     setAuthUser(null);
+    setDemoUser(null);
     setUserRoleState("public");
     setRoleChosen(false);
     await Promise.all([
@@ -242,6 +269,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       AsyncStorage.removeItem("authUser"),
       AsyncStorage.removeItem("userRole"),
       AsyncStorage.removeItem("roleChosen"),
+      AsyncStorage.removeItem("demoUser"),
     ]);
   }, []);
 
@@ -329,11 +357,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         roleChosen,
         authToken,
         authUser,
+        demoUser,
         points,
         setUserRole,
         resetRole,
         login,
         logout,
+        signInDemo,
+        signOutDemo,
         addOfficer,
         removeOfficer,
         updateOfficer,

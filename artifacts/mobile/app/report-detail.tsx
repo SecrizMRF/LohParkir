@@ -1,8 +1,9 @@
 import { Feather } from "@/components/Icon";
 import { hapticImpact, showAlert } from "@/lib/platform";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp, type Report } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -24,18 +25,40 @@ function getStatusConfig(status: string, colors: ReturnType<typeof useColors>) {
 
 export default function ReportDetailScreen() {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { reports, updateReportStatus, userRole, authToken } = useApp();
   const { reportId } = useLocalSearchParams<{ reportId: string }>();
   const [adminNotes, setAdminNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
 
+  const handleBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace("/(tabs)");
+  };
+
   const report = reports.find((r) => r.id.toString() === reportId);
 
   if (!report) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: "center", alignItems: "center" }]}>
-        <Feather name="file" size={48} color={colors.mutedForeground} />
-        <Text style={[styles.notFound, { color: colors.mutedForeground }]}>Laporan tidak ditemukan</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.topNav, { paddingTop: insets.top + 8 }]}>
+          <Pressable
+            onPress={handleBack}
+            style={({ pressed }) => [
+              styles.backBtn,
+              { backgroundColor: colors.card, borderRadius: 12, opacity: pressed ? 0.8 : 1 },
+            ]}
+            hitSlop={10}
+          >
+            <Feather name="arrow-left" size={20} color={colors.foreground} />
+          </Pressable>
+          <Text style={[styles.topNavTitle, { color: colors.foreground }]}>Detail Laporan</Text>
+          <View style={styles.backBtn} />
+        </View>
+        <View style={styles.centerContent}>
+          <Feather name="file" size={48} color={colors.mutedForeground} />
+          <Text style={[styles.notFound, { color: colors.mutedForeground }]}>Laporan tidak ditemukan</Text>
+        </View>
       </View>
     );
   }
@@ -56,10 +79,22 @@ export default function ReportDetailScreen() {
   const isAdmin = userRole === "admin" && !!authToken;
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={{ paddingBottom: 40 }}
-    >
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.topNav, { paddingTop: insets.top + 8 }]}>
+        <Pressable
+          onPress={handleBack}
+          style={({ pressed }) => [
+            styles.backBtn,
+            { backgroundColor: colors.card, borderRadius: 12, opacity: pressed ? 0.8 : 1 },
+          ]}
+          hitSlop={10}
+        >
+          <Feather name="arrow-left" size={20} color={colors.foreground} />
+        </Pressable>
+        <Text style={[styles.topNavTitle, { color: colors.foreground }]}>Detail Laporan</Text>
+        <View style={styles.backBtn} />
+      </View>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
       <View style={[styles.statusCard, { backgroundColor: statusConfig.bg, borderRadius: colors.radius }]}>
         <Feather
           name={report.type === "fake_qr" ? "alert-triangle" : "map-pin"}
@@ -190,12 +225,23 @@ export default function ReportDetailScreen() {
           </View>
         </View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  topNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  backBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  topNavTitle: { fontSize: 17, fontFamily: "AtkinsonHyperlegible_700Bold" },
+  centerContent: { flex: 1, justifyContent: "center", alignItems: "center" },
   notFound: { fontSize: 16, fontFamily: "AtkinsonHyperlegible_400Regular", marginTop: 12 },
   statusCard: { margin: 20, padding: 24, alignItems: "center", gap: 10 },
   statusTitle: { fontSize: 18, fontFamily: "AtkinsonHyperlegible_700Bold" },

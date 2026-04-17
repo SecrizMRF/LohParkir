@@ -82,6 +82,7 @@ function ReportItem({ item }: { item: Report }) {
 
 export default function ReportsScreen() {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const { reports, refreshData } = useApp();
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function ReportsScreen() {
         contentContainerStyle={{
           padding: 20,
           paddingBottom: 100,
-          paddingTop: Platform.OS === "web" ? 67 + 20 : 20,
+          paddingTop: Platform.OS === "web" ? 67 + 20 : insets.top + 20,
         }}
         showsVerticalScrollIndicator={false}
         scrollEnabled={reports.length > 0}
