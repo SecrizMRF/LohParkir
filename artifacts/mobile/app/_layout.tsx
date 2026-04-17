@@ -2,7 +2,6 @@ import {
   AtkinsonHyperlegible_400Regular,
   AtkinsonHyperlegible_700Bold,
 } from "@expo-google-fonts/atkinson-hyperlegible";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -54,8 +53,6 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     AtkinsonHyperlegible_400Regular,
     AtkinsonHyperlegible_700Bold,
-    ...MaterialCommunityIcons.font,
-    ...Feather.font,
   });
 
   useEffect(() => {
