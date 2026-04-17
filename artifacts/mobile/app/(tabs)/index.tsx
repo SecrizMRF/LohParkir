@@ -382,10 +382,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   scanMainBtn: {
-    height: 72,
+    minHeight: 72,
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     elevation: 3,
     shadowColor: "#1565C0",
     shadowOffset: { width: 0, height: 4 },
