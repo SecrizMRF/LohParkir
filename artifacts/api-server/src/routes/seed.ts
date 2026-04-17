@@ -1,8 +1,8 @@
 import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
-import { usersTable, officersTable, officerQrCodesTable, VEHICLE_TYPES } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { usersTable, officersTable, officerQrCodesTable, reportsTable, paymentsTable, scansTable, VEHICLE_TYPES } from "@workspace/db/schema";
+import { eq, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -67,6 +67,32 @@ async function ensureOfficerQrCodes(officerId: number, badgeNumber: string) {
   }
 }
 
+function dateStr(d: Date): string {
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function pad(n: number, len = 5): string {
+  return String(n).padStart(len, "0");
+}
+
+const DEMO_DEVICE_IDS = [
+  "demo-device-warga-001",
+  "demo-device-warga-002",
+  "demo-device-warga-003",
+];
+
+const DEMO_REPORTS: Array<{
+  type: string; description: string; address: string; status: string; daysAgo: number;
+  latitude: string; longitude: string; deviceIdx: number; adminNotes?: string;
+}> = [
+  { type: "tarif", description: "Petugas meminta Rp10.000 untuk parkir motor di area Pasar Petisah, jauh di atas tarif resmi.", address: "Jl. Razak Hamid, Pasar Petisah, Medan Petisah", status: "pending", daysAgo: 0, latitude: "3.5868", longitude: "98.6712", deviceIdx: 0 },
+  { type: "qr_palsu", description: "QR yang ditempel di pohon tidak menampilkan info petugas saat dipindai. Diduga QR palsu.", address: "Jl. Gatot Subroto depan Plaza Medan Fair", status: "in_review", daysAgo: 1, latitude: "3.5912", longitude: "98.6602", deviceIdx: 1, adminNotes: "Sedang ditinjau tim lapangan." },
+  { type: "petugas_palsu", description: "Orang berseragam tidak resmi memungut parkir di Lapangan Merdeka tanpa karcis.", address: "Lapangan Merdeka, Medan Barat", status: "resolved", daysAgo: 3, latitude: "3.5894", longitude: "98.6783", deviceIdx: 2, adminNotes: "Petugas tidak terdaftar telah ditindak. Terima kasih atas laporannya." },
+  { type: "lainnya", description: "Tidak diberikan struk/karcis setelah membayar parkir mobil di Center Point.", address: "Jl. Jawa, Center Point Mall", status: "rejected", daysAgo: 5, latitude: "3.5836", longitude: "98.6831", deviceIdx: 0, adminNotes: "Bukti tidak mencukupi untuk ditindaklanjuti." },
+  { type: "tarif", description: "Tarif motor dipungut Rp5.000 di area Sun Plaza tanpa karcis.", address: "Jl. KH. Zainul Arifin, Sun Plaza", status: "pending", daysAgo: 0, latitude: "3.5778", longitude: "98.6756", deviceIdx: 1 },
+  { type: "qr_palsu", description: "QR berbeda format dari yang resmi, tidak mengarah ke aplikasi LohParkir.", address: "Jl. Iskandar Muda, Medan Baru", status: "resolved", daysAgo: 7, latitude: "3.5743", longitude: "98.6512", deviceIdx: 2, adminNotes: "QR palsu telah dicabut. Pelaku diserahkan ke pihak berwajib." },
+];
+
 router.post("/seed", async (_req, res) => {
   try {
     const existingAdmins = await db.select().from(usersTable).where(eq(usersTable.username, "admin")).limit(1);
@@ -130,6 +156,99 @@ router.post("/seed", async (_req, res) => {
       officerCredentials.push({ name: seed.name, username: seed.nip, password: seed.loginPassword });
     }
 
+    const allOfficers = await db.select().from(officersTable);
+    const officerById = new Map(allOfficers.map(o => [o.id, o]));
+    const officerList = allOfficers.length > 0 ? allOfficers : [];
+
+    let reportsAdded = 0;
+    if (officerList.length > 0) {
+      const today = new Date();
+      for (let i = 0; i < DEMO_REPORTS.length; i++) {
+        const r = DEMO_REPORTS[i];
+        const created = new Date(today);
+        created.setDate(created.getDate() - r.daysAgo);
+        created.setHours(8 + i, 15 + i * 5, 0, 0);
+        const ticketNumber = `LP-${dateStr(created)}-${pad(1000 + i, 4)}`;
+        const exists = await db.select().from(reportsTable).where(eq(reportsTable.ticketNumber, ticketNumber)).limit(1);
+        if (exists.length === 0) {
+          await db.insert(reportsTable).values({
+            ticketNumber,
+            type: r.type,
+            description: r.description,
+            address: r.address,
+            latitude: r.latitude,
+            longitude: r.longitude,
+            status: r.status,
+            adminNotes: r.adminNotes ?? null,
+            reporterDeviceId: DEMO_DEVICE_IDS[r.deviceIdx],
+            createdAt: created,
+            updatedAt: created,
+          });
+          reportsAdded++;
+        }
+      }
+    }
+
+    let paymentsAdded = 0;
+    if (officerList.length > 0) {
+      const now = new Date();
+      let txnSeq = 0;
+      for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+        const day = new Date(now);
+        day.setDate(day.getDate() - dayOffset);
+        const txCount = dayOffset === 0 ? 6 : 4;
+        for (let i = 0; i < txCount; i++) {
+          const officer = officerList[(dayOffset + i) % officerList.length];
+          const isCar = (i % 3) === 0;
+          const amount = isCar ? 4000 : 2000;
+          const created = new Date(day);
+          created.setHours(7 + i * 2, 5 + i * 11, 0, 0);
+          const transactionId = `TXN-${dateStr(created)}-${pad(80000 + txnSeq, 5)}`;
+          txnSeq++;
+          const exists = await db.select().from(paymentsTable).where(eq(paymentsTable.transactionId, transactionId)).limit(1);
+          if (exists.length === 0) {
+            await db.insert(paymentsTable).values({
+              transactionId,
+              officerId: officer.id,
+              officerName: officer.name,
+              amount,
+              method: i % 2 === 0 ? "qris" : "cash",
+              status: "success",
+              deviceId: DEMO_DEVICE_IDS[(dayOffset + i) % DEMO_DEVICE_IDS.length],
+              area: officer.area,
+              createdAt: created,
+              updatedAt: created,
+            });
+            paymentsAdded++;
+          }
+        }
+      }
+    }
+
+    let scansAdded = 0;
+    if (officerList.length > 0) {
+      const existingScansCount = await db.select({ c: sql<number>`count(*)::int` }).from(scansTable);
+      if ((existingScansCount[0]?.c ?? 0) < 10) {
+        const now = new Date();
+        for (let i = 0; i < 12; i++) {
+          const officer = officerList[i % officerList.length];
+          const isValid = i % 5 !== 0;
+          const scanned = new Date(now);
+          scanned.setHours(scanned.getHours() - i * 2);
+          await db.insert(scansTable).values({
+            qrCode: isValid ? `LOHPARKIR-${officer.badgeNumber}-MOTOR` : `FAKE-QR-${i}`,
+            isValid,
+            officerId: isValid ? officer.id : null,
+            officerName: isValid ? officer.name : null,
+            location: officer.area,
+            deviceId: DEMO_DEVICE_IDS[i % DEMO_DEVICE_IDS.length],
+            scannedAt: scanned,
+          });
+          scansAdded++;
+        }
+      }
+    }
+
     res.json({
       message: "Seed data berhasil dibuat / diperbarui",
       credentials: {
@@ -137,6 +256,7 @@ router.post("/seed", async (_req, res) => {
         superadmin: { username: "superadmin", password: "superadmin123" },
         officers: officerCredentials,
       },
+      stats: { reportsAdded, paymentsAdded, scansAdded },
     });
   } catch (err: any) {
     res.status(500).json({ error: "Gagal membuat seed data", details: err.message });
