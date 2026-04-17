@@ -309,9 +309,11 @@ export default function PaymentScreen() {
             ))}
           </View>
 
-          <View style={styles.qrisAmount}>
-            <Text style={styles.qrisAmountLabel}>Nominal Pembayaran</Text>
-            <Text style={styles.qrisAmountValue}>Rp {rate.toLocaleString("id-ID")}</Text>
+          <View style={styles.qrisNoteCard}>
+            <MaterialCommunityIcons name="information" size={18} color="#1565C0" />
+            <Text style={styles.qrisNoteText}>
+              Nominal akan otomatis muncul saat Anda scan QRIS petugas, sesuai tipe kendaraan Anda.
+            </Text>
           </View>
         </View>
 
@@ -433,6 +435,22 @@ const styles = StyleSheet.create({
     flex: 1, fontSize: 13,
     fontFamily: "AtkinsonHyperlegible_400Regular",
     color: "#424242", lineHeight: 19,
+  },
+  qrisNoteCard: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    backgroundColor: "#E3F2FD",
+    borderRadius: 10,
+    padding: 12,
+  },
+  qrisNoteText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#0D47A1",
+    lineHeight: 19,
   },
   qrisAmount: {
     alignItems: "center",
