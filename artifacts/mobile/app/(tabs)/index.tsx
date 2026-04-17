@@ -17,7 +17,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { StatCard } from "@/components/StatCard";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useEffect } from "react";
@@ -399,19 +398,31 @@ export default function ScanScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.publicStatsHeader}>
-          <Feather name="bar-chart-2" size={14} color={colors.mutedForeground} />
-          <Text style={[styles.publicStatsTitle, { color: colors.mutedForeground }]}>
-            Statistik Publik
-          </Text>
-        </View>
-        <View style={styles.publicStatsGrid}>
-          <StatCard icon="activity" label="Total Scan" value={dashboardStats.totalScans} />
-          <StatCard icon="check-circle" label="QR Valid" value={dashboardStats.validScans} color={colors.success} />
-        </View>
-        <View style={styles.publicStatsGrid}>
-          <StatCard icon="x-circle" label="QR Palsu" value={dashboardStats.invalidScans} color={colors.destructive} />
-          <StatCard icon="file-text" label="Laporan" value={dashboardStats.totalReports} color={colors.warning} />
+        <View style={[styles.publicStatsCard, { backgroundColor: colors.card, borderColor: colors.border, borderRadius: colors.radius }]}>
+          <View style={styles.publicStatsHeader}>
+            <Feather name="bar-chart-2" size={14} color={colors.mutedForeground} />
+            <Text style={[styles.publicStatsTitle, { color: colors.mutedForeground }]}>
+              Statistik Publik
+            </Text>
+          </View>
+          <View style={styles.publicStatsRow}>
+            <View style={styles.publicStatItem}>
+              <Text style={[styles.publicStatValue, { color: colors.foreground }]}>{dashboardStats.totalScans}</Text>
+              <Text style={[styles.publicStatLabel, { color: colors.mutedForeground }]}>Total Scan</Text>
+            </View>
+            <View style={styles.publicStatItem}>
+              <Text style={[styles.publicStatValue, { color: "#2E7D32" }]}>{dashboardStats.validScans}</Text>
+              <Text style={[styles.publicStatLabel, { color: colors.mutedForeground }]}>QR Valid</Text>
+            </View>
+            <View style={styles.publicStatItem}>
+              <Text style={[styles.publicStatValue, { color: "#B71C1C" }]}>{dashboardStats.invalidScans}</Text>
+              <Text style={[styles.publicStatLabel, { color: colors.mutedForeground }]}>QR Palsu</Text>
+            </View>
+            <View style={styles.publicStatItem}>
+              <Text style={[styles.publicStatValue, { color: "#E65100" }]}>{dashboardStats.totalReports}</Text>
+              <Text style={[styles.publicStatLabel, { color: colors.mutedForeground }]}>Laporan</Text>
+            </View>
+          </View>
         </View>
 
         <Text style={[styles.homeFooter, { color: colors.mutedForeground }]}>
@@ -556,11 +567,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
   },
+  publicStatsCard: {
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
   publicStatsHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    marginTop: 4,
     marginBottom: 8,
   },
   publicStatsTitle: {
@@ -569,10 +585,23 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
-  publicStatsGrid: {
+  publicStatsRow: {
     flexDirection: "row",
-    gap: 10,
-    marginBottom: 10,
+    justifyContent: "space-between",
+  },
+  publicStatItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  publicStatValue: {
+    fontSize: 20,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    marginBottom: 2,
+  },
+  publicStatLabel: {
+    fontSize: 10,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    textAlign: "center",
   },
 
   cameraOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: "space-between" },
