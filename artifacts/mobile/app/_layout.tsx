@@ -44,6 +44,7 @@ function RootLayoutNav() {
       <Stack.Screen name="reports-manage" options={{ title: "Kelola Laporan" }} />
       <Stack.Screen name="rating" options={{ title: "Rating Jukir", headerShown: false }} />
       <Stack.Screen name="karcis" options={{ title: "Karcis Digital", headerShown: false }} />
+      <Stack.Screen name="officer-dashboard" options={{ title: "Dashboard Petugas", headerShown: false }} />
     </Stack>
   );
 }

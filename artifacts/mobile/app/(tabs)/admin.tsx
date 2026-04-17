@@ -44,13 +44,19 @@ export default function AdminScreen() {
       setShowLogin(false);
       setUsername("");
       setPassword("");
-      showAlert("Berhasil", "Login berhasil sebagai Admin Dishub");
     } catch (err: any) {
       showAlert("Login Gagal", err.message || "Username atau password salah");
     } finally {
       setLoginLoading(false);
     }
   };
+
+  // Redirect officer to their dashboard after login
+  useEffect(() => {
+    if (authUser?.role === "officer") {
+      router.replace("/officer-dashboard");
+    }
+  }, [authUser]);
 
   const handleLogout = async () => {
     showAlert("Logout", "Yakin ingin keluar dari mode admin?", [
@@ -142,7 +148,7 @@ export default function AdminScreen() {
           <View style={[styles.credHint, { backgroundColor: colors.primary + "08", borderRadius: colors.radius }]}>
             <Feather name="info" size={14} color={colors.primary} />
             <Text style={[styles.credHintText, { color: colors.primary }]}>
-              Demo: admin / admin123
+              Admin: admin / admin123{"\n"}Petugas: 198501012010011001 / petugas001
             </Text>
           </View>
         </View>
@@ -187,7 +193,7 @@ export default function AdminScreen() {
               ]}
             >
               <Feather name="shield" size={14} color="#FFF" />
-              <Text style={[styles.roleButtonText, { color: "#FFF" }]}>Login Admin</Text>
+              <Text style={[styles.roleButtonText, { color: "#FFF" }]}>Login Admin / Petugas</Text>
             </Pressable>
           )}
         </View>

@@ -20,11 +20,11 @@ interface AppContextType {
   reports: Report[];
   scanHistory: ScanRecord[];
   payments: Payment[];
-  userRole: "public" | "admin";
+  userRole: "public" | "admin" | "officer";
   authToken: string | null;
   authUser: { id: number; username: string; fullName: string; role: string } | null;
   points: number;
-  setUserRole: (role: "public" | "admin") => void;
+  setUserRole: (role: "public" | "admin" | "officer") => void;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   addOfficer: (data: { nip: string; name: string; badgeNumber: string; area: string; location: string; rate?: number; phone?: string }) => Promise<Officer>;
@@ -61,7 +61,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [reports, setReports] = useState<Report[]>([]);
   const [scanHistory, setScanHistory] = useState<ScanRecord[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [userRole, setUserRoleState] = useState<"public" | "admin">("public");
+  const [userRole, setUserRoleState] = useState<"public" | "admin" | "officer">("public");
   const [authToken, setAuthToken] = useState<string | null>(null);
   const [authUser, setAuthUser] = useState<{ id: number; username: string; fullName: string; role: string } | null>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(defaultStats);
@@ -83,7 +83,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       if (storedToken) setAuthToken(storedToken);
       if (storedUser) setAuthUser(JSON.parse(storedUser));
-      if (storedRole) setUserRoleState(storedRole as "public" | "admin");
+      if (storedRole) setUserRoleState(storedRole as "public" | "admin" | "officer");
       if (storedPoints) setPoints(Number(storedPoints) || 0);
 
       const results = await Promise.allSettled([
@@ -188,7 +188,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await fetchAllData();
   }, []);
 
-  const setUserRole = useCallback(async (role: "public" | "admin") => {
+  const setUserRole = useCallback(async (role: "public" | "admin" | "officer") => {
     setUserRoleState(role);
     await AsyncStorage.setItem("userRole", role);
   }, []);
@@ -202,6 +202,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (response.user.role === "admin" || response.user.role === "superadmin") {
       setUserRoleState("admin");
       await AsyncStorage.setItem("userRole", "admin");
+    } else if (response.user.role === "officer") {
+      setUserRoleState("officer");
+      await AsyncStorage.setItem("userRole", "officer");
     }
   }, []);
 

@@ -21,7 +21,8 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 ## Architecture
 
 ### Database (lib/db)
-- **Drizzle ORM** schema with 6 tables: `users`, `officers`, `reports`, `scans`, `payments`, `audit_trail`
+- **Drizzle ORM** schema with 7 tables: `users`, `officers`, `officer_qr_codes`, `reports`, `scans`, `payments`, `audit_trail`
+- `officer_qr_codes` holds 1 row per (officer × vehicle type) — each officer has its own motor + mobil QR code with preset rate
 - Schema at `lib/db/src/schema/index.ts`
 - Push with `pnpm --filter @workspace/db run push`
 
@@ -37,10 +38,15 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 - Context at `contexts/AppContext.tsx` for global state
 
 ## User Roles
-- **public**: Scan QR codes, submit reports, make payments (no auth needed)
-- **officer**: Carry QR badge only (no app interaction)
-- **admin**: Manage officers, reports, view dashboard (JWT required)
+- **public** (User): Scan QR codes, submit reports, make payments (no auth needed)
+- **officer** (Juru Parkir): Logs in with NIP + password, sees vehicle picker (Motor/Mobil) → displays the matching QR code on screen for users to scan. Each officer has 2 QR codes auto-generated, one per vehicle type, with preset tariff
+- **admin** (Dishub): Manage officers, reports, view dashboard (JWT required)
 - **superadmin**: Full access (JWT required)
+
+## Vehicle Types & Tariffs
+- **Motor / Roda 2**: Rp 3.000 (QR suffix `-MOTOR`)
+- **Mobil / Roda 4**: Rp 5.000 (QR suffix `-MOBIL`)
+- Defined in `lib/db/src/schema/officer_qr_codes.ts` as `VEHICLE_TYPES`
 
 ## Design System (ParkirCerdas Spec)
 
@@ -74,6 +80,10 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 - **Poin Tab** (`(tabs)/peta-rawan.tsx`): Points display (48pt yellow), progress bar, rewards redemption (Gratis Parkir 1x, Diskon 10%)
 - **Admin Tab** (`(tabs)/admin.tsx`): Dashboard stats, login, officer/report management
 
+### Officer Dashboard
+- **Officer Dashboard** (`officer-dashboard.tsx`): Officer-only screen. Shows vehicle picker (Motor/Mobil cards); tapping a card displays a large QR code (via `react-native-qrcode-svg`) with the matching tariff for the user to scan
+- Officer login from Admin tab automatically redirects here
+
 ### Stack Screens
 - **Scan Result** (`scan-result.tsx`): Valid — white card with officer photo, name, ID badge, zona/lokasi/tarif details, "BAYAR PARKIR" button expanding to QRIS/Tunai options. Invalid — full red screen with alert.
 - **Payment** (`payment.tsx`): Method-based flow — QRIS: QR code display → "SUDAH SCAN & BAYAR" → waiting/auto-detect (5s countdown) → success. Cash: amount card + warning → "SUDAH BAYAR TUNAI" → success. Success: green screen with receipt + points.
@@ -94,14 +104,16 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 
 ## QR Code Format
 - Badge: `DSH-YYYY-NNN` (e.g., DSH-2024-001)
-- QR Code: `LOHPARKIR-DSH-YYYY-NNN` (e.g., LOHPARKIR-DSH-2024-001)
-- Validated via regex: `/^LOHPARKIR-DSH-\d{4}-\d{3}$/`
+- New per-vehicle QR: `LOHPARKIR-DSH-YYYY-NNN-MOTOR` or `-MOBIL` (preferred, has tariff preset)
+- Legacy badge QR: `LOHPARKIR-DSH-YYYY-NNN` (still validated for backward compat, no vehicle type)
+- New regex: `/^LOHPARKIR-DSH-\d{4}-\d{3}-(MOTOR|MOBIL)$/`
 
 ## Seed Data
-- 3 demo officers: Budi Santoso, Siti Rahayu, Ahmad Wijaya
+- 3 demo officers: Budi Santoso, Siti Rahayu, Ahmad Wijaya — each with 2 QR codes (motor + mobil)
 - Admin login: `admin` / `admin123`
 - Superadmin login: `superadmin` / `superadmin123`
-- Seed endpoint: `POST /api/seed`
+- Officer logins (NIP / password): `198501012010011001` / `petugas001`, `199002152012012002` / `petugas002`, `198807202015011003` / `petugas003`
+- Seed endpoint: `POST /api/seed` (idempotent — re-runs safely)
 
 ## Cross-Platform Utilities (`lib/platform.ts`)
 - `showAlert(title, message, buttons?)` — cross-platform alert (Alert.alert on native, window.confirm/alert on web)
@@ -123,7 +135,8 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 - `POST /api/officers` — create officer (admin)
 - `PUT /api/officers/:id` — update officer (admin)
 - `DELETE /api/officers/:id` — delete officer (admin)
-- `POST /api/qr/validate` — validate QR code, record scan
+- `POST /api/qr/validate` — validate QR code, record scan; returns `vehicleType`, `vehicleLabel`, `rate` for new-format QRs
+- `GET /api/qr/my-codes` — officer fetches their own QR codes (officer JWT required)
 - `GET /api/reports` — list reports (filter by status/type)
 - `POST /api/reports` — create report (public)
 - `PUT /api/reports/:id/status` — update report status (admin)

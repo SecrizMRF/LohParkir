@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "@expo-google-fonts/atkinson-hyperlegible": "^0.4.1",
-    "expo-camera": "~16.0.18"
+    "expo-camera": "~16.0.18",
+    "react-native-qrcode-svg": "^6.3.21"
   }
 }

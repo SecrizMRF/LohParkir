@@ -53,8 +53,10 @@ export default function ScanScreen() {
             badgeNumber: result.officer.badgeNumber,
             area: result.officer.area,
             location: result.officer.location,
-            rate: result.officer.rate.toString(),
+            rate: (result.rate ?? result.officer.rate).toString(),
             officerId: result.officer.id.toString(),
+            vehicleType: result.vehicleType || "",
+            vehicleLabel: result.vehicleLabel || "",
           },
         });
       } else {

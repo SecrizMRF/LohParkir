@@ -19,6 +19,8 @@ export default function ScanResultScreen() {
     officerId?: string;
     qrCode?: string;
     message?: string;
+    vehicleType?: string;
+    vehicleLabel?: string;
   }>();
 
   const isValid = params.valid === "true";
@@ -93,6 +95,17 @@ export default function ScanResultScreen() {
             <Text style={styles.idBadgeLabel}>ID Petugas</Text>
             <Text style={styles.idBadgeValue}>{params.badgeNumber}</Text>
           </View>
+
+          {params.vehicleType ? (
+            <View style={styles.vehicleBadge}>
+              <MaterialCommunityIcons
+                name={params.vehicleType === "mobil" ? "car" : "motorbike"}
+                size={22}
+                color="#FFF"
+              />
+              <Text style={styles.vehicleBadgeText}>{params.vehicleLabel || params.vehicleType}</Text>
+            </View>
+          ) : null}
 
           <View style={styles.separator} />
 
@@ -283,6 +296,22 @@ const styles = StyleSheet.create({
     fontFamily: "AtkinsonHyperlegible_700Bold",
     color: "#1565C0",
     letterSpacing: 1,
+  },
+  vehicleBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#1565C0",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginBottom: 16,
+  },
+  vehicleBadgeText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    letterSpacing: 0.3,
   },
   separator: {
     width: "100%",

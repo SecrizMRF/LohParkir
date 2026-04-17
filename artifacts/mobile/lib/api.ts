@@ -84,9 +84,21 @@ export interface ApiScan {
   scannedAt: string;
 }
 
+export interface ApiOfficerQrCode {
+  id: number;
+  vehicleType: string;
+  vehicleLabel: string;
+  qrCode: string;
+  rate: number;
+  status: string;
+}
+
 export interface QrValidationResult {
   isValid: boolean;
   message: string;
+  vehicleType?: string | null;
+  vehicleLabel?: string | null;
+  rate?: number | null;
   officer: {
     id: number;
     name: string;
@@ -96,6 +108,17 @@ export interface QrValidationResult {
     rate: number;
     status: string;
   } | null;
+}
+
+export interface MyQrCodesResult {
+  officer: {
+    id: number;
+    name: string;
+    badgeNumber: string;
+    area: string;
+    location: string;
+  };
+  qrCodes: ApiOfficerQrCode[];
 }
 
 export interface DashboardStats {
@@ -203,4 +226,9 @@ export const api = {
     }),
 
   seed: () => request<any>("/seed", { method: "POST" }),
+
+  getMyQrCodes: (token: string) =>
+    request<MyQrCodesResult>("/qr/my-codes", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 };
