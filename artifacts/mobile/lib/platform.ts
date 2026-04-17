@@ -5,7 +5,20 @@ export function formatRupiah(amount: number): string {
   return `Rp${(amount || 0).toLocaleString("id-ID")}`;
 }
 
-export function showAlert(title: string, message: string, buttons?: Array<{ text: string; style?: "cancel" | "destructive" | "default"; onPress?: () => void }>) {
+type AlertButton = { text: string; style?: "cancel" | "destructive" | "default"; onPress?: () => void };
+type AlertHandler = (title: string, message: string, buttons?: AlertButton[]) => void;
+
+let customAlertHandler: AlertHandler | null = null;
+
+export function setAlertHandler(handler: AlertHandler | null) {
+  customAlertHandler = handler;
+}
+
+export function showAlert(title: string, message: string, buttons?: AlertButton[]) {
+  if (customAlertHandler) {
+    customAlertHandler(title, message, buttons);
+    return;
+  }
   if (Platform.OS === "web") {
     if (!buttons || buttons.length === 0) {
       window.alert(`${title}\n\n${message}`);

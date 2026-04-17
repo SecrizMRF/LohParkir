@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AlertProvider } from "@/components/CustomAlert";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AppProvider, useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
@@ -109,7 +110,9 @@ export default function RootLayout() {
           <GestureHandlerRootView>
             <KeyboardProvider>
               <AppProvider>
-                <RootLayoutNav />
+                <AlertProvider>
+                  <RootLayoutNav />
+                </AlertProvider>
               </AppProvider>
             </KeyboardProvider>
           </GestureHandlerRootView>
