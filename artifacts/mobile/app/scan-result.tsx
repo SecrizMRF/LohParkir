@@ -128,7 +128,8 @@ export default function ScanResultScreen() {
               <MaterialCommunityIcons name="cash" size={20} color="#1565C0" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Tarif Resmi</Text>
-                <Text style={styles.detailValue}>Rp {Number(params.rate || 0).toLocaleString("id-ID")}</Text>
+                <Text style={styles.detailValue}>Rp 2.000 / Rp 4.000</Text>
+                <Text style={styles.detailHint}>Motor Rp 2.000 • Mobil Rp 4.000</Text>
               </View>
             </View>
           </View>
@@ -347,6 +348,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "AtkinsonHyperlegible_700Bold",
     color: "#424242",
+  },
+  detailHint: {
+    fontSize: 12,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#757575",
+    marginTop: 2,
   },
 
   payBtn: {

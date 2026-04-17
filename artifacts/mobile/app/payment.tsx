@@ -232,9 +232,6 @@ export default function PaymentScreen() {
           <Text style={styles.stepTitle}>Pembayaran Tunai</Text>
 
           <View style={styles.cashCard}>
-            <Text style={styles.cashCardLabel}>Bayar ke petugas sebesar:</Text>
-            <Text style={styles.cashCardAmount}>Rp {rate.toLocaleString("id-ID")}</Text>
-            <View style={styles.cashCardDivider} />
             <View style={styles.cashCardInfo}>
               <Text style={styles.cashCardInfoText}>Petugas: {params.officerName}</Text>
               <Text style={styles.cashCardInfoText}>Zona: {params.area}</Text>
