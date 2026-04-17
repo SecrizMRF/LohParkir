@@ -1,5 +1,5 @@
 import { Feather } from "@/components/Icon";
-import { formatRupiah, hapticImpact, showAlert } from "@/lib/platform";
+import { hapticImpact, showAlert } from "@/lib/platform";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import {
@@ -43,12 +43,6 @@ function OfficerItem({ item, onToggleStatus, onRemove }: { item: Officer; onTogg
           <Feather name="map" size={14} color={colors.mutedForeground} />
           <Text style={[styles.infoText, { color: colors.mutedForeground }]} numberOfLines={1}>
             {item.area}
-          </Text>
-        </View>
-        <View style={styles.infoItem}>
-          <Feather name="tag" size={14} color={colors.mutedForeground} />
-          <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-            {formatRupiah(item.rate)}
           </Text>
         </View>
       </View>
