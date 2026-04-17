@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather } from "@/components/Icon";
 import { hapticNotification, showAlert } from "@/lib/platform";
 import { router } from "expo-router";
 import React, { useState } from "react";

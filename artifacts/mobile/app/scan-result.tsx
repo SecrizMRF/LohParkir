@@ -1,4 +1,4 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@/components/Icon";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from "react-native";
