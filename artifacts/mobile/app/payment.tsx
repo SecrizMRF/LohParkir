@@ -14,11 +14,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp, type Payment } from "@/contexts/AppContext";
-import { hapticImpact, hapticNotification, showAlert } from "@/lib/platform";
+import { formatRupiah, hapticImpact, hapticNotification, showAlert } from "@/lib/platform";
 
 export default function PaymentScreen() {
   const insets = useSafeAreaInsets();
-  const { addPayment, addPoints } = useApp();
+  const { addPayment, addPoints, deviceId } = useApp();
   const params = useLocalSearchParams<{
     officerId: string;
     officerName: string;
@@ -51,6 +51,7 @@ export default function PaymentScreen() {
         area: params.area || "",
         plateNumber: "-",
         duration: 1,
+        deviceId,
       });
 
       const pts = Math.floor(rate / 1000);
@@ -102,14 +103,14 @@ export default function PaymentScreen() {
             <MaterialCommunityIcons name="check-circle" size={96} color="#FFF" />
           </View>
           <Text style={styles.successTitle}>Pembayaran Berhasil!</Text>
-          <Text style={styles.successAmount}>Rp {paidAmount.toLocaleString("id-ID")}</Text>
+          <Text style={styles.successAmount}>{formatRupiah(paidAmount)}</Text>
 
           <View style={styles.receiptCard}>
             {[
               { label: "No. Transaksi", value: paymentData.transactionId },
               { label: "Petugas", value: params.officerName },
               { label: "Zona", value: params.area || "-" },
-              { label: "Nominal", value: `Rp ${paidAmount.toLocaleString("id-ID")}` },
+              { label: "Nominal", value: formatRupiah(paidAmount) },
               { label: "Metode", value: isCash ? "Tunai" : "QRIS" },
               { label: "Waktu", value: new Date(paymentData.createdAt).toLocaleString("id-ID", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short", year: "numeric" }) },
             ].map((item) => (
@@ -172,7 +173,7 @@ export default function PaymentScreen() {
 
           <View style={styles.waitingAmountCard}>
             <Text style={styles.waitingAmountLabel}>Total Pembayaran</Text>
-            <Text style={styles.waitingAmount}>Rp {rate.toLocaleString("id-ID")}</Text>
+            <Text style={styles.waitingAmount}>{formatRupiah(rate)}</Text>
           </View>
 
           <View style={styles.detectingCard}>
@@ -247,7 +248,7 @@ export default function PaymentScreen() {
                 </View>
                 <Text style={styles.tariffLabel}>Sepeda Motor</Text>
               </View>
-              <Text style={styles.tariffAmount}>Rp 2.000</Text>
+              <Text style={styles.tariffAmount}>Rp2.000</Text>
             </View>
             <View style={styles.tariffRow}>
               <View style={styles.tariffLeft}>
@@ -256,7 +257,7 @@ export default function PaymentScreen() {
                 </View>
                 <Text style={styles.tariffLabel}>Mobil</Text>
               </View>
-              <Text style={styles.tariffAmount}>Rp 4.000</Text>
+              <Text style={styles.tariffAmount}>Rp4.000</Text>
             </View>
             <Text style={styles.tariffNote}>
               Sesuai Perda Kota Medan. Pastikan Anda membayar tepat sesuai jenis kendaraan.

@@ -151,6 +151,11 @@ export const api = {
 
   getOfficer: (id: number) => request<ApiOfficer>(`/officers/${id}`),
 
+  getNextBadge: (token: string) =>
+    request<{ badgeNumber: string }>("/officers/next-badge", {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
   createOfficer: (data: any, token: string) =>
     request<ApiOfficer>("/officers", {
       method: "POST",
@@ -171,10 +176,11 @@ export const api = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  getReports: (params?: { status?: string; type?: string }) => {
+  getReports: (params?: { status?: string; type?: string; deviceId?: string }) => {
     const qs = new URLSearchParams();
     if (params?.status) qs.set("status", params.status);
     if (params?.type) qs.set("type", params.type);
+    if (params?.deviceId) qs.set("deviceId", params.deviceId);
     const query = qs.toString();
     return request<ApiReport[]>(`/reports${query ? `?${query}` : ""}`);
   },

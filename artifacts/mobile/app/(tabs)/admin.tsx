@@ -8,7 +8,7 @@ import { StatCard } from "@/components/StatCard";
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useRequireAdmin } from "@/hooks/useRoleGuard";
-import { hapticImpact, showAlert } from "@/lib/platform";
+import { formatRupiah, hapticImpact, showAlert } from "@/lib/platform";
 
 export default function AdminScreen() {
   const colors = useColors();
@@ -118,35 +118,48 @@ export default function AdminScreen() {
       </View>
 
       <Text style={[styles.sectionTitle, { color: colors.foreground, marginTop: 28 }]}>Statistik</Text>
+
       <View style={styles.statsRow}>
         <StatCard icon="activity" label="Total Scan" value={dashboardStats.totalScans} />
+        <Pressable
+          style={{ flex: 1 }}
+          onPress={() => { hapticImpact(); router.push("/reports-manage"); }}
+        >
+          <StatCard
+            icon="file-text"
+            label="Laporan"
+            value={dashboardStats.totalReports}
+            color={colors.warning}
+          />
+        </Pressable>
+      </View>
+
+      <View style={styles.statsRow}>
         <StatCard
           icon="check-circle"
           label="QR Valid"
           value={dashboardStats.validScans}
           color={colors.success}
         />
+        <Pressable
+          style={{ flex: 1 }}
+          onPress={() => { hapticImpact(); router.push({ pathname: "/reports-manage", params: { filter: "fake_qr" } } as any); }}
+        >
+          <StatCard
+            icon="x-circle"
+            label="QR Palsu"
+            value={dashboardStats.invalidScans}
+            color={colors.destructive}
+          />
+        </Pressable>
       </View>
+
       <View style={styles.statsRow}>
         <StatCard
-          icon="x-circle"
-          label="QR Palsu"
-          value={dashboardStats.invalidScans}
-          color={colors.destructive}
-        />
-        <StatCard
-          icon="file-text"
-          label="Laporan"
-          value={dashboardStats.totalReports}
+          icon="sunrise"
+          label="Scan Hari Ini"
+          value={dashboardStats.todayScans}
           color={colors.warning}
-        />
-      </View>
-      <View style={styles.statsRow}>
-        <StatCard
-          icon="dollar-sign"
-          label="Pendapatan"
-          value={`Rp ${dashboardStats.totalRevenue.toLocaleString("id-ID")}`}
-          color={colors.secondary}
         />
         <StatCard
           icon="users"
@@ -156,22 +169,20 @@ export default function AdminScreen() {
         />
       </View>
 
-      {dashboardStats.todayScans > 0 && (
-        <View style={styles.statsRow}>
-          <StatCard
-            icon="sunrise"
-            label="Scan Hari Ini"
-            value={dashboardStats.todayScans}
-            color={colors.warning}
-          />
-          <StatCard
-            icon="trending-up"
-            label="Revenue Hari Ini"
-            value={`Rp ${dashboardStats.todayRevenue.toLocaleString("id-ID")}`}
-            color={colors.success}
-          />
-        </View>
-      )}
+      <View style={styles.statsRow}>
+        <StatCard
+          icon="dollar-sign"
+          label="Total Pendapatan"
+          value={formatRupiah(dashboardStats.totalRevenue)}
+          color={colors.secondary}
+        />
+        <StatCard
+          icon="trending-up"
+          label="Pendapatan Hari Ini"
+          value={formatRupiah(dashboardStats.todayRevenue)}
+          color={colors.success}
+        />
+      </View>
 
       {scanHistory.length > 0 && (
         <>

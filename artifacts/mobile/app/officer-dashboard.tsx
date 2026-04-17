@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -17,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/contexts/AppContext";
 import { useRequireOfficer } from "@/hooks/useRoleGuard";
 import { api, type ApiOfficerQrCode, type MyQrCodesResult } from "@/lib/api";
-import { hapticImpact, showAlert } from "@/lib/platform";
+import { formatRupiah, hapticImpact, showAlert } from "@/lib/platform";
 
 export default function OfficerDashboardScreen() {
   const insets = useSafeAreaInsets();
@@ -26,35 +27,24 @@ export default function OfficerDashboardScreen() {
   const [data, setData] = useState<MyQrCodesResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ApiOfficerQrCode | null>(null);
-  const [mode, setMode] = useState<"verify" | "qris">("verify");
   const [cashLoading, setCashLoading] = useState(false);
+  const [showCashModal, setShowCashModal] = useState(false);
 
-  const handleCashPayment = async () => {
-    if (!authToken || !selected) return;
-    showAlert(
-      "Konfirmasi Pembayaran Tunai",
-      `Tandai pembayaran TUNAI ${selected.vehicleLabel} sebesar Rp ${selected.rate.toLocaleString("id-ID")}?`,
-      [
-        { text: "Batal", style: "cancel" },
-        {
-          text: "Ya, Tandai Lunas",
-          onPress: async () => {
-            setCashLoading(true);
-            try {
-              const result = await api.recordCashPayment(authToken, selected.vehicleType);
-              showAlert(
-                "Pembayaran Tunai Tercatat",
-                `${result.vehicleLabel} — Rp ${result.payment.amount.toLocaleString("id-ID")}\nNo. Transaksi: ${result.payment.transactionId}`,
-              );
-            } catch (err: any) {
-              showAlert("Gagal", err.message || "Tidak dapat mencatat pembayaran tunai");
-            } finally {
-              setCashLoading(false);
-            }
-          },
-        },
-      ],
-    );
+  const recordCash = async (vehicleType: "motor" | "mobil") => {
+    if (!authToken) return;
+    setCashLoading(true);
+    setShowCashModal(false);
+    try {
+      const result = await api.recordCashPayment(authToken, vehicleType);
+      showAlert(
+        "Pembayaran Tunai Tercatat",
+        `${result.vehicleLabel} — ${formatRupiah(result.payment.amount)}\nNo. Transaksi: ${result.payment.transactionId}`,
+      );
+    } catch (err: any) {
+      showAlert("Gagal", err.message || "Tidak dapat mencatat pembayaran tunai");
+    } finally {
+      setCashLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -116,57 +106,69 @@ export default function OfficerDashboardScreen() {
     );
   }
 
+  const cashModal = (
+    <Modal visible={showCashModal} transparent animationType="fade" onRequestClose={() => setShowCashModal(false)}>
+      <Pressable style={styles.modalBackdrop} onPress={() => setShowCashModal(false)}>
+        <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+          <Text style={styles.modalTitle}>Pilih Jenis Kendaraan</Text>
+          <Text style={styles.modalDesc}>Tarif sesuai Perda Kota Medan</Text>
+
+          <Pressable
+            onPress={() => recordCash("motor")}
+            style={({ pressed }) => [styles.modalOption, { borderColor: "#E65100", opacity: pressed ? 0.85 : 1 }]}
+          >
+            <View style={[styles.modalIcon, { backgroundColor: "#E65100" }]}>
+              <MaterialCommunityIcons name="motorbike" size={32} color="#FFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.modalOptionLabel}>Motor</Text>
+              <Text style={[styles.modalOptionRate, { color: "#E65100" }]}>{formatRupiah(2000)}</Text>
+            </View>
+            <Feather name="chevron-right" size={20} color="#757575" />
+          </Pressable>
+
+          <Pressable
+            onPress={() => recordCash("mobil")}
+            style={({ pressed }) => [styles.modalOption, { borderColor: "#1B5E20", opacity: pressed ? 0.85 : 1 }]}
+          >
+            <View style={[styles.modalIcon, { backgroundColor: "#1B5E20" }]}>
+              <MaterialCommunityIcons name="car" size={32} color="#FFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.modalOptionLabel}>Mobil</Text>
+              <Text style={[styles.modalOptionRate, { color: "#1B5E20" }]}>{formatRupiah(4000)}</Text>
+            </View>
+            <Feather name="chevron-right" size={20} color="#757575" />
+          </Pressable>
+
+          <Pressable onPress={() => setShowCashModal(false)} style={styles.modalCancel}>
+            <Text style={styles.modalCancelText}>Batal</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+
   if (selected) {
-    const isQris = mode === "qris";
     const qrisPayload = `QRIS-LOHPARKIR|MID:DSH-MEDAN|OFC:${data.officer.badgeNumber}|VEH:${selected.vehicleType.toUpperCase()}|AMT:${selected.rate}|CUR:IDR`;
-    const qrValue = isQris ? qrisPayload : selected.qrCode;
-    const accent = isQris ? "#1B5E20" : "#1565C0";
 
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+        {cashModal}
         <ScrollView
           contentContainerStyle={[
             styles.qrContent,
             { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
           ]}
         >
-          <Pressable onPress={() => { setSelected(null); setMode("verify"); }} style={styles.backBtn}>
+          <Pressable onPress={() => setSelected(null)} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color="#424242" />
             <Text style={styles.backText}>Pilih Kendaraan Lain</Text>
           </Pressable>
 
-          <View style={styles.modeToggle}>
-            <Pressable
-              onPress={() => { hapticImpact(); setMode("verify"); }}
-              style={[styles.modeBtn, mode === "verify" && { backgroundColor: "#1565C0" }]}
-            >
-              <MaterialCommunityIcons
-                name="shield-check"
-                size={18}
-                color={mode === "verify" ? "#FFF" : "#1565C0"}
-              />
-              <Text style={[styles.modeBtnText, mode === "verify" && { color: "#FFF" }]}>
-                QR Verifikasi
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => { hapticImpact(); setMode("qris"); }}
-              style={[styles.modeBtn, mode === "qris" && { backgroundColor: "#1B5E20" }]}
-            >
-              <MaterialCommunityIcons
-                name="qrcode-scan"
-                size={18}
-                color={mode === "qris" ? "#FFF" : "#1B5E20"}
-              />
-              <Text style={[styles.modeBtnText, mode === "qris" && { color: "#FFF" }]}>
-                QRIS Pembayaran
-              </Text>
-            </Pressable>
-          </View>
-
           <View style={styles.qrCard}>
-            <View style={[styles.vehicleHeader, { backgroundColor: accent }]}>
+            <View style={[styles.vehicleHeader, { backgroundColor: "#1B5E20" }]}>
               <MaterialCommunityIcons
                 name={selected.vehicleType === "mobil" ? "car" : "motorbike"}
                 size={36}
@@ -174,43 +176,31 @@ export default function OfficerDashboardScreen() {
               />
               <View style={{ flex: 1 }}>
                 <Text style={styles.vehicleHeaderLabel}>{selected.vehicleLabel}</Text>
-                <Text style={styles.vehicleHeaderRate}>
-                  {isQris ? "Bayar" : "Tarif"} Rp {selected.rate.toLocaleString("id-ID")}
-                </Text>
+                <Text style={styles.vehicleHeaderRate}>Bayar {formatRupiah(selected.rate)}</Text>
               </View>
             </View>
 
-            <View style={[styles.qrBox, { borderColor: isQris ? "#E8F5E9" : "#E3F2FD" }]}>
-              <QRCode value={qrValue} size={240} backgroundColor="#FFF" color="#000" />
+            <View style={[styles.qrBox, { borderColor: "#E8F5E9" }]}>
+              <QRCode value={qrisPayload} size={240} backgroundColor="#FFF" color="#000" />
             </View>
 
-            {isQris ? (
-              <View style={styles.qrisBadgeRow}>
-                <View style={styles.qrisBadge}>
-                  <Text style={styles.qrisBadgeText}>QRIS</Text>
-                </View>
-                <Text style={styles.qrisMerchant}>Dishub Kota Medan</Text>
+            <View style={styles.qrisBadgeRow}>
+              <View style={styles.qrisBadge}>
+                <Text style={styles.qrisBadgeText}>QRIS</Text>
               </View>
-            ) : (
-              <Text style={styles.qrCodeText}>{selected.qrCode}</Text>
-            )}
+              <Text style={styles.qrisMerchant}>Dishub Kota Medan</Text>
+            </View>
 
-            <View style={[styles.instructionBox, isQris && { backgroundColor: "#E8F5E9" }]}>
-              <MaterialCommunityIcons
-                name="information"
-                size={18}
-                color={isQris ? "#1B5E20" : "#1565C0"}
-              />
-              <Text style={[styles.instructionText, isQris && { color: "#1B5E20" }]}>
-                {isQris
-                  ? "Tunjukkan QRIS ini ke pengguna untuk discan dengan aplikasi e-wallet / m-banking mereka."
-                  : "Tunjukkan QR ini ke pengguna parkir untuk discan dengan aplikasi LohParkir."}
+            <View style={[styles.instructionBox, { backgroundColor: "#E8F5E9" }]}>
+              <MaterialCommunityIcons name="information" size={18} color="#1B5E20" />
+              <Text style={[styles.instructionText, { color: "#1B5E20" }]}>
+                Tunjukkan QRIS ini ke pengguna untuk discan dengan e-wallet / m-banking mereka.
               </Text>
             </View>
           </View>
 
           <Pressable
-            onPress={handleCashPayment}
+            onPress={() => { hapticImpact(); setShowCashModal(true); }}
             disabled={cashLoading}
             style={({ pressed }) => [
               styles.cashPayBtn,
@@ -227,7 +217,7 @@ export default function OfficerDashboardScreen() {
             )}
           </Pressable>
           <Text style={styles.cashPayHint}>
-            Tekan jika user memilih membayar langsung dengan uang tunai (tanpa scan QRIS)
+            Tekan jika user memilih bayar langsung tunai (tanpa scan QRIS). Pilih jenis kendaraan setelahnya.
           </Text>
 
           <View style={styles.officerInfoCard}>
@@ -244,6 +234,7 @@ export default function OfficerDashboardScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1565C0" />
+      {cashModal}
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
@@ -264,7 +255,7 @@ export default function OfficerDashboardScreen() {
         <View style={styles.body}>
           <Text style={styles.sectionTitle}>Pilih Jenis Kendaraan</Text>
           <Text style={styles.sectionDesc}>
-            Pilih kendaraan pengguna untuk menampilkan QR dengan tarif yang sesuai
+            Pilih kendaraan pengguna untuk menampilkan QRIS dengan tarif yang sesuai
           </Text>
 
           <View style={styles.cardGrid}>
@@ -292,10 +283,10 @@ export default function OfficerDashboardScreen() {
                   </View>
                   <Text style={styles.vehicleCardLabel}>{qr.vehicleLabel}</Text>
                   <Text style={[styles.vehicleCardRate, { color: accent }]}>
-                    Rp {qr.rate.toLocaleString("id-ID")}
+                    {formatRupiah(qr.rate)}
                   </Text>
                   <View style={styles.tapHint}>
-                    <Text style={styles.tapHintText}>Ketuk untuk tampilkan QR</Text>
+                    <Text style={styles.tapHintText}>Ketuk untuk tampilkan QRIS</Text>
                     <Feather name="chevron-right" size={16} color="#757575" />
                   </View>
                 </Pressable>
@@ -397,101 +388,31 @@ const styles = StyleSheet.create({
     borderWidth: 4,
     borderColor: "#E3F2FD",
   },
-  qrCodeText: { marginTop: 16, fontSize: 13, color: "#616161", fontFamily: "AtkinsonHyperlegible_700Bold", letterSpacing: 1 },
 
-  modeToggle: {
-    flexDirection: "row",
-    gap: 8,
-    width: "100%",
-    marginBottom: 16,
-    backgroundColor: "#FFF",
-    padding: 6,
-    borderRadius: 12,
-    ...Platform.select({
-      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
-      android: { elevation: 1 },
-      web: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
-    }),
-  },
-  modeBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  modeBtnText: {
-    fontSize: 13,
-    fontFamily: "AtkinsonHyperlegible_700Bold",
-    color: "#424242",
-  },
-  qrisBadgeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 16,
-  },
+  qrisBadgeRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 16 },
   qrisBadge: {
-    backgroundColor: "#D32F2F",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 4,
+    backgroundColor: "#D32F2F", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4,
   },
-  qrisBadgeText: {
-    color: "#FFF",
-    fontSize: 13,
-    fontFamily: "AtkinsonHyperlegible_700Bold",
-    letterSpacing: 0.5,
-  },
-  qrisMerchant: {
-    fontSize: 13,
-    fontFamily: "AtkinsonHyperlegible_700Bold",
-    color: "#212121",
-  },
+  qrisBadgeText: { color: "#FFF", fontSize: 13, fontFamily: "AtkinsonHyperlegible_700Bold", letterSpacing: 0.5 },
+  qrisMerchant: { fontSize: 13, fontFamily: "AtkinsonHyperlegible_700Bold", color: "#212121" },
+
   cashPayBtn: {
-    width: "100%",
-    height: 56,
-    borderRadius: 12,
-    backgroundColor: "#E65100",
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 18,
+    width: "100%", height: 56, borderRadius: 12, backgroundColor: "#E65100",
+    alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 10, marginTop: 18,
   },
-  cashPayBtnText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontFamily: "AtkinsonHyperlegible_700Bold",
-    letterSpacing: 0.5,
-  },
+  cashPayBtnText: { color: "#FFF", fontSize: 16, fontFamily: "AtkinsonHyperlegible_700Bold", letterSpacing: 0.5 },
   cashPayHint: {
-    fontSize: 12,
-    fontFamily: "AtkinsonHyperlegible_400Regular",
-    color: "#757575",
-    textAlign: "center",
-    marginTop: 8,
-    lineHeight: 17,
+    fontSize: 12, fontFamily: "AtkinsonHyperlegible_400Regular", color: "#757575",
+    textAlign: "center", marginTop: 8, lineHeight: 17,
   },
   instructionBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#E3F2FD",
-    borderRadius: 10,
-    padding: 12,
-    marginTop: 20,
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: "#E3F2FD", borderRadius: 10, padding: 12, marginTop: 20,
   },
   instructionText: { flex: 1, fontSize: 12, color: "#0D47A1", fontFamily: "AtkinsonHyperlegible_400Regular", lineHeight: 17 },
 
   officerInfoCard: {
-    width: "100%",
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 16,
+    width: "100%", backgroundColor: "#FFF", borderRadius: 12, padding: 16, marginTop: 16,
   },
   officerInfoLabel: { fontSize: 11, color: "#757575", fontFamily: "AtkinsonHyperlegible_400Regular", textTransform: "uppercase", letterSpacing: 0.5 },
   officerInfoName: { fontSize: 16, color: "#212121", fontFamily: "AtkinsonHyperlegible_700Bold", marginTop: 4 },
@@ -501,4 +422,24 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 14, color: "#B71C1C", fontFamily: "AtkinsonHyperlegible_400Regular", marginBottom: 16 },
   retryBtn: { paddingHorizontal: 24, paddingVertical: 12, backgroundColor: "#1565C0", borderRadius: 10 },
   retryBtnText: { color: "#FFF", fontSize: 14, fontFamily: "AtkinsonHyperlegible_700Bold" },
+
+  modalBackdrop: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center", justifyContent: "center", padding: 24,
+  },
+  modalCard: {
+    backgroundColor: "#FFF", borderRadius: 20, padding: 24,
+    width: "100%", maxWidth: 420, gap: 12,
+  },
+  modalTitle: { fontSize: 18, fontFamily: "AtkinsonHyperlegible_700Bold", color: "#212121", textAlign: "center" },
+  modalDesc: { fontSize: 12, fontFamily: "AtkinsonHyperlegible_400Regular", color: "#757575", textAlign: "center", marginBottom: 8 },
+  modalOption: {
+    flexDirection: "row", alignItems: "center", gap: 14, padding: 14,
+    borderRadius: 14, borderWidth: 2, backgroundColor: "#FFF",
+  },
+  modalIcon: { width: 56, height: 56, borderRadius: 28, alignItems: "center", justifyContent: "center" },
+  modalOptionLabel: { fontSize: 16, fontFamily: "AtkinsonHyperlegible_700Bold", color: "#212121" },
+  modalOptionRate: { fontSize: 18, fontFamily: "AtkinsonHyperlegible_700Bold", marginTop: 2 },
+  modalCancel: { paddingVertical: 14, alignItems: "center" },
+  modalCancelText: { color: "#757575", fontSize: 14, fontFamily: "AtkinsonHyperlegible_700Bold" },
 });

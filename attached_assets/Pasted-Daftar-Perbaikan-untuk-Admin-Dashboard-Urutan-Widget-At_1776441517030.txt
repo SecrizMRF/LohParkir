@@ -1,0 +1,89 @@
+Daftar Perbaikan untuk Admin
+Dashboard – Urutan Widget
+Atur ulang susunan widget di dashboard menjadi:
+
+Total Scan, Laporan
+
+QR Valid, QR Palsu
+
+Scan Hari Ini, Petugas Aktif
+
+Dashboard – Wording Widget
+Ubah label widget yang ambigu:
+
+"Pendapatan" → Total Pendapatan (akumulasi sepanjang masa)
+
+"Revenue Hari Ini" → Pendapatan Hari Ini (tanggal berjalan)
+
+Dashboard – Interaksi Widget
+Jadikan widget QR Palsu dan Laporan dapat diklik. Saat diklik, arahkan ke halaman laporan detail yang sesuai.
+
+Manajemen Petugas – Hapus NIP
+Hapus field NIP dari formulir tambah/edit petugas.
+
+Manajemen Petugas – Nomor Badge Auto-generate
+Ubah field Nomor Badge menjadi auto-generate dengan format DSH-YYYYMMDD-Z-XXX (XXX = nomor urut pendaftaran, jadi misal udah 005, nextnya otomatis +1, yaitu 006, hingga akhir, lalu balik lagi ke 001; Z = itu huruf penanda misal A, jadi nanti jika udah A-999, nextnya B-001). Field tidak dapat diedit.
+
+Manajemen Petugas – Area Kerja Dropdown Berjenjang
+Ganti field text bebas menjadi dropdown berjenjang wilayah administratif: Provinsi → Kab/Kota → Kecamatan → Kelurahan. Tambahkan text field opsional "Nama Zona/Kawasan" untuk detail lebih lanjut.
+
+Manajemen Petugas – Hapus Tarif
+Hapus field Tarif dari form petugas karena tarif bersifat global berdasarkan jenis kendaraan.
+
+Manajemen Petugas – Nomor HP Wajib
+Ubah status field Nomor HP dari opsional menjadi wajib diisi.
+
+Manajemen Laporan – Perbaikan Alur Status
+Perbaiki tombol aksi pada detail laporan:
+
+Status "Ditolak" → sembunyikan tombol "Selesai"
+
+Status "Selesai" → sembunyikan tombol "Tolak"
+
+Daftar Perbaikan untuk Petugas
+UI/UX Umum – Format Mata Uang
+Hilangkan spasi antara simbol Rp dan nominal. Contoh: Rp3.000 (bukan Rp 3.000).
+
+Alur Scan & Bayar – Hapus QR Verifikasi
+Hapus tombol/menu generate QR Verifikasi. Cukup tampilkan QRIS Pembayaran saja setelah scan plat nomor berhasil.
+
+Alur Pembayaran Tunai – Seleksi Jenis Kendaraan
+Saat petugas menekan "Sudah Bayar Tunai", tampilkan pop-up yang mewajibkan pemilihan: Motor (Rp2.000) atau Mobil (Rp4.000).
+
+Alur Pembayaran Tunai – Validasi Nominal
+Pastikan setelah pemilihan jenis kendaraan, sistem mencatat pembayaran sebesar Rp2.000 (Motor) atau Rp4.000 (Mobil). Jangan gunakan default Rp3.000.
+
+UI Laporan Terkirim – Pop-up Kustom
+Ganti alert/toast default sistem dengan modal pop-up kustom yang lebih rapi saat laporan berhasil dikirim.
+
+Daftar Perbaikan untuk Pengguna
+Hak Akses – View-Only
+Pastikan pengguna biasa hanya dapat melihat data (grafik, jumlah scan, daftar laporan publik) tetapi tidak dapat mengedit, menyetujui, atau menolak data milik Admin/Petugas.
+
+Riwayat Transaksi – Perbaiki Data Dummy
+Ganti nominal data dummy/sample pada halaman Riwayat Transaksi menjadi hanya Rp2.000 (Motor) dan Rp4.000 (Mobil).
+
+Fitur Laporan – Visibilitas Data
+Pastikan halaman Laporan hanya menampilkan laporan yang dibuat oleh pengguna yang sedang login (laporan pribadi), kecuali ada fitur khusus "Laporan Publik" yang memang disengaja.
+
+Alur Scan QR – Kunci Navigasi
+Saat kamera QR Scanner aktif, kunci navigasi aplikasi. Pengguna tidak boleh berpindah ke halaman lain melalui bottom navigation atau gestur back selama kamera menyala.
+
+Lampiran Rekomendasi Decision Making
+Pertanyaan: Cara mendapat poin terlalu mudah (mobil 3x parkir gratis 1x)
+Rekomendasi:
+
+Poin Transaksi: Motor = 1 Poin, Mobil = 2 Poin (bukan per Rp1.000)
+
+Rating Jukir: Turunkan dari +5 menjadi +1 Poin
+
+Konversi Gratis: 50 Poin = 1x Parkir Gratis
+Alasan UI/UX & Bisnis: Skema baru membuat konversi gratis lebih seimbang (perlu ~17x parkir motor atau ~13x parkir mobil). Menjaga PAD tetap sehat sambil tetap mengapresiasi loyalitas pengguna.
+
+Pertanyaan: Bolehkah widget QR Palsu dan Laporan di dashboard diklik?
+Rekomendasi: Ya, jadikan widget sebagai shortcut ke halaman detail.
+Alasan UI/UX: Widget interaktif adalah praktik standar dashboard modern, mengurangi jumlah klik untuk mengakses data detail.
+
+Keputusan: Fitur Diskon Langganan Bulanan 10%
+Rekomendasi: Hapus total fitur ini.
+Alasan: Fokus aplikasi adalah pencatatan retribusi akurat, bukan model bisnis berlangganan yang dapat mengaburkan esensi pendapatan daerah.

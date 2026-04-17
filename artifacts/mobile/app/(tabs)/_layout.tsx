@@ -46,6 +46,7 @@ function NativeTabLayout({ isAdmin }: { isAdmin: boolean }) {
 function ClassicTabLayout({ isAdmin }: { isAdmin: boolean }) {
   const colors = useColors();
   const colorScheme = useColorScheme();
+  const { scanLocked } = useApp();
   const isDark = colorScheme === "dark";
   const isIOS = Platform.OS === "ios";
   const isWeb = Platform.OS === "web";
@@ -57,7 +58,7 @@ function ClassicTabLayout({ isAdmin }: { isAdmin: boolean }) {
         tabBarActiveTintColor: "#1565C0",
         tabBarInactiveTintColor: "#757575",
         headerShown: false,
-        tabBarStyle: {
+        tabBarStyle: scanLocked ? { display: "none" } : {
           position: "absolute",
           backgroundColor: isIOS ? "transparent" : "#FFFFFF",
           borderTopWidth: isWeb ? 1 : 0,

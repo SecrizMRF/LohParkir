@@ -83,16 +83,20 @@ function ReportItem({ item }: { item: Report }) {
 export default function ReportsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { reports, refreshData } = useApp();
+  const { reports, refreshData, deviceId, userRole } = useApp();
 
   useEffect(() => {
     refreshData();
   }, []);
 
+  const visibleReports = userRole === "admin"
+    ? reports
+    : reports.filter((r: any) => r.reporterDeviceId === deviceId);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
-        data={reports}
+        data={visibleReports}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => <ReportItem item={item} />}
         contentContainerStyle={{

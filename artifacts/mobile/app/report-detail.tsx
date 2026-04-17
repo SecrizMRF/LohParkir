@@ -157,7 +157,7 @@ export default function ReportDetailScreen() {
         </View>
       )}
 
-      {isAdmin && report.status !== "resolved" && (
+      {isAdmin && report.status !== "resolved" && report.status !== "rejected" && (
         <View style={styles.adminActions}>
           <Text style={[styles.sectionLabel, { color: colors.foreground, marginBottom: 12 }]}>
             Tindakan Admin

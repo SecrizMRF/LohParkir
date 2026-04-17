@@ -19,11 +19,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp } from "@/contexts/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useEffect } from "react";
 
 export default function ScanScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { validateQR, scanHistory, demoUser, signOutDemo, resetRole } = useApp();
+  const { validateQR, scanHistory, demoUser, signOutDemo, resetRole, setScanLocked } = useApp();
 
   const handleAccountMenu = () => {
     hapticImpact();
@@ -69,6 +70,11 @@ export default function ScanScreen() {
   const [qrInput, setQrInput] = useState("");
   const [validating, setValidating] = useState(false);
   const scanCooldown = useRef(false);
+
+  useEffect(() => {
+    setScanLocked(showCamera);
+    return () => setScanLocked(false);
+  }, [showCamera]);
 
   const handleScan = async (code: string) => {
     if (!code.trim()) return;

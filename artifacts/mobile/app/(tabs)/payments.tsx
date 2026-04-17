@@ -11,6 +11,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useApp, type Payment } from "@/contexts/AppContext";
+import { formatRupiah } from "@/lib/platform";
+
 function PaymentItem({ item, onPress }: { item: Payment; onPress: () => void }) {
   const isCar = (item.amount || 0) >= 4000;
 
@@ -38,7 +40,7 @@ function PaymentItem({ item, onPress }: { item: Payment; onPress: () => void }) 
         </Text>
       </View>
       <View style={styles.cardRight}>
-        <Text style={styles.cardAmount}>Rp {item.amount.toLocaleString("id-ID")}</Text>
+        <Text style={styles.cardAmount}>{formatRupiah(item.amount)}</Text>
         <View style={styles.successBadge}>
           <Text style={styles.successBadgeText}>SUKSES</Text>
         </View>
@@ -49,16 +51,20 @@ function PaymentItem({ item, onPress }: { item: Payment; onPress: () => void }) 
 
 export default function PaymentsScreen() {
   const insets = useSafeAreaInsets();
-  const { payments, refreshData } = useApp();
+  const { payments, refreshData, deviceId, userRole } = useApp();
 
   useEffect(() => {
     refreshData();
   }, []);
 
+  const visiblePayments = userRole === "admin"
+    ? payments
+    : payments.filter((p: any) => p.deviceId === deviceId);
+
   return (
     <View style={[styles.container, { backgroundColor: "#F5F5F5" }]}>
       <FlatList
-        data={payments}
+        data={visiblePayments}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <PaymentItem item={item} onPress={() => {}} />

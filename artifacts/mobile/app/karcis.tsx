@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { hapticImpact } from "@/lib/platform";
+import { formatRupiah, hapticImpact } from "@/lib/platform";
 
 export default function KarcisScreen() {
   const insets = useSafeAreaInsets();
@@ -43,7 +43,7 @@ export default function KarcisScreen() {
           {[
             { label: "Plat", value: params.plateNumber },
             { label: "Zona", value: params.area || "-" },
-            { label: "Tarif", value: `Rp ${rate.toLocaleString("id-ID")}` },
+            { label: "Tarif", value: formatRupiah(rate) },
             { label: "Waktu", value: new Date(params.createdAt).toLocaleString("id-ID", { hour: "2-digit", minute: "2-digit" }) },
             { label: "Petugas", value: params.officerName },
             { label: "ID", value: params.transactionId },

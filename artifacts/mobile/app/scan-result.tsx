@@ -128,8 +128,8 @@ export default function ScanResultScreen() {
               <MaterialCommunityIcons name="cash" size={20} color="#1565C0" />
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Tarif Resmi</Text>
-                <Text style={styles.detailValue}>Rp 2.000 / Rp 4.000</Text>
-                <Text style={styles.detailHint}>Motor Rp 2.000 • Mobil Rp 4.000</Text>
+                <Text style={styles.detailValue}>Rp2.000 / Rp4.000</Text>
+                <Text style={styles.detailHint}>Motor Rp2.000 • Mobil Rp4.000</Text>
               </View>
             </View>
           </View>
@@ -207,11 +207,11 @@ export default function ScanResultScreen() {
                 <View style={styles.cashRateBox}>
                   <View style={styles.cashRateRow}>
                     <MaterialCommunityIcons name="motorbike" size={16} color="#1B5E20" />
-                    <Text style={styles.cashRateText}>Sepeda Motor: Rp 2.000</Text>
+                    <Text style={styles.cashRateText}>Sepeda Motor: Rp2.000</Text>
                   </View>
                   <View style={styles.cashRateRow}>
                     <MaterialCommunityIcons name="car" size={16} color="#1B5E20" />
-                    <Text style={styles.cashRateText}>Mobil: Rp 4.000</Text>
+                    <Text style={styles.cashRateText}>Mobil: Rp4.000</Text>
                   </View>
                 </View>
               </View>

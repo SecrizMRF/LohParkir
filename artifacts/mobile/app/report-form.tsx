@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -23,8 +24,9 @@ type ReportType = "illegal_parking" | "fake_qr";
 
 export default function ReportFormScreen() {
   const colors = useColors();
-  const { addReport } = useApp();
+  const { addReport, deviceId } = useApp();
   const params = useLocalSearchParams<{ prefillType?: string; qrCode?: string }>();
+  const [successInfo, setSuccessInfo] = useState<{ ticket: string } | null>(null);
 
   const [type, setType] = useState<ReportType>(
     (params.prefillType as ReportType) || "illegal_parking",
@@ -123,13 +125,10 @@ export default function ReportFormScreen() {
         longitude,
         address: locationName || null,
         relatedQrCode: params.qrCode || null,
-      });
+        reporterDeviceId: deviceId,
+      } as any);
 
-      showAlert(
-        "Laporan Terkirim",
-        `Nomor tiket: ${report.ticketNumber}\n\nLaporan Anda telah diterima dan akan segera ditindaklanjuti.`,
-        [{ text: "OK", onPress: () => router.back() }],
-      );
+      setSuccessInfo({ ticket: report.ticketNumber });
     } catch (err: any) {
       showAlert("Error", err.message || "Gagal mengirim laporan. Coba lagi.");
     } finally {
@@ -260,6 +259,30 @@ export default function ReportFormScreen() {
         )}
       </View>
 
+      <Modal visible={!!successInfo} transparent animationType="fade" onRequestClose={() => { setSuccessInfo(null); router.back(); }}>
+        <View style={styles.successBackdrop}>
+          <View style={[styles.successCard, { backgroundColor: colors.card, borderRadius: colors.radius }]}>
+            <View style={[styles.successIcon, { backgroundColor: colors.success + "20" }]}>
+              <Feather name="check-circle" size={40} color={colors.success} />
+            </View>
+            <Text style={[styles.successTitle, { color: colors.foreground }]}>Laporan Terkirim</Text>
+            <Text style={[styles.successDesc, { color: colors.mutedForeground }]}>
+              Laporan Anda telah diterima dan akan segera ditindaklanjuti oleh Dishub Kota Medan.
+            </Text>
+            <View style={[styles.successTicket, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={[styles.successTicketLabel, { color: colors.mutedForeground }]}>Nomor Tiket</Text>
+              <Text style={[styles.successTicketValue, { color: colors.primary }]}>{successInfo?.ticket}</Text>
+            </View>
+            <Pressable
+              onPress={() => { setSuccessInfo(null); router.back(); }}
+              style={({ pressed }) => [styles.successBtn, { backgroundColor: colors.primary, borderRadius: colors.radius, opacity: pressed ? 0.85 : 1 }]}
+            >
+              <Text style={styles.successBtnText}>OK</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.submitContainer}>
         <Pressable
           onPress={handleSubmit}
@@ -356,4 +379,24 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   submitText: { color: "#FFF", fontSize: 16, fontFamily: "AtkinsonHyperlegible_700Bold" },
+  successBackdrop: {
+    flex: 1, backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center", justifyContent: "center", padding: 24,
+  },
+  successCard: { width: "100%", maxWidth: 420, padding: 28, alignItems: "center", gap: 14 },
+  successIcon: {
+    width: 80, height: 80, borderRadius: 40,
+    alignItems: "center", justifyContent: "center", marginBottom: 4,
+  },
+  successTitle: { fontSize: 20, fontFamily: "AtkinsonHyperlegible_700Bold" },
+  successDesc: { fontSize: 14, fontFamily: "AtkinsonHyperlegible_400Regular", textAlign: "center", lineHeight: 20 },
+  successTicket: {
+    width: "100%", padding: 14, borderWidth: 1, alignItems: "center", marginTop: 8,
+  },
+  successTicketLabel: { fontSize: 11, fontFamily: "AtkinsonHyperlegible_400Regular", textTransform: "uppercase", letterSpacing: 0.5 },
+  successTicketValue: { fontSize: 18, fontFamily: "AtkinsonHyperlegible_700Bold", marginTop: 6, letterSpacing: 1 },
+  successBtn: {
+    width: "100%", height: 48, alignItems: "center", justifyContent: "center", marginTop: 12,
+  },
+  successBtnText: { color: "#FFF", fontSize: 15, fontFamily: "AtkinsonHyperlegible_700Bold" },
 });

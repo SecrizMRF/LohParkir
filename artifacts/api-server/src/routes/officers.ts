@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import { db } from "@workspace/db";
 import { officersTable, officerQrCodesTable, usersTable, VEHICLE_TYPES } from "@workspace/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, like } from "drizzle-orm";
 import { authMiddleware, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
@@ -29,6 +29,57 @@ async function attachQrCodes(officers: (typeof officersTable.$inferSelect)[]) {
   }));
 }
 
+function todayDateStr(): string {
+  const now = new Date();
+  return `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+}
+
+async function generateNextBadge(): Promise<string> {
+  const dateStr = todayDateStr();
+  const prefix = `DSH-${dateStr}-`;
+  const existing = await db
+    .select({ badgeNumber: officersTable.badgeNumber })
+    .from(officersTable)
+    .where(like(officersTable.badgeNumber, `${prefix}%`));
+
+  let bestLetter = "A";
+  let bestNum = 0;
+  const re = /^DSH-\d{8}-([A-Z])-(\d{3})$/;
+  for (const row of existing) {
+    const m = row.badgeNumber.match(re);
+    if (!m) continue;
+    const letter = m[1];
+    const num = parseInt(m[2], 10);
+    if (
+      letter > bestLetter ||
+      (letter === bestLetter && num > bestNum)
+    ) {
+      bestLetter = letter;
+      bestNum = num;
+    }
+  }
+
+  if (bestNum === 0) return `${prefix}A-001`;
+
+  let nextLetter = bestLetter;
+  let nextNum = bestNum + 1;
+  if (nextNum > 999) {
+    nextNum = 1;
+    nextLetter = String.fromCharCode(bestLetter.charCodeAt(0) + 1);
+    if (nextLetter > "Z") nextLetter = "A";
+  }
+  return `${prefix}${nextLetter}-${String(nextNum).padStart(3, "0")}`;
+}
+
+router.get("/officers/next-badge", authMiddleware, requireRole("admin", "superadmin"), async (_req, res) => {
+  try {
+    const badgeNumber = await generateNextBadge();
+    res.json({ badgeNumber });
+  } catch (err: any) {
+    res.status(500).json({ error: "Gagal membuat nomor badge", details: err.message });
+  }
+});
+
 router.get("/officers", async (_req, res) => {
   try {
     const officers = await db.select().from(officersTable).orderBy(desc(officersTable.createdAt));
@@ -54,47 +105,47 @@ router.get("/officers/:id", async (req, res) => {
 
 router.post("/officers", authMiddleware, requireRole("admin", "superadmin"), async (req, res) => {
   try {
-    const { nip, name, badgeNumber, area, location, rate, phone } = req.body;
+    const { name, area, location, phone } = req.body;
 
-    if (!nip || !name || !badgeNumber || !area || !location) {
-      res.status(400).json({ error: "NIP, nama, nomor badge, area, dan lokasi wajib diisi" });
+    if (!name || !area || !location) {
+      res.status(400).json({ error: "Nama, area, dan lokasi wajib diisi" });
+      return;
+    }
+    if (!phone || !String(phone).trim()) {
+      res.status(400).json({ error: "Nomor HP wajib diisi" });
       return;
     }
 
-    const existingNip = await db.select().from(officersTable).where(eq(officersTable.nip, nip)).limit(1);
-    if (existingNip.length > 0) {
-      res.status(409).json({ error: "NIP sudah terdaftar" });
-      return;
-    }
+    const badgeNumber = await generateNextBadge();
 
     const existingBadge = await db.select().from(officersTable).where(eq(officersTable.badgeNumber, badgeNumber)).limit(1);
     if (existingBadge.length > 0) {
-      res.status(409).json({ error: "Nomor badge sudah terdaftar" });
+      res.status(409).json({ error: "Konflik nomor badge, silakan coba lagi" });
       return;
     }
 
     const qrCode = `LOHPARKIR-${badgeNumber}`;
 
-    const loginPassword = `petugas${badgeNumber.replace(/\D/g, "").slice(-3) || "000"}`;
+    const username = badgeNumber.toLowerCase();
+    const loginPassword = `petugas${badgeNumber.replace(/\D/g, "").slice(-4) || "0001"}`;
     const passwordHash = await bcrypt.hash(loginPassword, 10);
     const [user] = await db.insert(usersTable).values({
-      username: nip,
+      username,
       passwordHash,
       fullName: name,
       role: "officer",
-      phone: phone || null,
+      phone,
     }).returning();
 
     const [officer] = await db.insert(officersTable).values({
       userId: user.id,
-      nip,
       name,
       badgeNumber,
       qrCode,
       area,
       location,
-      rate: rate || 2000,
-      phone: phone || null,
+      rate: 2000,
+      phone,
     }).returning();
 
     for (const vt of Object.keys(VEHICLE_TYPES) as Array<keyof typeof VEHICLE_TYPES>) {
@@ -109,7 +160,7 @@ router.post("/officers", authMiddleware, requireRole("admin", "superadmin"), asy
     }
 
     const [enriched] = await attachQrCodes([officer]);
-    res.status(201).json({ ...enriched, loginCredentials: { username: nip, password: loginPassword } });
+    res.status(201).json({ ...enriched, loginCredentials: { username, password: loginPassword } });
   } catch (err: any) {
     res.status(500).json({ error: "Gagal menambah petugas", details: err.message });
   }
@@ -118,13 +169,12 @@ router.post("/officers", authMiddleware, requireRole("admin", "superadmin"), asy
 router.put("/officers/:id", authMiddleware, requireRole("admin", "superadmin"), async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const { name, area, location, rate, status, phone } = req.body;
+    const { name, area, location, status, phone } = req.body;
 
     const updates: any = { updatedAt: new Date() };
     if (name !== undefined) updates.name = name;
     if (area !== undefined) updates.area = area;
     if (location !== undefined) updates.location = location;
-    if (rate !== undefined) updates.rate = rate;
     if (status !== undefined) updates.status = status;
     if (phone !== undefined) updates.phone = phone;
 

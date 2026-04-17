@@ -15,13 +15,14 @@ function generateTicketNumber(): string {
 
 router.get("/reports", async (req, res) => {
   try {
-    const { status, type, limit: limitStr } = req.query;
+    const { status, type, deviceId, limit: limitStr } = req.query;
     let query = db.select().from(reportsTable).orderBy(desc(reportsTable.createdAt));
 
     const results = await query;
     let filtered = results;
     if (status) filtered = filtered.filter(r => r.status === status);
     if (type) filtered = filtered.filter(r => r.type === type);
+    if (deviceId) filtered = filtered.filter(r => r.reporterDeviceId === deviceId);
     const limit = limitStr ? Number(limitStr) : undefined;
     if (limit) filtered = filtered.slice(0, limit);
 

@@ -32,13 +32,18 @@ interface AppContextType {
   logout: () => Promise<void>;
   signInDemo: (data: { name: string; email: string; provider: "email" | "google" }) => Promise<void>;
   signOutDemo: () => Promise<void>;
-  addOfficer: (data: { nip: string; name: string; badgeNumber: string; area: string; location: string; rate?: number; phone?: string }) => Promise<Officer>;
+  deviceId: string;
+  scanLocked: boolean;
+  setScanLocked: (locked: boolean) => void;
+  addOfficer: (data: { name: string; area: string; location: string; phone: string }) => Promise<Officer>;
   removeOfficer: (id: number) => Promise<void>;
   updateOfficer: (id: number, data: Partial<Officer>) => Promise<Officer>;
-  addReport: (data: { type: string; description: string; photoUrl?: string | null; latitude?: number | null; longitude?: number | null; address?: string | null; relatedQrCode?: string | null }) => Promise<Report>;
+  addReport: (data: { type: string; description: string; photoUrl?: string | null; latitude?: number | null; longitude?: number | null; address?: string | null; relatedQrCode?: string | null; reporterDeviceId?: string }) => Promise<Report>;
   updateReportStatus: (id: number, status: string, adminNotes?: string) => Promise<void>;
-  addPayment: (data: { officerId?: number | null; officerName: string; amount: number; method?: string; area?: string; plateNumber?: string; duration?: number }) => Promise<Payment>;
+  addPayment: (data: { officerId?: number | null; officerName: string; amount: number; method?: string; area?: string; plateNumber?: string; duration?: number; deviceId?: string }) => Promise<Payment>;
   addPoints: (amount: number) => void;
+  addPointsForVehicle: (vehicleType: "motor" | "mobil") => void;
+  redeemPoints: (cost: number) => boolean;
   validateQR: (qrCode: string) => Promise<QrValidationResult>;
   refreshData: () => Promise<void>;
   dashboardStats: DashboardStats;
@@ -74,10 +79,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>(defaultStats);
   const [points, setPoints] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [deviceId, setDeviceId] = useState<string>("");
+  const [scanLocked, setScanLocked] = useState(false);
 
   useEffect(() => {
     loadInitialData();
+    ensureDeviceId();
   }, []);
+
+  const ensureDeviceId = async () => {
+    try {
+      let id = await AsyncStorage.getItem("deviceId");
+      if (!id) {
+        id = `dev-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        await AsyncStorage.setItem("deviceId", id);
+      }
+      setDeviceId(id);
+    } catch {}
+  };
 
   const loadInitialData = async () => {
     try {
@@ -99,10 +118,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         try { setDemoUser(JSON.parse(storedDemoUser)); } catch {}
       }
 
+      const role = (storedRole as "public" | "admin" | "officer") || "public";
+      const did = await AsyncStorage.getItem("deviceId");
+      const scopedDeviceId = role === "admin" ? undefined : (did || undefined);
+
       const results = await Promise.allSettled([
         api.getOfficers(),
-        api.getReports(),
-        api.getPayments(),
+        api.getReports(scopedDeviceId ? { deviceId: scopedDeviceId } : undefined),
+        api.getPayments(scopedDeviceId ? { deviceId: scopedDeviceId } : undefined),
         api.getRecentScans(50),
         api.getDashboardStats(),
       ]);
@@ -165,10 +188,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const fetchAllData = async () => {
     try {
+      const scoped = userRole === "admin" ? undefined : (deviceId || undefined);
       const [officersData, reportsData, paymentsData, scansData, stats] = await Promise.all([
         api.getOfficers().catch(() => null),
-        api.getReports().catch(() => null),
-        api.getPayments().catch(() => null),
+        api.getReports(scoped ? { deviceId: scoped } : undefined).catch(() => null),
+        api.getPayments(scoped ? { deviceId: scoped } : undefined).catch(() => null),
         api.getRecentScans(50).catch(() => null),
         api.getDashboardStats().catch(() => null),
       ]);
@@ -299,7 +323,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [officers]);
 
-  const addOfficer = useCallback(async (data: { nip: string; name: string; badgeNumber: string; area: string; location: string; rate?: number; phone?: string }): Promise<Officer> => {
+  const addOfficer = useCallback(async (data: { name: string; area: string; location: string; phone: string }): Promise<Officer> => {
     if (!authToken) throw new Error("Silakan login sebagai admin terlebih dahulu");
     const officer = await api.createOfficer(data, authToken);
     setOfficers((prev) => [officer, ...prev]);
@@ -346,6 +370,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const addPointsForVehicle = useCallback((vehicleType: "motor" | "mobil") => {
+    const earned = vehicleType === "mobil" ? 2 : 1;
+    setPoints((prev) => {
+      const newTotal = prev + earned;
+      AsyncStorage.setItem("parkingPoints", String(newTotal)).catch(() => {});
+      return newTotal;
+    });
+  }, []);
+
+  const redeemPoints = useCallback((cost: number) => {
+    if (points < cost) return false;
+    const newTotal = points - cost;
+    setPoints(newTotal);
+    AsyncStorage.setItem("parkingPoints", String(newTotal)).catch(() => {});
+    return true;
+  }, [points]);
+
   return (
     <AppContext.Provider
       value={{
@@ -372,6 +413,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         updateReportStatus,
         addPayment,
         addPoints,
+        addPointsForVehicle,
+        redeemPoints,
+        deviceId,
+        scanLocked,
+        setScanLocked,
         validateQR,
         refreshData,
         dashboardStats,

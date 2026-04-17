@@ -1,6 +1,10 @@
 import { Alert, Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 
+export function formatRupiah(amount: number): string {
+  return `Rp${(amount || 0).toLocaleString("id-ID")}`;
+}
+
 export function showAlert(title: string, message: string, buttons?: Array<{ text: string; style?: "cancel" | "destructive" | "default"; onPress?: () => void }>) {
   if (Platform.OS === "web") {
     if (!buttons || buttons.length === 0) {
