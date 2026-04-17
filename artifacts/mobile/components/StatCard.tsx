@@ -33,6 +33,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     minWidth: 140,
+    minHeight: 116,
+    justifyContent: "flex-start",
   },
   iconContainer: {
     width: 36,

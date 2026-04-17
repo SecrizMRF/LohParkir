@@ -18,7 +18,7 @@ import { formatRupiah, hapticImpact, hapticNotification, showAlert } from "@/lib
 
 export default function PaymentScreen() {
   const insets = useSafeAreaInsets();
-  const { addPayment, addPoints, deviceId } = useApp();
+  const { addPayment, addPointsForVehicle, deviceId } = useApp();
   const params = useLocalSearchParams<{
     officerId: string;
     officerName: string;
@@ -35,6 +35,7 @@ export default function PaymentScreen() {
   const [step, setStep] = useState<"qris" | "waiting" | "success" | "cash_confirm">(isCash ? "cash_confirm" : "qris");
   const [loading, setLoading] = useState(false);
   const [paymentData, setPaymentData] = useState<Payment | null>(null);
+  const [earnedPoints, setEarnedPoints] = useState(0);
   const [countdown, setCountdown] = useState(5);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -54,8 +55,9 @@ export default function PaymentScreen() {
         deviceId,
       });
 
-      const pts = Math.floor(rate / 1000);
-      addPoints(pts);
+      const vehicleForPoints: "motor" | "mobil" = rate >= 4000 ? "mobil" : "motor";
+      addPointsForVehicle(vehicleForPoints);
+      setEarnedPoints(vehicleForPoints === "mobil" ? 2 : 1);
       setPaymentData(payment);
       setStep("success");
     } catch (err: any) {
@@ -123,7 +125,7 @@ export default function PaymentScreen() {
 
           <View style={styles.pointsBanner}>
             <MaterialCommunityIcons name="star" size={24} color="#FBC02D" />
-            <Text style={styles.pointsText}>+{Math.floor(paidAmount / 1000)} Poin ditambahkan!</Text>
+            <Text style={styles.pointsText}>+{earnedPoints} Poin ditambahkan!</Text>
           </View>
 
           <Pressable

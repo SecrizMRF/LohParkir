@@ -1,0 +1,39 @@
+Daftar Perbaikan untuk Admin (Tambahan)
+Dashboard – Keseragaman Ukuran Widget
+Samakan ukuran (tinggi dan lebar) widget Total Scan, Laporan, QR Valid, QR Palsu dengan widget baris di bawahnya (Scan Hari Ini dan Petugas Aktif) agar tampilan dashboard simetris dan rapi.
+
+Default Halaman Awal
+Atur halaman pertama yang muncul setelah login Admin agar langsung menampilkan Dashboard Statistik, bukan halaman Scan QR Jukir, Laporkan, atau Input QR Manual.
+
+Daftar Perbaikan untuk Petugas (Tambahan)
+Alur Pembayaran Tunai – Hapus Seleksi Berulang
+Pada alur pembayaran tunai, jenis kendaraan sudah dipilih di awal sesi (sebelum scan atau saat scan). Jangan tampilkan ulang pop-up pilihan jenis kendaraan saat petugas menekan tombol "Sudah Bayar Tunai". Gunakan jenis kendaraan yang sudah terseleksi sebelumnya.
+
+Daftar Perbaikan untuk Pengguna (Tambahan)
+Dashboard Statistik – Akses Read-Only
+Pastikan pengguna biasa sudah dapat melihat dashboard statistik (Total Scan, Laporan, QR Valid, QR Palsu, dsb.) dengan hak akses hanya baca (read-only). Tidak boleh ada tombol edit, approve, atau reject.
+
+Perhitungan Poin & Rating – Penyesuaian Rumus
+Terapkan rumus baru poin seperti yang direkomendasikan sebelumnya:
+
+Bayar Motor = +1 Poin
+
+Bayar Mobil = +2 Poin
+
+Beri Rating Jukir = +1 Poin
+Pastikan saat pengguna dummy (contoh: Budi Santoso) menyelesaikan pembayaran, nominal yang tercatat sesuai jenis kendaraan (Motor Rp2.000 / Mobil Rp4.000) dan poin bertambah sesuai aturan baru.
+
+Perbaikan Bug Rating +5
+Ubah bonus rating dari +5 Poin menjadi +1 Poin sesuai rekomendasi. Pastikan tidak ada lagi penambahan +5 poin saat pengguna memberi rating.
+
+Perbaikan Bug Default Pembayaran Rp3.000
+Hilangkan fallback nilai Rp3.000 pada alur pembayaran tunai. Sistem harus membaca tarif berdasarkan jenis kendaraan yang dipilih di awal, bukan hardcoded Rp3.000.
+
+Lampiran Rekomendasi Decision Making (Tambahan)
+Pertanyaan: Dashboard Admin ukurannya tidak rapi setelah urutan diubah
+Rekomendasi: Gunakan sistem grid yang konsisten (misal: CSS Grid atau Flexbox dengan fixed height). Widget baris pertama (4 kotak) harus memiliki tinggi yang sama dengan widget baris kedua (2 kotak) meskipun jumlah kolom berbeda. Bisa dengan menyamakan min-height atau menggunakan aspect ratio yang seragam.
+Alasan UI/UX: Konsistensi visual meningkatkan kenyamanan membaca data statistik dan memberikan kesan profesional.
+
+Pertanyaan: Halaman awal Admin saat ini menampilkan opsi scan/lapor, apakah perlu diubah?
+Rekomendasi: Ya, arahkan langsung ke Dashboard Statistik. Fungsi scan dan lapor adalah ranah Petugas dan Pengguna. Admin membutuhkan gambaran data secara instan saat login.
+Alasan UI/UX: Mengurangi friction dan langkah yang tidak perlu bagi Admin. Setelah login, informasi terpenting (statistik) langsung terpampang.

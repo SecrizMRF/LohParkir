@@ -38,7 +38,7 @@ export default function LoginScreen() {
       if (isOfficer) {
         router.replace("/officer-dashboard");
       } else {
-        router.replace("/(tabs)");
+        router.replace("/(tabs)/admin");
       }
     } catch (err: any) {
       showAlert("Login Gagal", err.message || "Username atau password salah");

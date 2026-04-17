@@ -3,7 +3,6 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -28,12 +27,9 @@ export default function OfficerDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ApiOfficerQrCode | null>(null);
   const [cashLoading, setCashLoading] = useState(false);
-  const [showCashModal, setShowCashModal] = useState(false);
-
   const recordCash = async (vehicleType: "motor" | "mobil") => {
     if (!authToken) return;
     setCashLoading(true);
-    setShowCashModal(false);
     try {
       const result = await api.recordCashPayment(authToken, vehicleType);
       showAlert(
@@ -106,56 +102,12 @@ export default function OfficerDashboardScreen() {
     );
   }
 
-  const cashModal = (
-    <Modal visible={showCashModal} transparent animationType="fade" onRequestClose={() => setShowCashModal(false)}>
-      <Pressable style={styles.modalBackdrop} onPress={() => setShowCashModal(false)}>
-        <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-          <Text style={styles.modalTitle}>Pilih Jenis Kendaraan</Text>
-          <Text style={styles.modalDesc}>Tarif sesuai Perda Kota Medan</Text>
-
-          <Pressable
-            onPress={() => recordCash("motor")}
-            style={({ pressed }) => [styles.modalOption, { borderColor: "#E65100", opacity: pressed ? 0.85 : 1 }]}
-          >
-            <View style={[styles.modalIcon, { backgroundColor: "#E65100" }]}>
-              <MaterialCommunityIcons name="motorbike" size={32} color="#FFF" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.modalOptionLabel}>Motor</Text>
-              <Text style={[styles.modalOptionRate, { color: "#E65100" }]}>{formatRupiah(2000)}</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#757575" />
-          </Pressable>
-
-          <Pressable
-            onPress={() => recordCash("mobil")}
-            style={({ pressed }) => [styles.modalOption, { borderColor: "#1B5E20", opacity: pressed ? 0.85 : 1 }]}
-          >
-            <View style={[styles.modalIcon, { backgroundColor: "#1B5E20" }]}>
-              <MaterialCommunityIcons name="car" size={32} color="#FFF" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.modalOptionLabel}>Mobil</Text>
-              <Text style={[styles.modalOptionRate, { color: "#1B5E20" }]}>{formatRupiah(4000)}</Text>
-            </View>
-            <Feather name="chevron-right" size={20} color="#757575" />
-          </Pressable>
-
-          <Pressable onPress={() => setShowCashModal(false)} style={styles.modalCancel}>
-            <Text style={styles.modalCancelText}>Batal</Text>
-          </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-
   if (selected) {
     const qrisPayload = `QRIS-LOHPARKIR|MID:DSH-MEDAN|OFC:${data.officer.badgeNumber}|VEH:${selected.vehicleType.toUpperCase()}|AMT:${selected.rate}|CUR:IDR`;
 
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
-        {cashModal}
         <ScrollView
           contentContainerStyle={[
             styles.qrContent,
@@ -200,7 +152,7 @@ export default function OfficerDashboardScreen() {
           </View>
 
           <Pressable
-            onPress={() => { hapticImpact(); setShowCashModal(true); }}
+            onPress={() => { hapticImpact(); recordCash(selected.vehicleType as "motor" | "mobil"); }}
             disabled={cashLoading}
             style={({ pressed }) => [
               styles.cashPayBtn,
@@ -234,7 +186,6 @@ export default function OfficerDashboardScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1565C0" />
-      {cashModal}
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,

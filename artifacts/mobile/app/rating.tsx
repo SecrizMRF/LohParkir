@@ -37,7 +37,7 @@ export default function RatingScreen() {
   const handleSelect = async (idx: number) => {
     setSelected(idx);
     await hapticNotification();
-    addPoints(5);
+    addPoints(1);
 
     setTimeout(() => {
       router.dismissAll();
@@ -61,7 +61,7 @@ export default function RatingScreen() {
           </Text>
           <View style={styles.bonusBadge}>
             <MaterialCommunityIcons name="star" size={24} color="#FBC02D" />
-            <Text style={styles.bonusText}>+5 Poin ditambahkan!</Text>
+            <Text style={styles.bonusText}>+1 Poin ditambahkan!</Text>
           </View>
         </View>
       </View>
@@ -102,7 +102,7 @@ export default function RatingScreen() {
 
         <View style={styles.bonusHint}>
           <MaterialCommunityIcons name="star" size={20} color="#FBC02D" />
-          <Text style={styles.bonusHintText}>+5 Poin akan ditambahkan!</Text>
+          <Text style={styles.bonusHintText}>+1 Poin akan ditambahkan!</Text>
         </View>
 
         <Pressable
