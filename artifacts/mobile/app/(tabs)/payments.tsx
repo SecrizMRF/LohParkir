@@ -11,7 +11,7 @@ import {
 
 import { useApp, type Payment } from "@/contexts/AppContext";
 function PaymentItem({ item, onPress }: { item: Payment; onPress: () => void }) {
-  const isCar = (item.amount || 0) >= 3000;
+  const isCar = (item.amount || 0) >= 4000;
 
   return (
     <Pressable

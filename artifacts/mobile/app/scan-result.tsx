@@ -203,6 +203,16 @@ export default function ScanResultScreen() {
                 <Text style={styles.methodDesc}>
                   Bayar langsung ke petugas dengan uang tunai. Petugas akan menandai pembayaran Anda sebagai lunas dari aplikasi LohParkir mereka.
                 </Text>
+                <View style={styles.cashRateBox}>
+                  <View style={styles.cashRateRow}>
+                    <MaterialCommunityIcons name="motorbike" size={16} color="#1B5E20" />
+                    <Text style={styles.cashRateText}>Sepeda Motor: Rp 2.000</Text>
+                  </View>
+                  <View style={styles.cashRateRow}>
+                    <MaterialCommunityIcons name="car" size={16} color="#1B5E20" />
+                    <Text style={styles.cashRateText}>Mobil: Rp 4.000</Text>
+                  </View>
+                </View>
               </View>
               <Feather name="chevron-right" size={24} color="#757575" />
             </Pressable>
@@ -399,6 +409,23 @@ const styles = StyleSheet.create({
     fontFamily: "AtkinsonHyperlegible_400Regular",
     color: "#757575",
     marginTop: 2,
+  },
+  cashRateBox: {
+    marginTop: 8,
+    padding: 10,
+    backgroundColor: "#E8F5E9",
+    borderRadius: 8,
+    gap: 6,
+  },
+  cashRateRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  cashRateText: {
+    fontSize: 13,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#1B5E20",
   },
 
   backLink: { paddingVertical: 16, marginTop: 8 },
