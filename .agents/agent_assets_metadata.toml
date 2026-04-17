@@ -125,3 +125,9 @@ id = "d6TF-BNW32y8wHASY9g1n"
 uri = "file://qr-demo/qr-palsu.png"
 type = "image"
 title = "QR PALSU - Untuk Testing"
+
+[[outputs]]
+id = "zHztz5WxrMtnblYhJALvu"
+uri = "file://attached_assets/proposal_lohparkir_bab3-6.md"
+type = "text"
+title = "Isian Proposal LohParkir — BAB 3 sampai BAB 6"
