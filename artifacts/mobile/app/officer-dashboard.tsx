@@ -24,6 +24,7 @@ export default function OfficerDashboardScreen() {
   const [data, setData] = useState<MyQrCodesResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<ApiOfficerQrCode | null>(null);
+  const [mode, setMode] = useState<"verify" | "qris">("verify");
 
   useEffect(() => {
     if (appLoading) return;
@@ -85,6 +86,11 @@ export default function OfficerDashboardScreen() {
   }
 
   if (selected) {
+    const isQris = mode === "qris";
+    const qrisPayload = `QRIS-LOHPARKIR|MID:DSH-MEDAN|OFC:${data.officer.badgeNumber}|VEH:${selected.vehicleType.toUpperCase()}|AMT:${selected.rate}|CUR:IDR`;
+    const qrValue = isQris ? qrisPayload : selected.qrCode;
+    const accent = isQris ? "#1B5E20" : "#1565C0";
+
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
@@ -94,13 +100,42 @@ export default function OfficerDashboardScreen() {
             { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 24 },
           ]}
         >
-          <Pressable onPress={() => setSelected(null)} style={styles.backBtn}>
+          <Pressable onPress={() => { setSelected(null); setMode("verify"); }} style={styles.backBtn}>
             <Feather name="arrow-left" size={20} color="#424242" />
             <Text style={styles.backText}>Pilih Kendaraan Lain</Text>
           </Pressable>
 
+          <View style={styles.modeToggle}>
+            <Pressable
+              onPress={() => { hapticImpact(); setMode("verify"); }}
+              style={[styles.modeBtn, mode === "verify" && { backgroundColor: "#1565C0" }]}
+            >
+              <MaterialCommunityIcons
+                name="shield-check"
+                size={18}
+                color={mode === "verify" ? "#FFF" : "#1565C0"}
+              />
+              <Text style={[styles.modeBtnText, mode === "verify" && { color: "#FFF" }]}>
+                QR Verifikasi
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => { hapticImpact(); setMode("qris"); }}
+              style={[styles.modeBtn, mode === "qris" && { backgroundColor: "#1B5E20" }]}
+            >
+              <MaterialCommunityIcons
+                name="qrcode-scan"
+                size={18}
+                color={mode === "qris" ? "#FFF" : "#1B5E20"}
+              />
+              <Text style={[styles.modeBtnText, mode === "qris" && { color: "#FFF" }]}>
+                QRIS Pembayaran
+              </Text>
+            </Pressable>
+          </View>
+
           <View style={styles.qrCard}>
-            <View style={styles.vehicleHeader}>
+            <View style={[styles.vehicleHeader, { backgroundColor: accent }]}>
               <MaterialCommunityIcons
                 name={selected.vehicleType === "mobil" ? "car" : "motorbike"}
                 size={36}
@@ -109,21 +144,36 @@ export default function OfficerDashboardScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.vehicleHeaderLabel}>{selected.vehicleLabel}</Text>
                 <Text style={styles.vehicleHeaderRate}>
-                  Tarif Rp {selected.rate.toLocaleString("id-ID")}
+                  {isQris ? "Bayar" : "Tarif"} Rp {selected.rate.toLocaleString("id-ID")}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.qrBox}>
-              <QRCode value={selected.qrCode} size={240} backgroundColor="#FFF" color="#000" />
+            <View style={[styles.qrBox, { borderColor: isQris ? "#E8F5E9" : "#E3F2FD" }]}>
+              <QRCode value={qrValue} size={240} backgroundColor="#FFF" color="#000" />
             </View>
 
-            <Text style={styles.qrCodeText}>{selected.qrCode}</Text>
+            {isQris ? (
+              <View style={styles.qrisBadgeRow}>
+                <View style={styles.qrisBadge}>
+                  <Text style={styles.qrisBadgeText}>QRIS</Text>
+                </View>
+                <Text style={styles.qrisMerchant}>Dishub Kota Medan</Text>
+              </View>
+            ) : (
+              <Text style={styles.qrCodeText}>{selected.qrCode}</Text>
+            )}
 
-            <View style={styles.instructionBox}>
-              <MaterialCommunityIcons name="information" size={18} color="#1565C0" />
-              <Text style={styles.instructionText}>
-                Tunjukkan QR ini ke pengguna parkir untuk discan dengan aplikasi LohParkir.
+            <View style={[styles.instructionBox, isQris && { backgroundColor: "#E8F5E9" }]}>
+              <MaterialCommunityIcons
+                name="information"
+                size={18}
+                color={isQris ? "#1B5E20" : "#1565C0"}
+              />
+              <Text style={[styles.instructionText, isQris && { color: "#1B5E20" }]}>
+                {isQris
+                  ? "Tunjukkan QRIS ini ke pengguna untuk discan dengan aplikasi e-wallet / m-banking mereka."
+                  : "Tunjukkan QR ini ke pengguna parkir untuk discan dengan aplikasi LohParkir."}
               </Text>
             </View>
           </View>
@@ -296,6 +346,58 @@ const styles = StyleSheet.create({
     borderColor: "#E3F2FD",
   },
   qrCodeText: { marginTop: 16, fontSize: 13, color: "#616161", fontFamily: "AtkinsonHyperlegible_700Bold", letterSpacing: 1 },
+
+  modeToggle: {
+    flexDirection: "row",
+    gap: 8,
+    width: "100%",
+    marginBottom: 16,
+    backgroundColor: "#FFF",
+    padding: 6,
+    borderRadius: 12,
+    ...Platform.select({
+      ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      android: { elevation: 1 },
+      web: { shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4 },
+    }),
+  },
+  modeBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  modeBtnText: {
+    fontSize: 13,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#424242",
+  },
+  qrisBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 16,
+  },
+  qrisBadge: {
+    backgroundColor: "#D32F2F",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  qrisBadgeText: {
+    color: "#FFF",
+    fontSize: 13,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    letterSpacing: 0.5,
+  },
+  qrisMerchant: {
+    fontSize: 13,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#212121",
+  },
   instructionBox: {
     flexDirection: "row",
     alignItems: "center",

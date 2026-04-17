@@ -285,23 +285,34 @@ export default function PaymentScreen() {
         <Text style={styles.stepTitle}>Pembayaran QRIS</Text>
 
         <View style={styles.qrisCard}>
-          <View style={styles.qrisHeader}>
-            <MaterialCommunityIcons name="qrcode-scan" size={20} color="#1565C0" />
-            <Text style={styles.qrisHeaderText}>Scan untuk Bayar</Text>
+          <View style={styles.qrisOfficerIcon}>
+            <MaterialCommunityIcons name="cellphone-arrow-down" size={64} color="#1565C0" />
           </View>
 
-          <View style={styles.qrisQrWrap}>
-            <MaterialCommunityIcons name="qrcode" size={240} color="#000" />
+          <Text style={styles.qrisOfficerTitle}>Scan QRIS dari Layar Petugas</Text>
+          <Text style={styles.qrisOfficerDesc}>
+            Mohon minta petugas untuk menampilkan QRIS pembayaran di layar HP-nya.
+            Lalu scan QRIS tersebut menggunakan aplikasi e-wallet (GoPay, OVO, DANA, ShopeePay) atau mobile banking Anda.
+          </Text>
+
+          <View style={styles.stepsList}>
+            {[
+              "Buka aplikasi e-wallet / m-banking di HP Anda",
+              "Pilih menu Scan QRIS",
+              "Arahkan kamera ke QRIS di layar HP petugas",
+              "Konfirmasi nominal & selesaikan pembayaran",
+            ].map((s, i) => (
+              <View key={i} style={styles.stepRow}>
+                <View style={styles.stepNum}><Text style={styles.stepNumText}>{i + 1}</Text></View>
+                <Text style={styles.stepText}>{s}</Text>
+              </View>
+            ))}
           </View>
 
           <View style={styles.qrisAmount}>
-            <Text style={styles.qrisAmountLabel}>Total Pembayaran</Text>
+            <Text style={styles.qrisAmountLabel}>Nominal Pembayaran</Text>
             <Text style={styles.qrisAmountValue}>Rp {rate.toLocaleString("id-ID")}</Text>
           </View>
-
-          <Text style={styles.qrisInstruction}>
-            Buka aplikasi e-wallet atau mobile banking Anda,{"\n"}lalu scan kode QR di atas
-          </Text>
         </View>
 
         <View style={styles.merchantInfo}>
@@ -312,14 +323,19 @@ export default function PaymentScreen() {
         <Pressable
           onPress={() => {
             hapticImpact();
-            startPaymentDetection();
+            processPayment("qris");
           }}
+          disabled={loading}
           style={({ pressed }) => [
             styles.primaryBtn,
-            { backgroundColor: "#1565C0", opacity: pressed ? 0.9 : 1 },
+            { backgroundColor: "#1B5E20", opacity: loading ? 0.6 : pressed ? 0.9 : 1 },
           ]}
         >
-          <Text style={styles.primaryBtnText}>SUDAH SCAN & BAYAR</Text>
+          {loading ? (
+            <ActivityIndicator color="#FFF" size="small" />
+          ) : (
+            <Text style={styles.primaryBtnText}>SAYA SUDAH BAYAR QRIS</Text>
+          )}
         </Pressable>
 
         <Pressable
@@ -376,6 +392,47 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#E0E0E0",
     marginBottom: 20,
+  },
+  qrisOfficerIcon: {
+    width: 96, height: 96, borderRadius: 48,
+    backgroundColor: "#E3F2FD",
+    alignItems: "center", justifyContent: "center",
+    marginBottom: 16,
+  },
+  qrisOfficerTitle: {
+    fontSize: 20,
+    fontFamily: "AtkinsonHyperlegible_700Bold",
+    color: "#212121",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  qrisOfficerDesc: {
+    fontSize: 14,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#616161",
+    textAlign: "center",
+    lineHeight: 21,
+    marginBottom: 18,
+  },
+  stepsList: {
+    width: "100%",
+    backgroundColor: "#F5F7FA",
+    borderRadius: 12,
+    padding: 14,
+    gap: 10,
+    marginBottom: 18,
+  },
+  stepRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  stepNum: {
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: "#1565C0",
+    alignItems: "center", justifyContent: "center",
+  },
+  stepNumText: { color: "#FFF", fontSize: 12, fontFamily: "AtkinsonHyperlegible_700Bold" },
+  stepText: {
+    flex: 1, fontSize: 13,
+    fontFamily: "AtkinsonHyperlegible_400Regular",
+    color: "#424242", lineHeight: 19,
   },
   qrisAmount: {
     alignItems: "center",
