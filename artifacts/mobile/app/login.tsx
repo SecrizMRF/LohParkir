@@ -34,7 +34,7 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      await login(username.trim(), password.trim());
+      await login(username.trim().toLowerCase(), password.trim());
       if (isOfficer) {
         router.replace("/officer-dashboard");
       } else {
