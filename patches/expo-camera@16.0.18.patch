@@ -1,0 +1,10 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 2ed1db376d5a8b49965936285901e6e45e8e851a..35c64e80afe98e334f7b12f8c4ed1bdc79c65807 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -33,4 +33,5 @@ dependencies {
+   implementation "androidx.camera:camera-extensions:${camerax_version}"
+   implementation "com.google.mlkit:barcode-scanning:17.2.0"
+   implementation "androidx.camera:camera-mlkit-vision:${camerax_version}"
++  implementation project(':expo-barcode-scanner')
+ }
