@@ -137,3 +137,9 @@ id = "r3Lkc-BJCgIjbP3smKSqQ"
 uri = "file://attached_assets/Proposal_LohParkir_BAB3-6.docx"
 type = "word_document"
 title = "Proposal LohParkir — BAB 3 sampai BAB 6 (.docx)"
+
+[[outputs]]
+id = "wErYr81zrQVI6UYmPtsuu"
+uri = "file://attached_assets/use_case_diagram_lohparkir.png"
+type = "image"
+title = "Use Case Diagram — Aplikasi LohParkir"
