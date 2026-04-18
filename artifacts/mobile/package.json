@@ -63,5 +63,13 @@
     "expo-barcode-scanner": "^13.0.1",
     "expo-camera": "~16.0.18",
     "react-native-qrcode-svg": "^6.3.21"
+  },
+  "expo": {
+    "autolinking": {
+      "searchPaths": [
+        "./node_modules",
+        "../../node_modules"
+      ]
+    }
   }
 }
