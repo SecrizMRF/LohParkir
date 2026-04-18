@@ -85,7 +85,7 @@ export default function LoginScreen() {
             <Feather name="user" size={18} color={colors.mutedForeground} />
             <TextInput
               style={[styles.input, { color: colors.foreground }]}
-              placeholder={isOfficer ? "NIP" : "Username"}
+              placeholder={isOfficer ? "Nomor Badge (cth: DSH-2024-001)" : "Username"}
               placeholderTextColor={colors.mutedForeground}
               value={username}
               onChangeText={setUsername}
@@ -127,7 +127,7 @@ export default function LoginScreen() {
           <Feather name="info" size={14} color={colors.primary} />
           <Text style={[styles.hintText, { color: colors.primary }]}>
             {isOfficer
-              ? "NIP: 198501012010011001 / petugas001"
+              ? "Badge: DSH-2024-001 / petugas001"
               : "Admin: admin / admin123"}
           </Text>
         </View>

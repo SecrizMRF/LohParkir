@@ -33,7 +33,6 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export interface ApiOfficer {
   id: number;
-  nip: string;
   name: string;
   badgeNumber: string;
   qrCode: string;

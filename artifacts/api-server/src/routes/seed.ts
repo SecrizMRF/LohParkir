@@ -7,7 +7,6 @@ import { eq, sql } from "drizzle-orm";
 const router: IRouter = Router();
 
 interface SeedOfficer {
-  nip: string;
   name: string;
   badgeNumber: string;
   area: string;
@@ -18,7 +17,6 @@ interface SeedOfficer {
 
 const SEED_OFFICERS: SeedOfficer[] = [
   {
-    nip: "198501012010011001",
     name: "Budi Santoso",
     badgeNumber: "DSH-2024-001",
     area: "Zona A - Jl. Sudirman",
@@ -27,7 +25,6 @@ const SEED_OFFICERS: SeedOfficer[] = [
     loginPassword: "petugas001",
   },
   {
-    nip: "199002152012012002",
     name: "Siti Rahayu",
     badgeNumber: "DSH-2024-002",
     area: "Zona B - Jl. Thamrin",
@@ -36,7 +33,6 @@ const SEED_OFFICERS: SeedOfficer[] = [
     loginPassword: "petugas002",
   },
   {
-    nip: "198807202015011003",
     name: "Ahmad Wijaya",
     badgeNumber: "DSH-2024-003",
     area: "Zona C - Jl. Gatot Subroto",
@@ -108,12 +104,13 @@ router.post("/seed", async (_req, res) => {
     const officerCredentials: Array<{ name: string; username: string; password: string }> = [];
 
     for (const seed of SEED_OFFICERS) {
-      let [officer] = await db.select().from(officersTable).where(eq(officersTable.nip, seed.nip)).limit(1);
+      const officerUsername = seed.badgeNumber.toLowerCase();
+      let [officer] = await db.select().from(officersTable).where(eq(officersTable.badgeNumber, seed.badgeNumber)).limit(1);
 
       if (!officer) {
         const passwordHash = await bcrypt.hash(seed.loginPassword, 10);
         const [user] = await db.insert(usersTable).values({
-          username: seed.nip,
+          username: officerUsername,
           passwordHash,
           fullName: seed.name,
           role: "officer",
@@ -122,7 +119,6 @@ router.post("/seed", async (_req, res) => {
 
         const [created] = await db.insert(officersTable).values({
           userId: user.id,
-          nip: seed.nip,
           name: seed.name,
           badgeNumber: seed.badgeNumber,
           qrCode: `LOHPARKIR-${seed.badgeNumber}`,
@@ -133,13 +129,13 @@ router.post("/seed", async (_req, res) => {
           phone: seed.phone,
         }).returning();
         officer = created;
-      } else if (!officer.userId) {
-        const existingUser = await db.select().from(usersTable).where(eq(usersTable.username, seed.nip)).limit(1);
+      } else {
+        const existingUser = await db.select().from(usersTable).where(eq(usersTable.username, officerUsername)).limit(1);
         let userId: number;
         if (existingUser.length === 0) {
           const passwordHash = await bcrypt.hash(seed.loginPassword, 10);
           const [user] = await db.insert(usersTable).values({
-            username: seed.nip,
+            username: officerUsername,
             passwordHash,
             fullName: seed.name,
             role: "officer",
@@ -148,12 +144,16 @@ router.post("/seed", async (_req, res) => {
           userId = user.id;
         } else {
           userId = existingUser[0].id;
+          const passwordHash = await bcrypt.hash(seed.loginPassword, 10);
+          await db.update(usersTable).set({ passwordHash, fullName: seed.name, role: "officer" }).where(eq(usersTable.id, userId));
         }
-        await db.update(officersTable).set({ userId }).where(eq(officersTable.id, officer.id));
+        if (officer.userId !== userId) {
+          await db.update(officersTable).set({ userId }).where(eq(officersTable.id, officer.id));
+        }
       }
 
       await ensureOfficerQrCodes(officer.id, officer.badgeNumber);
-      officerCredentials.push({ name: seed.name, username: seed.nip, password: seed.loginPassword });
+      officerCredentials.push({ name: seed.name, username: officerUsername, password: seed.loginPassword });
     }
 
     const allOfficers = await db.select().from(officersTable);

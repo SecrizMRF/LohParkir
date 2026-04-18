@@ -6,7 +6,6 @@ import { usersTable } from "./users";
 export const officersTable = pgTable("officers", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => usersTable.id),
-  nip: varchar("nip", { length: 50 }).unique(),
   name: varchar("name", { length: 200 }).notNull(),
   badgeNumber: varchar("badge_number", { length: 50 }).notNull().unique(),
   qrCode: varchar("qr_code", { length: 100 }).notNull().unique(),

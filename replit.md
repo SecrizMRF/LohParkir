@@ -39,7 +39,7 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 
 ## User Roles
 - **public** (User): Scan QR codes, submit reports, make payments (no auth needed)
-- **officer** (Juru Parkir): Logs in with NIP + password, sees vehicle picker (Motor/Mobil) → displays the matching QR code on screen for users to scan. Each officer has 2 QR codes auto-generated, one per vehicle type, with preset tariff
+- **officer** (Juru Parkir): Logs in with badge number + password (badge is lowercased to use as username), sees vehicle picker (Motor/Mobil) → displays the matching QR code on screen for users to scan. Each officer has 2 QR codes auto-generated, one per vehicle type, with preset tariff
 - **admin** (Dishub): Manage officers, reports, view dashboard (JWT required)
 - **superadmin**: Full access (JWT required)
 
@@ -91,7 +91,7 @@ ParkirCerdas is a QR code-based parking verification and management system for I
 - **Rating** (`rating.tsx`): 4 emoji choices (Buruk/Biasa/Baik/Sangat Baik), auto-navigates home 1.5s after selection, +5 bonus points
 - **Report Form** (`report-form.tsx`): Submit reports with photo & GPS
 - **Report Detail** (`report-detail.tsx`): View report, admin status changes + notes
-- **Officer Form** (`officer-form.tsx`): Register officers with NIP/badge validation
+- **Officer Form** (`officer-form.tsx`): Register officers (badge auto-generated, login uses badge as username)
 - **Officers List** (`officers-list.tsx`): View/manage officers, activate/deactivate
 - **Reports Manage** (`reports-manage.tsx`): Filter reports by status
 
